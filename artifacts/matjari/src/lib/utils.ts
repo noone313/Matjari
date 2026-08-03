@@ -37,3 +37,8 @@ export function getStatusColor(status: string) {
 export function getCategoryLabel(cat: string) {
   return CATEGORIES.find(c => c.value === cat)?.label || cat;
 }
+
+/** Build an absolute API URL from a root-relative path like `/api/images/1` */
+export function getApiUrl(path: string): string {
+  return `${window.location.origin}${path}`;
+}

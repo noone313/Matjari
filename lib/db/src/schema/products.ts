@@ -7,7 +7,12 @@ import {
   timestamp,
   integer,
   pgEnum,
+  customType,
 } from "drizzle-orm/pg-core";
+
+const bytea = customType<{ data: Buffer; notNull: false; default: false }>({
+  dataType() { return "bytea"; },
+});
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { merchantsTable } from "./merchants";
@@ -53,6 +58,16 @@ export const productVariantsTable = pgTable("product_variants", {
 export const insertProductSchema = createInsertSchema(productsTable).omit({
   id: true,
   createdAt: true,
+});
+
+export const productImagesTable = pgTable("product_images", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id")
+    .notNull()
+    .references(() => productsTable.id, { onDelete: "cascade" }),
+  data: bytea("data").notNull(),
+  mimeType: varchar("mime_type", { length: 50 }).notNull().default("image/jpeg"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const insertProductVariantSchema = createInsertSchema(
