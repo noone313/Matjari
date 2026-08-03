@@ -21,3 +21,9 @@ timeoutMs = 20000
 
 [nix]
 channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+VAPID_PUBLIC_KEY = "BIlnTE3vzi22F47DhYzkX8x615kmwWOT_gXwt7ZRQvXJGXeKxr9Y5a-HNZujegK3nmfzMar_vH9x5kC0_EGalLE"
+VAPID_SUBJECT = "mailto:admin@matjari.iq"

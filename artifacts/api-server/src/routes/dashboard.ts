@@ -1,8 +1,9 @@
 import { Router } from "express";
 import multer from "multer";
-import { db, merchantsTable, productsTable, productVariantsTable, productImagesTable, ordersTable, orderItemsTable, discountCodesTable } from "@workspace/db";
+import { db, merchantsTable, productsTable, productVariantsTable, productImagesTable, ordersTable, orderItemsTable, discountCodesTable, pushSubscriptionsTable } from "@workspace/db";
 import { eq, and, gte, sql, desc, count, inArray, notInArray } from "drizzle-orm";
 import { requireAuth, type AuthRequest } from "../middleware/auth";
+import { VAPID_PUBLIC_KEY, sendPushToMerchant } from "../lib/push";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -494,6 +495,63 @@ router.patch("/discounts/:id/toggle", async (req: AuthRequest, res): Promise<voi
     .returning();
 
   res.json(updated);
+});
+
+// ─── Push Notifications ──────────────────────────────────────────────────────
+
+/** GET /dashboard/push/vapid-public-key — return the public VAPID key so the
+ *  client can subscribe without exposing the private key. */
+router.get("/push/vapid-public-key", (_req, res): void => {
+  if (!VAPID_PUBLIC_KEY) {
+    res.status(503).json({ error: "Push notifications not configured" });
+    return;
+  }
+  res.json({ publicKey: VAPID_PUBLIC_KEY });
+});
+
+/** POST /dashboard/push/subscribe — save a PushSubscription for this merchant. */
+router.post("/push/subscribe", async (req: AuthRequest, res): Promise<void> => {
+  const { endpoint, keys } = req.body ?? {};
+  if (
+    typeof endpoint !== "string" ||
+    typeof keys?.p256dh !== "string" ||
+    typeof keys?.auth !== "string"
+  ) {
+    res.status(400).json({ error: "بيانات الاشتراك غير صالحة" });
+    return;
+  }
+
+  // Upsert: if the endpoint already exists for this merchant, update keys;
+  // if it exists for a different merchant (device transfer), replace it.
+  await db
+    .delete(pushSubscriptionsTable)
+    .where(eq(pushSubscriptionsTable.endpoint, endpoint));
+
+  await db.insert(pushSubscriptionsTable).values({
+    merchantId: req.merchantId!,
+    endpoint,
+    p256dh: keys.p256dh,
+    auth: keys.auth,
+  });
+
+  res.sendStatus(201);
+});
+
+/** DELETE /dashboard/push/unsubscribe — remove all push subscriptions for
+ *  this merchant on the given endpoint. */
+router.delete("/push/unsubscribe", async (req: AuthRequest, res): Promise<void> => {
+  const { endpoint } = req.body ?? {};
+  if (typeof endpoint === "string") {
+    await db
+      .delete(pushSubscriptionsTable)
+      .where(
+        and(
+          eq(pushSubscriptionsTable.merchantId, req.merchantId!),
+          eq(pushSubscriptionsTable.endpoint, endpoint),
+        ),
+      );
+  }
+  res.sendStatus(204);
 });
 
 export default router;

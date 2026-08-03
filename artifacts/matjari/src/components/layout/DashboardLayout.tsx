@@ -36,6 +36,116 @@ function playNewOrderSound() {
 
 const seenKey = (merchantId: number) => `matjari_seen_new_orders_${merchantId}`;
 
+// ─── Push notification helpers ────────────────────────────────────────────────
+
+/** Convert a base64url string to a Uint8Array (required by pushManager.subscribe). */
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+}
+
+/** Fetch the VAPID public key from the server. */
+async function fetchVapidPublicKey(): Promise<string> {
+  const token = localStorage.getItem('matjari_token');
+  const res = await fetch('/api/dashboard/push/vapid-public-key', {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw new Error('Could not fetch VAPID public key');
+  const data = await res.json();
+  return data.publicKey as string;
+}
+
+/** POST a PushSubscription to the server. */
+async function savePushSubscription(sub: PushSubscription): Promise<void> {
+  const token = localStorage.getItem('matjari_token');
+  const json = sub.toJSON();
+  await fetch('/api/dashboard/push/subscribe', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({
+      endpoint: json.endpoint,
+      keys: { p256dh: json.keys?.p256dh, auth: json.keys?.auth },
+    }),
+  });
+}
+
+/** Register the service worker and subscribe to push notifications.
+ *  Returns true on success, false if push is unsupported or permission denied. */
+async function subscribeToPush(): Promise<boolean> {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
+
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') return false;
+
+  try {
+    const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    await navigator.serviceWorker.ready;
+
+    const vapidKey = await fetchVapidPublicKey();
+
+    // Check whether we already have a subscription
+    let sub = await registration.pushManager.getSubscription();
+
+    // If no existing subscription, create one
+    if (!sub) {
+      sub = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidKey),
+      });
+    }
+
+    await savePushSubscription(sub);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// ─── usePushNotifications ─────────────────────────────────────────────────────
+
+const PUSH_ASKED_KEY = (merchantId: number) => `matjari_push_asked_${merchantId}`;
+
+function usePushNotifications(merchantId: number | undefined) {
+  React.useEffect(() => {
+    if (!merchantId) return;
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+
+    // If already granted, silently re-register SW and save subscription
+    if (Notification.permission === 'granted') {
+      subscribeToPush().catch(() => undefined);
+      return;
+    }
+
+    // Only ask once per merchant
+    if (Notification.permission === 'denied') return;
+    if (localStorage.getItem(PUSH_ASKED_KEY(merchantId))) return;
+
+    // Small delay so the page renders before the permission prompt
+    const timer = setTimeout(() => {
+      localStorage.setItem(PUSH_ASKED_KEY(merchantId), '1');
+      subscribeToPush()
+        .then((granted) => {
+          if (granted) {
+            toast({
+              title: '🔔 تم تفعيل الإشعارات',
+              description: 'ستصلك تنبيهات فورية عند وصول طلبات جديدة.',
+            });
+          }
+        })
+        .catch(() => undefined);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [merchantId]);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const { logout, merchant } = useAuth();
@@ -57,6 +167,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       refetchInterval: 30_000,
     },
   });
+
+  // ─── Push notifications ───────────────────────────────────────────────────
+  usePushNotifications(merchant?.id);
 
   // ─── New-order badge ─────────────────────────────────────────────────────
   // `seenNewOrdersCount` is the value of `newOrdersCount` the last time the

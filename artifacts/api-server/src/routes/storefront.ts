@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db, merchantsTable, productsTable, productVariantsTable, ordersTable, orderItemsTable, discountCodesTable } from "@workspace/db";
 import { eq, and, ilike } from "drizzle-orm";
+import { sendPushToMerchant } from "../lib/push";
 import {
   GetStoreParams,
   BrowseStoreProductsParams,
@@ -311,6 +312,13 @@ router.post("/:slug/orders", async (req, res): Promise<void> => {
   await db.insert(orderItemsTable).values(
     orderItemsData.map((item) => ({ ...item, orderId: order.id })),
   );
+
+  // Fire push notification to the merchant (non-blocking — never fails the response)
+  sendPushToMerchant(merchant.id, {
+    title: `🛍️ طلب جديد — ${merchant.storeName}`,
+    body: `طلب جديد من ${customerName} بقيمة ${(total / 1000).toFixed(3)} د.ع`,
+    url: "/dashboard/orders",
+  }).catch(() => undefined);
 
   res.status(201).json({
     orderId: order.id,
