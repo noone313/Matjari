@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { Route, Switch, Router as WouterRouter } from 'wouter';
+import { Route, Switch, Router as WouterRouter, Redirect } from 'wouter';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
@@ -45,6 +45,9 @@ function DashboardRouter() {
   return (
     <DashboardLayout>
       <Switch>
+        <Route path="/">
+          <Redirect to="/dashboard" />
+        </Route>
         <Route path="/dashboard" component={Overview} />
         <Route path="/dashboard/products" component={Products} />
         <Route path="/dashboard/products/new" component={ProductForm} />
