@@ -36,6 +36,7 @@ export default function StoreHome({ slug }: { slug: string }) {
   });
 
   let products = allProducts?.filter((p) => {
+    if (!p.imageUrls?.length) return false;
     const matchCat = !activeCategory || p.category === activeCategory;
     const matchSearch =
       !search ||
