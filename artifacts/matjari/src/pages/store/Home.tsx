@@ -19,6 +19,7 @@ export default function StoreHome({ slug }: { slug: string }) {
   const [activeCategory, setActiveCategory] = useState('');
   const [sortBy, setSortBy] = useState<'default' | 'price_asc' | 'price_desc'>('default');
   const [filterOpen, setFilterOpen] = useState(false);
+  const [brokenImages, setBrokenImages] = useState<Set<number>>(new Set());
   const [location] = useLocation();
 
   // Sync category from URL ?cat= param
@@ -37,6 +38,7 @@ export default function StoreHome({ slug }: { slug: string }) {
 
   let products = allProducts?.filter((p) => {
     if (!p.imageUrls?.length || !p.imageUrls.some((u) => u?.trim())) return false;
+    if (brokenImages.has(p.id)) return false;
     const matchCat = !activeCategory || p.category === activeCategory;
     const matchSearch =
       !search ||
@@ -202,6 +204,7 @@ export default function StoreHome({ slug }: { slug: string }) {
                           src={product.imageUrls[0]}
                           alt={product.name}
                           className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700 ease-out"
+                          onError={() => setBrokenImages((prev) => new Set(prev).add(product.id))}
                         />
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-zinc-100">
