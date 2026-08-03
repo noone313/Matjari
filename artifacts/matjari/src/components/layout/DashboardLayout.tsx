@@ -6,6 +6,8 @@ import { LayoutDashboard, Package, ShoppingBag, Tags, Settings, LogOut, Store, E
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
+const seenKey = (merchantId: number) => `matjari_seen_new_orders_${merchantId}`;
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const { logout, merchant } = useAuth();
@@ -19,13 +21,61 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       setTimeout(() => setCopied(false), 2000);
     });
   };
-  
-  const { data: stats } = useGetDashboardStats({ query: { enabled: !!merchant, queryKey: getGetDashboardStatsQueryKey() } });
+
+  const { data: stats } = useGetDashboardStats({
+    query: {
+      enabled: !!merchant,
+      queryKey: getGetDashboardStatsQueryKey(),
+      refetchInterval: 30_000,
+    },
+  });
+
+  // ─── New-order badge ─────────────────────────────────────────────────────
+  // `seenNewOrdersCount` is the value of `newOrdersCount` the last time the
+  // merchant visited the orders page. null = not yet read from localStorage.
+  const [seenNewOrdersCount, setSeenNewOrdersCount] = React.useState<number | null>(null);
+
+  // Read persisted baseline once the merchant identity is known
+  React.useEffect(() => {
+    if (!merchant) return;
+    const stored = localStorage.getItem(seenKey(merchant.id));
+    if (stored !== null) {
+      setSeenNewOrdersCount(Number(stored));
+    }
+    // else: leave null until first stats arrive (see initializer effect below)
+  }, [merchant?.id]);
+
+  // On first stats load with no stored baseline: initialize to current value
+  // so historical "new" orders don't trigger a badge the merchant never caused.
+  React.useEffect(() => {
+    if (!merchant || !stats || seenNewOrdersCount !== null) return;
+    const key = seenKey(merchant.id);
+    if (localStorage.getItem(key) === null) {
+      localStorage.setItem(key, String(stats.newOrdersCount));
+      setSeenNewOrdersCount(stats.newOrdersCount);
+    }
+  }, [stats?.newOrdersCount, merchant?.id, seenNewOrdersCount]);
+
+  const isOnOrdersPage =
+    location === '/dashboard/orders' || location.startsWith('/dashboard/orders/');
+
+  // When the merchant is on the orders page, mark the current count as seen
+  React.useEffect(() => {
+    if (!isOnOrdersPage || !merchant || !stats) return;
+    localStorage.setItem(seenKey(merchant.id), String(stats.newOrdersCount));
+    setSeenNewOrdersCount(stats.newOrdersCount);
+  }, [isOnOrdersPage, merchant?.id, stats?.newOrdersCount]);
+
+  const newOrdersBadge =
+    !isOnOrdersPage && seenNewOrdersCount !== null && stats
+      ? Math.max(0, stats.newOrdersCount - seenNewOrdersCount)
+      : 0;
+  // ─────────────────────────────────────────────────────────────────────────
 
   const navItems = [
     { href: '/dashboard', label: 'الرئيسية', icon: LayoutDashboard },
     { href: '/dashboard/products', label: 'المنتجات', icon: Package },
-    { href: '/dashboard/orders', label: 'الطلبات', icon: ShoppingBag },
+    { href: '/dashboard/orders', label: 'الطلبات', icon: ShoppingBag, badge: newOrdersBadge },
     { href: '/dashboard/discounts', label: 'الخصومات', icon: Tags },
     { href: '/dashboard/settings', label: 'الإعدادات', icon: Settings },
   ];
@@ -45,7 +95,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </h1>
           {merchant?.slug && (
             <div className="flex items-center justify-between mt-1">
-              <a 
+              <a
                 href={`/store/${merchant.slug}`}
                 target="_blank"
                 rel="noreferrer"
@@ -82,19 +132,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
-            const isActive = location === item.href || (location.startsWith(item.href) && item.href !== '/dashboard');
+            const isActive =
+              location === item.href ||
+              (location.startsWith(item.href) && item.href !== '/dashboard');
             return (
               <Link key={item.href} href={item.href}>
                 <Button
                   variant="ghost"
                   className={cn(
-                    "w-full justify-start text-right font-medium transition-colors h-11",
-                    isActive 
-                      ? "bg-gray-100 text-gray-900" 
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    'w-full justify-start text-right font-medium transition-colors h-11',
+                    isActive
+                      ? 'bg-gray-100 text-gray-900'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
                   )}
                 >
-                  <item.icon className={cn("w-5 h-5 ml-3", isActive ? "text-primary" : "text-gray-400")} />
+                  <span className="relative ml-3">
+                    <item.icon
+                      className={cn('w-5 h-5', isActive ? 'text-primary' : 'text-gray-400')}
+                    />
+                    {item.badge && item.badge > 0 ? (
+                      <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-[10px] font-bold leading-none text-white">
+                        {item.badge > 99 ? '99+' : item.badge}
+                      </span>
+                    ) : null}
+                  </span>
                   {item.label}
                 </Button>
               </Link>
@@ -105,10 +166,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="p-4 border-t border-gray-200">
           <div className="mb-4 px-2">
             <p className="text-sm font-medium text-gray-900 truncate">{merchant?.email}</p>
-            <p className="text-xs text-gray-500">عضو منذ {merchant?.createdAt ? new Date(merchant.createdAt).getFullYear() : ''}</p>
+            <p className="text-xs text-gray-500">
+              عضو منذ{' '}
+              {merchant?.createdAt ? new Date(merchant.createdAt).getFullYear() : ''}
+            </p>
           </div>
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 h-11"
             onClick={handleLogout}
           >
@@ -121,9 +185,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <div className="flex-1 overflow-y-auto p-4 md:p-8">
-          <div className="max-w-6xl mx-auto">
-            {children}
-          </div>
+          <div className="max-w-6xl mx-auto">{children}</div>
         </div>
       </main>
     </div>

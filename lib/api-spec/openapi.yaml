@@ -704,7 +704,7 @@ components:
     # ─── Dashboard ──────────────────────────────────────────
     DashboardStats:
       type: object
-      required: [ordersThisMonth, revenueThisMonth, totalOrders, totalRevenue, topProducts, ordersByStatus, recentOrders]
+      required: [ordersThisMonth, revenueThisMonth, totalOrders, totalRevenue, newOrdersCount, topProducts, ordersByStatus, recentOrders]
       properties:
         ordersThisMonth:
           type: number
@@ -714,6 +714,9 @@ components:
           type: number
         totalRevenue:
           type: number
+        newOrdersCount:
+          type: number
+          description: Count of orders with status "new" (unseen by merchant)
         topProducts:
           type: array
           items:

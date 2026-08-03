@@ -55,6 +55,12 @@ router.get("/stats", async (req: AuthRequest, res): Promise<void> => {
     .orderBy(sql`sum(${orderItemsTable.quantity}) desc`)
     .limit(5);
 
+  // New orders count (status = 'new')
+  const [newOrdersRow] = await db
+    .select({ count: count() })
+    .from(ordersTable)
+    .where(and(eq(ordersTable.merchantId, merchantId), eq(ordersTable.status, "new")));
+
   // Orders by status
   const statusCounts = await db
     .select({ status: ordersTable.status, count: count() })
@@ -75,6 +81,7 @@ router.get("/stats", async (req: AuthRequest, res): Promise<void> => {
     revenueThisMonth: Number(monthlyOrders[0]?.revenue ?? 0),
     totalOrders: Number(totalStats[0]?.count ?? 0),
     totalRevenue: Number(totalStats[0]?.revenue ?? 0),
+    newOrdersCount: Number(newOrdersRow?.count ?? 0),
     topProducts: topProducts.map((p) => ({
       productId: p.productId ?? 0,
       productName: p.productName,

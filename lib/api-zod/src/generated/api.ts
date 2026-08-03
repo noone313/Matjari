@@ -108,6 +108,7 @@ export const GetDashboardStatsResponse = zod.object({
   "revenueThisMonth": zod.number(),
   "totalOrders": zod.number(),
   "totalRevenue": zod.number(),
+  "newOrdersCount": zod.number().describe('Count of orders with status \"new\" (unseen by merchant)'),
   "topProducts": zod.array(zod.object({
   "productId": zod.number(),
   "productName": zod.string(),

@@ -104,6 +104,8 @@ export interface DashboardStats {
   revenueThisMonth: number;
   totalOrders: number;
   totalRevenue: number;
+  /** Count of orders with status "new" (unseen by merchant) */
+  newOrdersCount: number;
   topProducts: TopProduct[];
   ordersByStatus: StatusCount[];
   recentOrders: Order[];
