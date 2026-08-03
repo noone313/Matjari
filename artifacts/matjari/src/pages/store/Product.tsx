@@ -4,7 +4,7 @@ import { useCart } from '@/contexts/CartContext';
 import { formatPrice, getCategoryLabel } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { ChevronRight, Droplet, Leaf, AlertCircle } from 'lucide-react';
+import { ChevronRight, Droplet, Leaf, Share2, Check } from 'lucide-react';
 import { Link } from 'wouter';
 
 function FragrancePyramid({ top, heart, base }: { top?: string|null, heart?: string|null, base?: string|null }) {
@@ -55,6 +55,19 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
   const [selectedVariant, setSelectedVariant] = useState<number | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState<string>('');
+  const [shared, setShared] = useState(false);
+
+  const handleShare = () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      navigator.share({ title: product?.name, url });
+    } else {
+      navigator.clipboard.writeText(url).then(() => {
+        setShared(true);
+        setTimeout(() => setShared(false), 2000);
+      });
+    }
+  };
 
   useEffect(() => {
     if (product && product.variants.length > 0 && !selectedVariant) {
@@ -130,15 +143,24 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
 
         {/* Details */}
         <div className="p-8 lg:p-12 flex flex-col justify-center">
-          <div className="mb-2 flex items-center gap-3">
-            <span className="text-sm text-[hsl(var(--primary))] font-medium tracking-wide">
-              {getCategoryLabel(product.category)}
-            </span>
-            {totalStock > 0 && totalStock <= 5 && (
-              <span className="text-[10px] uppercase tracking-widest bg-zinc-900 text-white px-2 py-0.5">
-                متبقي {totalStock} فقط
+          <div className="mb-2 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-[hsl(var(--primary))] font-medium tracking-wide">
+                {getCategoryLabel(product.category)}
               </span>
-            )}
+              {totalStock > 0 && totalStock <= 5 && (
+                <span className="text-[10px] uppercase tracking-widest bg-zinc-900 text-white px-2 py-0.5">
+                  متبقي {totalStock} فقط
+                </span>
+              )}
+            </div>
+            <button
+              onClick={handleShare}
+              title="مشاركة المنتج"
+              className="p-2 rounded-full hover:bg-zinc-100 text-zinc-400 hover:text-zinc-900 transition-colors"
+            >
+              {shared ? <Check className="w-4 h-4 text-green-500" /> : <Share2 className="w-4 h-4" />}
+            </button>
           </div>
           <h1 className="text-4xl font-bold font-serif text-gray-900 mb-4 leading-tight">{product.name}</h1>
           
