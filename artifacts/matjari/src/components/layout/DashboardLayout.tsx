@@ -2,13 +2,23 @@ import React from 'react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGetMe, useGetDashboardStats, getGetDashboardStatsQueryKey } from '@workspace/api-client-react';
-import { LayoutDashboard, Package, ShoppingBag, Tags, Settings, LogOut, Store, ExternalLink } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, Tags, Settings, LogOut, Store, ExternalLink, Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const { logout, merchant } = useAuth();
+  const [copied, setCopied] = React.useState(false);
+
+  const handleCopyLink = () => {
+    if (!merchant?.slug) return;
+    const url = `${window.location.origin}/store/${merchant.slug}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
   
   const { data: stats } = useGetDashboardStats({ query: { enabled: !!merchant, queryKey: getGetDashboardStatsQueryKey() } });
 
@@ -34,16 +44,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {merchant?.storeName || 'متجري'}
           </h1>
           {merchant?.slug && (
-            <a 
-              href={`/store/${merchant.slug}`}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center text-sm text-gray-500 hover:text-primary transition-colors gap-1.5 group"
-            >
-              <span className="w-2 h-2 rounded-full bg-green-500"></span>
-              {merchant.slug}.matjari.iq
-              <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </a>
+            <div className="flex items-center justify-between mt-1">
+              <a 
+                href={`/store/${merchant.slug}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center text-sm text-gray-500 hover:text-primary transition-colors gap-1.5 group"
+              >
+                <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                {merchant.slug}.matjari.iq
+                <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </a>
+              <button
+                onClick={handleCopyLink}
+                title="نسخ رابط المتجر"
+                className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
+              >
+                {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+            </div>
           )}
         </div>
 

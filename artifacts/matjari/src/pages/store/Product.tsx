@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useGetStoreProduct, getGetStoreProductQueryKey } from '@workspace/api-client-react';
+import { useGetStoreProduct, getGetStoreProductQueryKey, useBrowseStoreProducts, getBrowseStoreProductsQueryKey } from '@workspace/api-client-react';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice, getCategoryLabel } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -65,10 +65,18 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
     }
   }, [product, selectedVariant, activeImage]);
 
+  const { data: allProducts } = useBrowseStoreProducts(slug, {
+    query: { enabled: !!slug, queryKey: getBrowseStoreProductsQueryKey(slug) },
+  });
+
   if (isLoading) return <div className="text-center py-24">جاري التحميل...</div>;
   if (!product) return <div className="text-center py-24">المنتج غير موجود</div>;
 
   const currentVariant = product.variants.find(v => v.id === selectedVariant) || product.variants[0];
+  const totalStock = product.variants.reduce((s, v) => s + (v.stock ?? 0), 0);
+  const relatedProducts = allProducts
+    ?.filter(p => p.category === product.category && p.id !== product.id)
+    .slice(0, 3) ?? [];
   const isFragrance = product.category.startsWith('perfume') || product.category === 'oud';
   const isSkincare = product.category === 'skincare' || product.category === 'makeup';
 
@@ -122,8 +130,15 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
 
         {/* Details */}
         <div className="p-8 lg:p-12 flex flex-col justify-center">
-          <div className="mb-2 text-sm text-[hsl(var(--primary))] font-medium tracking-wide">
-            {getCategoryLabel(product.category)}
+          <div className="mb-2 flex items-center gap-3">
+            <span className="text-sm text-[hsl(var(--primary))] font-medium tracking-wide">
+              {getCategoryLabel(product.category)}
+            </span>
+            {totalStock > 0 && totalStock <= 5 && (
+              <span className="text-[10px] uppercase tracking-widest bg-zinc-900 text-white px-2 py-0.5">
+                متبقي {totalStock} فقط
+              </span>
+            )}
           </div>
           <h1 className="text-4xl font-bold font-serif text-gray-900 mb-4 leading-tight">{product.name}</h1>
           
@@ -214,6 +229,37 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
           </div>
         </div>
       </div>
+
+      {/* ── Related products ─────────────────── */}
+      {relatedProducts.length > 0 && (
+        <div className="mt-12 border-t border-zinc-100 pt-10 px-6 pb-8">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 text-center mb-6">منتجات مشابهة</p>
+          <div className="grid grid-cols-3 gap-px bg-zinc-100">
+            {relatedProducts.map(p => {
+              const minPrice = p.variants?.length ? Math.min(...p.variants.map(v => v.price)) : 0;
+              return (
+                <Link key={p.id} href={`/store/${slug}/product/${p.id}`}>
+                  <div className="bg-white group cursor-pointer">
+                    <div className="aspect-[3/4] overflow-hidden bg-zinc-50">
+                      {p.imageUrls?.[0] ? (
+                        <img src={p.imageUrls[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-3xl font-serif text-zinc-200">
+                          {p.name.charAt(0)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <h3 className="text-sm font-serif text-zinc-900 line-clamp-1">{p.name}</h3>
+                      <p className="text-sm text-zinc-500 mt-1">{formatPrice(minPrice)}</p>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

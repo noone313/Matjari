@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useGetStore, getGetStoreQueryKey } from '@workspace/api-client-react';
 import { useCart } from '@/contexts/CartContext';
-import { ShoppingBag, Search, Menu, X, Phone } from 'lucide-react';
+import { ShoppingBag, Menu, X, Phone, MessageCircle } from 'lucide-react';
 
 export default function StoreLayout({ children, slug }: { children: React.ReactNode; slug: string }) {
   const { data: store, isLoading } = useGetStore(slug, {
@@ -186,6 +186,25 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
           </p>
         </div>
       </footer>
+
+      {/* ── WhatsApp floating button ─────────── */}
+      {store.phone && (() => {
+        const waPhone = store.phone.replace(/^0/, '964').replace(/\D/g, '');
+        return (
+          <a
+            href={`https://wa.me/${waPhone}?text=${encodeURIComponent('مرحباً، أريد الاستفسار عن منتجاتكم')}`}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="تواصل عبر واتساب"
+            className="fixed bottom-6 left-6 z-50 w-14 h-14 rounded-full bg-[#25D366] text-white shadow-xl flex items-center justify-center hover:bg-[#20bc5a] transition-colors group"
+          >
+            <MessageCircle className="w-7 h-7 fill-white stroke-none" />
+            <span className="absolute right-full ml-3 mr-3 whitespace-nowrap bg-zinc-900 text-white text-xs rounded px-3 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              تواصل عبر واتساب
+            </span>
+          </a>
+        );
+      })()}
     </div>
   );
 }

@@ -211,6 +211,15 @@ export default function StoreHome({ slug }: { slug: string }) {
                       )}
                       {/* Hover overlay */}
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300" />
+                      {/* Low stock badge */}
+                      {(() => {
+                        const totalStock = product.variants?.reduce((s, v) => s + (v.stock ?? 0), 0) ?? 0;
+                        return totalStock > 0 && totalStock <= 5 ? (
+                          <div className="absolute top-2 right-2 bg-black text-white text-[9px] tracking-widest uppercase px-2 py-1">
+                            متبقي {totalStock} فقط
+                          </div>
+                        ) : null;
+                      })()}
                     </div>
 
                     {/* Info */}

@@ -48,6 +48,39 @@ export default function Overview() {
         </div>
       </div>
 
+      {/* ── Revenue sparkline (last 7 days) ── */}
+      {stats.recentOrders.length > 0 && (() => {
+        const days: { label: string; total: number }[] = [];
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          const key = d.toISOString().slice(0, 10);
+          const label = d.toLocaleDateString('ar-IQ', { weekday: 'short' });
+          const total = stats.recentOrders
+            .filter(o => new Date(o.createdAt).toISOString().slice(0, 10) === key)
+            .reduce((s, o) => s + o.total, 0);
+          days.push({ label, total });
+        }
+        const maxVal = Math.max(...days.map(d => d.total), 1);
+        return (
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">المبيعات — آخر ٧ أيام</h3>
+            <div className="flex items-end gap-2 h-20">
+              {days.map((day, i) => (
+                <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                  <div
+                    className="w-full rounded-t bg-gray-900 transition-all duration-700"
+                    style={{ height: `${Math.max((day.total / maxVal) * 64, day.total > 0 ? 4 : 1)}px` }}
+                    title={formatPrice(day.total)}
+                  />
+                  <span className="text-[9px] text-gray-400 whitespace-nowrap">{day.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Recent Orders */}
         <div className="lg:col-span-2 bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
