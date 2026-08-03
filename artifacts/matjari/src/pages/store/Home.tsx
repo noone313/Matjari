@@ -211,6 +211,12 @@ export default function StoreHome({ slug }: { slug: string }) {
                       )}
                       {/* Hover overlay */}
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300" />
+                      {/* New badge */}
+                      {product.createdAt && (Date.now() - new Date(product.createdAt).getTime()) < 7 * 24 * 60 * 60 * 1000 && (
+                        <div className="absolute top-2 left-2 bg-white text-zinc-900 text-[9px] tracking-widest uppercase px-2 py-1 shadow-sm">
+                          جديد
+                        </div>
+                      )}
                       {/* Low stock badge */}
                       {(() => {
                         const totalStock = product.variants?.reduce((s, v) => s + (v.stock ?? 0), 0) ?? 0;
