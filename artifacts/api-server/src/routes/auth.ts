@@ -1,7 +1,7 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
-import { db, merchantsTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { db, merchantsTable, ordersTable } from "@workspace/db";
+import { and, count, eq } from "drizzle-orm";
 import { requireAuth, signToken, type AuthRequest } from "../middleware/auth";
 import {
   RegisterMerchantBody,
@@ -74,6 +74,7 @@ router.post("/register", async (req, res): Promise<void> => {
       orderCount: 0,
     },
     token,
+    newOrdersCount: 0, // brand-new account has no orders
   });
 });
 
@@ -106,6 +107,13 @@ router.post("/login", async (req, res): Promise<void> => {
 
   const token = signToken(merchant.id);
 
+  // Fetch current new-orders count so the client can initialise its seen-orders
+  // baseline immediately on login (preventing a badge flash for historical orders).
+  const [newOrdersRow] = await db
+    .select({ count: count() })
+    .from(ordersTable)
+    .where(and(eq(ordersTable.merchantId, merchant.id), eq(ordersTable.status, "new")));
+
   res.json({
     merchant: {
       id: merchant.id,
@@ -123,6 +131,7 @@ router.post("/login", async (req, res): Promise<void> => {
       orderCount: null,
     },
     token,
+    newOrdersCount: Number(newOrdersRow?.count ?? 0),
   });
 });
 

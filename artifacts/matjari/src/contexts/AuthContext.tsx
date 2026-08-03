@@ -4,7 +4,7 @@ import type { Merchant } from '@workspace/api-client-react';
 interface AuthContextType {
   token: string | null;
   merchant: Merchant | null;
-  login: (token: string, merchant: Merchant) => void;
+  login: (token: string, merchant: Merchant, initialNewOrdersCount?: number) => void;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -28,9 +28,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const login = (newToken: string, newMerchant: Merchant) => {
+  const login = (newToken: string, newMerchant: Merchant, initialNewOrdersCount?: number) => {
     localStorage.setItem('matjari_token', newToken);
     localStorage.setItem('matjari_merchant', JSON.stringify(newMerchant));
+
+    // Initialise the seen-orders baseline at login time so the merchant doesn't
+    // see a badge for historical orders when opening the dashboard on a new browser.
+    // Only set if no baseline is already stored (preserves the count from prior sessions).
+    if (initialNewOrdersCount !== undefined) {
+      const seenKey = `matjari_seen_new_orders_${newMerchant.id}`;
+      if (localStorage.getItem(seenKey) === null) {
+        localStorage.setItem(seenKey, String(initialNewOrdersCount));
+      }
+    }
+
     setToken(newToken);
     setMerchant(newMerchant);
   };

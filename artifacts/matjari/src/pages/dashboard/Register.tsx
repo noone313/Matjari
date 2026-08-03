@@ -31,7 +31,7 @@ export default function Register() {
   const onSubmit = (data: z.infer<typeof schema>) => {
     registerMutation.mutate({ data }, {
       onSuccess: (res) => {
-        login(res.token, res.merchant);
+        login(res.token, res.merchant, res.newOrdersCount);
         toast({ title: 'تم إنشاء الحساب بنجاح' });
         setLocation('/dashboard');
       },

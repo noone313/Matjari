@@ -42,7 +42,8 @@ export const RegisterMerchantResponse = zod.object({
   "productCount": zod.number().nullish(),
   "orderCount": zod.number().nullish()
 }),
-  "token": zod.string()
+  "token": zod.string(),
+  "newOrdersCount": zod.number().describe('Count of orders with status \"new\" at the moment of login — used to initialise the seen-orders baseline so the merchant doesn\'t see a badge for historical orders')
 })
 
 
@@ -70,7 +71,8 @@ export const LoginMerchantResponse = zod.object({
   "productCount": zod.number().nullish(),
   "orderCount": zod.number().nullish()
 }),
-  "token": zod.string()
+  "token": zod.string(),
+  "newOrdersCount": zod.number().describe('Count of orders with status \"new\" at the moment of login — used to initialise the seen-orders baseline so the merchant doesn\'t see a badge for historical orders')
 })
 
 

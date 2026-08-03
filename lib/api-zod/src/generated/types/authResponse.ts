@@ -10,4 +10,6 @@ import type { Merchant } from './merchant';
 export interface AuthResponse {
   merchant: Merchant;
   token: string;
+  /** Count of orders with status "new" at the moment of login — used to initialise the seen-orders baseline so the merchant doesn't see a badge for historical orders */
+  newOrdersCount: number;
 }

@@ -645,12 +645,15 @@ components:
 
     AuthResponse:
       type: object
-      required: [merchant, token]
+      required: [merchant, token, newOrdersCount]
       properties:
         merchant:
           $ref: "#/components/schemas/Merchant"
         token:
           type: string
+        newOrdersCount:
+          type: number
+          description: Count of orders with status "new" at the moment of login — used to initialise the seen-orders baseline so the merchant doesn't see a badge for historical orders
 
     Merchant:
       type: object

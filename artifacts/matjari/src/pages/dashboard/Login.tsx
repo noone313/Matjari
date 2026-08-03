@@ -29,7 +29,7 @@ export default function Login() {
   const onSubmit = (data: z.infer<typeof schema>) => {
     loginMutation.mutate({ data }, {
       onSuccess: (res) => {
-        login(res.token, res.merchant);
+        login(res.token, res.merchant, res.newOrdersCount);
         toast({ title: 'تم تسجيل الدخول بنجاح' });
         setLocation('/dashboard');
       },
