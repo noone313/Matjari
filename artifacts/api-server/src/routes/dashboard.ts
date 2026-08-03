@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, merchantsTable, productsTable, productVariantsTable, ordersTable, orderItemsTable, discountCodesTable } from "@workspace/db";
-import { eq, and, gte, sql, desc, count } from "drizzle-orm";
+import { eq, and, gte, sql, desc, count, inArray } from "drizzle-orm";
 import { requireAuth, type AuthRequest } from "../middleware/auth";
 import {
   UpdateDashboardSettingsBody,
@@ -149,12 +149,12 @@ router.get("/products", async (req: AuthRequest, res): Promise<void> => {
     .where(eq(productsTable.merchantId, req.merchantId!))
     .orderBy(desc(productsTable.createdAt));
 
-  const variants = await db
-    .select()
-    .from(productVariantsTable)
-    .where(
-      sql`${productVariantsTable.productId} IN (${products.map((p) => p.id).join(",") || "NULL"})`,
-    );
+  const variants = products.length > 0
+    ? await db
+        .select()
+        .from(productVariantsTable)
+        .where(inArray(productVariantsTable.productId, products.map((p) => p.id)))
+    : [];
 
   let result = products.map((p) => ({
     ...p,

@@ -17,15 +17,16 @@ export default function OrderDetail() {
 
   const handleStatusChange = (newStatus: string) => {
     updateStatus.mutate({ id: orderId, data: { status: newStatus } }, {
-      onSuccess: (data) => {
+      onSuccess: () => {
         toast({ title: 'تم تحديث حالة الطلب' });
-        queryClient.setQueryData(getGetOrderQueryKey(orderId), data);
+        queryClient.invalidateQueries({ queryKey: getGetOrderQueryKey(orderId) });
       }
     });
   };
 
   if (isLoading) return <div>جاري التحميل...</div>;
   if (!order) return <div>الطلب غير موجود</div>;
+  if (!order.items) return <div>جاري التحميل...</div>;
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-16">
