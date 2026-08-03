@@ -1,7 +1,27 @@
 import { Router } from "express";
-import { db, merchantsTable, productsTable, productVariantsTable, ordersTable, orderItemsTable, discountCodesTable } from "@workspace/db";
-import { eq, and, gte, sql, desc, count, inArray } from "drizzle-orm";
+import multer from "multer";
+import { db, merchantsTable, productsTable, productVariantsTable, productImagesTable, ordersTable, orderItemsTable, discountCodesTable } from "@workspace/db";
+import { eq, and, gte, sql, desc, count, inArray, notInArray } from "drizzle-orm";
 import { requireAuth, type AuthRequest } from "../middleware/auth";
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) cb(null, true);
+    else cb(new Error("Only image files are allowed"));
+  },
+});
+
+/** Insert uploaded files into product_images, return their /api/images/:id URLs */
+async function saveImages(productId: number, files: Express.Multer.File[]): Promise<string[]> {
+  if (!files.length) return [];
+  const rows = await db
+    .insert(productImagesTable)
+    .values(files.map((f) => ({ productId, data: f.buffer, mimeType: f.mimetype })))
+    .returning({ id: productImagesTable.id });
+  return rows.map((r) => `/api/images/${r.id}`);
+}
 import {
   UpdateDashboardSettingsBody,
   CreateProductBody,
@@ -179,19 +199,25 @@ router.get("/products", async (req: AuthRequest, res): Promise<void> => {
   res.json(result);
 });
 
-router.post("/products", async (req: AuthRequest, res): Promise<void> => {
-  const parsed = CreateProductBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
+router.post("/products", upload.array("images", 10), async (req: AuthRequest, res): Promise<void> => {
+  let body: unknown;
+  try { body = JSON.parse(req.body.data ?? "{}"); } catch { res.status(400).json({ error: "Invalid JSON in data field" }); return; }
+
+  const parsed = CreateProductBody.safeParse(body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
   const { variants: variantInputs, ...productData } = parsed.data;
 
   const [product] = await db
     .insert(productsTable)
-    .values({ ...productData, merchantId: req.merchantId!, imageUrls: productData.imageUrls ?? [] })
+    .values({ ...productData, merchantId: req.merchantId!, imageUrls: [] })
     .returning();
+
+  const files = (req.files as Express.Multer.File[]) ?? [];
+  const imageUrls = await saveImages(product.id, files);
+  if (imageUrls.length) {
+    await db.update(productsTable).set({ imageUrls }).where(eq(productsTable.id, product.id));
+  }
 
   const insertedVariants =
     variantInputs && variantInputs.length > 0
@@ -201,7 +227,7 @@ router.post("/products", async (req: AuthRequest, res): Promise<void> => {
           .returning()
       : [];
 
-  res.status(201).json({ ...product, variants: insertedVariants });
+  res.status(201).json({ ...product, imageUrls, variants: insertedVariants });
 });
 
 router.get("/products/:id", async (req: AuthRequest, res): Promise<void> => {
@@ -230,31 +256,49 @@ router.get("/products/:id", async (req: AuthRequest, res): Promise<void> => {
   res.json({ ...product, variants });
 });
 
-router.put("/products/:id", async (req: AuthRequest, res): Promise<void> => {
+router.put("/products/:id", upload.array("images", 10), async (req: AuthRequest, res): Promise<void> => {
   const params = UpdateProductParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: "معرّف غير صالح" });
-    return;
-  }
+  if (!params.success) { res.status(400).json({ error: "معرّف غير صالح" }); return; }
 
-  const parsed = UpdateProductBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
+  let body: unknown;
+  try { body = JSON.parse(req.body.data ?? "{}"); } catch { res.status(400).json({ error: "Invalid JSON in data field" }); return; }
+
+  const parsed = UpdateProductBody.safeParse(body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
   const { variants: variantInputs, ...productData } = parsed.data;
 
+  // keepUrls = existing image URLs the client wants to keep (JSON array in form field)
+  let keepUrls: string[] = [];
+  try { keepUrls = JSON.parse(req.body.keepUrls ?? "[]"); } catch { keepUrls = []; }
+
+  // Remove images not in keepUrls (they were deleted by the user)
+  const existingImages = await db
+    .select({ id: productImagesTable.id, url: sql<string>`'/api/images/' || ${productImagesTable.id}` })
+    .from(productImagesTable)
+    .where(eq(productImagesTable.productId, params.data.id));
+
+  const idsToDelete = existingImages
+    .filter((img) => !keepUrls.includes(img.url))
+    .map((img) => img.id);
+  if (idsToDelete.length) {
+    await db.delete(productImagesTable).where(inArray(productImagesTable.id, idsToDelete));
+  }
+
+  // Upload new images
+  const files = (req.files as Express.Multer.File[]) ?? [];
+  const newUrls = await saveImages(params.data.id, files);
+
+  // Final imageUrls = kept + new
+  const imageUrls = [...keepUrls.filter((u) => u.startsWith("/api/images/")), ...newUrls];
+
   const [product] = await db
     .update(productsTable)
-    .set(productData)
+    .set({ ...productData, imageUrls })
     .where(and(eq(productsTable.id, params.data.id), eq(productsTable.merchantId, req.merchantId!)))
     .returning();
 
-  if (!product) {
-    res.status(404).json({ error: "المنتج غير موجود" });
-    return;
-  }
+  if (!product) { res.status(404).json({ error: "المنتج غير موجود" }); return; }
 
   // Replace variants
   let updatedVariants: typeof productVariantsTable.$inferSelect[] = [];
@@ -267,10 +311,7 @@ router.put("/products/:id", async (req: AuthRequest, res): Promise<void> => {
         .returning();
     }
   } else {
-    updatedVariants = await db
-      .select()
-      .from(productVariantsTable)
-      .where(eq(productVariantsTable.productId, product.id));
+    updatedVariants = await db.select().from(productVariantsTable).where(eq(productVariantsTable.productId, product.id));
   }
 
   res.json({ ...product, variants: updatedVariants });
