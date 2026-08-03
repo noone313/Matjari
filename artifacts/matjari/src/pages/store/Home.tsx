@@ -203,10 +203,11 @@ export default function StoreHome({ slug }: { slug: string }) {
                           className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700 ease-out"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <span className="text-4xl font-serif text-zinc-200">
+                        <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-zinc-100">
+                          <span className="text-5xl font-serif text-zinc-300 select-none">
                             {product.name.charAt(0)}
                           </span>
+                          <span className="text-[9px] tracking-widest uppercase text-zinc-300">بدون صورة</span>
                         </div>
                       )}
                       {/* Hover overlay */}
