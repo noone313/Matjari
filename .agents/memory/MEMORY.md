@@ -1,0 +1,1 @@
+- [Matjari platform overview](matjari-platform.md) — full-stack Arabic SaaS storefront; key arch decisions, auth pattern, orval quirks, routing fix

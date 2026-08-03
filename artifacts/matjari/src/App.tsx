@@ -1,0 +1,128 @@
+import React, { useEffect } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from '@/components/ui/toaster';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { Route, Switch, Router as WouterRouter } from 'wouter';
+
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { CartProvider } from './contexts/CartContext';
+import NotFound from '@/pages/not-found';
+
+// --- Dashboard Pages ---
+import Login from '@/pages/dashboard/Login';
+import Register from '@/pages/dashboard/Register';
+import Overview from '@/pages/dashboard/Overview';
+import Products from '@/pages/dashboard/Products';
+import ProductForm from '@/pages/dashboard/ProductForm';
+import Orders from '@/pages/dashboard/Orders';
+import OrderDetail from '@/pages/dashboard/OrderDetail';
+import Discounts from '@/pages/dashboard/Discounts';
+import Settings from '@/pages/dashboard/Settings';
+import DashboardLayout from '@/components/layout/DashboardLayout';
+
+// --- Storefront Pages ---
+import StoreLayout from '@/components/layout/StoreLayout';
+import StoreHome from '@/pages/store/Home';
+import StoreProduct from '@/pages/store/Product';
+import StoreCart from '@/pages/store/Cart';
+import StoreCheckout from '@/pages/store/Checkout';
+import StoreConfirmation from '@/pages/store/Confirmation';
+
+const queryClient = new QueryClient();
+
+function DashboardRouter() {
+  const { isAuthenticated } = useAuth();
+
+  if (!isAuthenticated) {
+    return (
+      <Switch>
+        <Route path="/register" component={Register} />
+        <Route component={Login} />
+      </Switch>
+    );
+  }
+
+  return (
+    <DashboardLayout>
+      <Switch>
+        <Route path="/dashboard" component={Overview} />
+        <Route path="/dashboard/products" component={Products} />
+        <Route path="/dashboard/products/new" component={ProductForm} />
+        <Route path="/dashboard/products/:id/edit" component={ProductForm} />
+        <Route path="/dashboard/orders" component={Orders} />
+        <Route path="/dashboard/orders/:id" component={OrderDetail} />
+        <Route path="/dashboard/discounts" component={Discounts} />
+        <Route path="/dashboard/settings" component={Settings} />
+        <Route component={NotFound} />
+      </Switch>
+    </DashboardLayout>
+  );
+}
+
+function StoreRouter({ params }: { params: { slug: string } }) {
+  const slug = params.slug;
+  return (
+    <CartProvider storeSlug={slug}>
+      <StoreLayout slug={slug}>
+        <Switch>
+          <Route path="/store/:slug">
+            {() => <StoreHome slug={slug} />}
+          </Route>
+          <Route path="/store/:slug/product/:productId">
+            {(p) => <StoreProduct slug={slug} productId={p?.productId ?? ''} />}
+          </Route>
+          <Route path="/store/:slug/cart">
+            {() => <StoreCart slug={slug} />}
+          </Route>
+          <Route path="/store/:slug/checkout">
+            {() => <StoreCheckout slug={slug} />}
+          </Route>
+          <Route path="/store/:slug/confirmation/:orderId">
+            {() => <StoreConfirmation />}
+          </Route>
+          <Route component={NotFound} />
+        </Switch>
+      </StoreLayout>
+    </CartProvider>
+  );
+}
+
+function MainRouter() {
+  useEffect(() => {
+    // Enforce RTL at document level
+    document.documentElement.dir = 'rtl';
+    document.documentElement.lang = 'ar';
+  }, []);
+
+  return (
+    <Switch>
+      <Route path="/store/:slug/*?" component={StoreRouter} />
+      <Route path="/store/:slug" component={StoreRouter} />
+      
+      {/* Fallback all other routes to Dashboard (which handles /login and /register if unauthenticated) */}
+      <Route path="/register" component={DashboardRouter} />
+      <Route path="/login" component={DashboardRouter} />
+      <Route path="/dashboard/*?" component={DashboardRouter} />
+      <Route path="/" component={DashboardRouter} />
+      
+      <Route component={NotFound} />
+    </Switch>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+            <MainRouter />
+          </WouterRouter>
+          <Toaster />
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
+
+export default App;

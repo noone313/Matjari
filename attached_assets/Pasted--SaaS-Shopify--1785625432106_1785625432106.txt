@@ -1,0 +1,211 @@
+أنت وكيل برمجي هدفك بناء تطبيق ويب متكامل اسمه مؤقتاً "متجري" — منصة SaaS شبيهة بـ Shopify من ناحية الفكرة والتجربة، لكن بدون بوابة دفع إلكتروني حقيقي، وموجهة حصراً لتجار العطور والكوزمتك (مستحضرات تجميل) الصغار بالعراق اللي يبيعون عبر انستقرام وتيك توك. اقرأ السياق كامل قبل ما تبدأ أي كود.
+
+السياق والمشكلة
+تاجر العطور/الكوزمتك الصغير بالعراق يبيع حالياً عبر رسائل انستقرام المباشرة — فوضى، ضياع طلبات، ما فيه كتالوج منظم، وما فيه طريقة للزبون يتصفح المنتجات بشكل احترافي. المنصة تعطيه متجره الإلكتروني الخاص (رابط واحد بايو → متجر كامل)، بنفس روح Shopify: كل تاجر عنده متجر مستقل، لوحة تحكم كاملة، وصفحة عامة احترافية — لكن بحجم وتعقيد مناسب لتاجر صغير بلا فريق تقني، وبدون معالجة دفع إلكتروني فعلية (العراق يعتمد على الدفع عند الاستلام والتحويل اليدوي حالياً).
+
+لماذا العطور والكوزمتك تحديداً (مهم — صمم كل شي حول هذا المجال، مو متجر عام)
+هذا مو متجر إلكتروني عام بواجهة محايدة. كل قرار تصميم وميزة لازم يخدم طبيعة هذا المجال بالذات:
+
+المنتجات لها خصائص خاصة (حجم بالمل، نوع البشرة، مكونات، تاريخ صلاحية/دفعة إنتاج)
+العطور تُوصف بـهرم روائح (مقدمة/قلب/قاعدة) — هذا عنصر أساسي بصفحة المنتج، مو اختياري
+كثير من التجار يبيعون عينات تجربة صغيرة قبل الحجم الكامل — لازم المنتج يدعم أكثر من "متغير" (Variant) بنفس المنتج (مثلاً: عينة 5مل، عبوة 50مل، عبوة 100مل بأسعار مختلفة)
+نسبة كبيرة من المبيعات هدايا — لازم فيه خيار "تغليف هدية + رسالة" بالطلب
+المستخدمون
+التاجر (Merchant): يسجل حساب، يجهّز متجره (شعار، اسم، وصف، لون هوية)، يضيف منتجات بتفاصيلها الكاملة، يدير الطلبات، يشوف تقارير بسيطة
+الزبون (Customer): يفتح رابط متجر التاجر، يتصفح المنتجات، يشوف تفاصيل كل منتج (هرم الرائحة، الحجم، المكونات)، يضيف للسلة، يكمل الطلب بدون تسجيل حساب
+نطاق المشروع — الميزات المطلوبة (شبيه Shopify، بدون بوابة دفع)
+1. تسجيل وإدارة حساب التاجر
+
+تسجيل/دخول بإيميل وكلمة مرور (تشفير كلمة المرور بـ bcrypt)
+كل تاجر يحصل على slug فريد يظهر برابط متجره: domain.com/store/[slug]
+2. لوحة تحكم التاجر (Dashboard)
+
+إعدادات المتجر: اسم المتجر، الشعار، صورة بانر، وصف قصير، لون هوية (Accent Color) يُطبّق تلقائياً على صفحة المتجر العامة — هذا "محرر ثيم مصغّر" بسيط، مو محرر كامل
+إدارة المنتجات (CRUD كامل):اسم، وصف، صور متعددة
+فئة: عطور رجالي / عطور نسائي / عود وبخور / عناية بالبشرة / مكياج / هدايا
+متغيرات المنتج (Variants): كل منتج يقدر يحتوي أكثر من خيار حجم/سعر (مثلاً عينة 5مل = 15,000 د.ع، عبوة 50مل = 85,000 د.ع)
+حقول خاصة بالعطور (تظهر فقط إذا الفئة عطور): نوتات المقدمة، القلب، القاعدة
+حقول خاصة بالكوزمتك (تظهر فقط إذا الفئة عناية/مكياج): نوع البشرة المناسب، المكونات الأساسية
+تاريخ الصلاحية/رقم الدفعة (اختياري، لأغراض تتبع المخزون الداخلي)
+المخزون المتوفر (Stock) لكل متغير
+إدارة الطلبات:قائمة الطلبات بحالة (جديد / قيد التجهيز / تم الشحن / تم التسليم / ملغي)
+تفاصيل كل طلب: المنتجات، الكمية، بيانات الزبون، طريقة الدفع المختارة، ملاحظة تغليف الهدية إن وجدت
+تغيير حالة الطلب من نفس الصفحة
+لوحة إحصائيات بسيطة: إجمالي الطلبات هذا الشهر، إجمالي المبيعات، أكثر 5 منتجات مبيعاً — استعلامات SQL مباشرة، بدون مكتبات تحليلات معقدة
+أكواد خصم بسيطة: كود نصي (مثلاً RAHAF10) بنسبة خصم مئوية، يفعّله التاجر ويعطّله وقتما يريد
+3. صفحة المتجر العامة (Storefront) — domain.com/store/[slug]
+
+هوية بصرية فاخرة مستوحاة من عالم العطور (التفاصيل الكاملة بقسم "الهوية البصرية" أدناه)
+شبكة منتجات مع فلترة حسب الفئة
+بحث بسيط باسم المنتج
+صفحة تفاصيل منتج مخصصة:لو عطر: عرض هرم الرائحة بشكل بصري (مقدمة/قلب/قاعدة) كعنصر مركزي بالصفحة
+لو كوزمتك: عرض نوع البشرة والمكونات بوضوح
+اختيار المتغير (الحجم/العينة) قبل الإضافة للسلة
+سلة شراء (تُدار بجلسة Session بسيطة أو Local State بالمتصفح، حسب ما تراه أنسب تقنياً)
+صفحة إتمام الطلب:بيانات الزبون: الاسم، الهاتف، العنوان
+خيار "هدية؟" — لو فعّله الزبون، يظهر حقل رسالة إهداء قصيرة
+طريقة الدفع: خيارين بس — الدفع عند الاستلام أو تحويل مباشر (تظهر له تفاصيل حساب التاجر المصرفي كنص بسيط يدخله التاجر بإعدادات متجره)
+كود خصم (اختياري) يُتحقق منه عبر الخادم قبل تأكيد الطلب
+تأكيد الطلب: رقم طلب، صفحة شكر بتصميم "الختم الشمعي" (موضح أدناه)
+⚠️ لا تبني أي بوابة دفع إلكتروني حقيقية (لا Stripe ولا Moyasar ولا أي معالج دفع). الدفع بالكامل يدوي/عند الاستلام. لا تحاول "تجهيز" الكود لدمج بوابة دفع لاحقاً — هذا خارج النطاق كلياً وبشكل دائم لهذا المشروع.
+
+الهوية البصرية — طبّقها بدقة على كل صفحات المتجر العامة (مو لوحة التحكم، هي تبقى بسيطة وعملية)
+هذا التصميم إلزامي، مو اقتراح — بُني خصيصاً ليتماشى مع طبيعة منتجات العطور والكوزمتك:
+الألوان (استخدمها كـ CSS Variables بالضبط):
+
+css
+
+--noir: #140F13;       /* خلفية الصفحة، أسود دافئ */
+--velvet: #271721;     /* خلفية البطاقات */
+--velvet-2: #38202E;   /* حالة hover/elevated */
+--gold: #B08D4F;       /* اللون الأساسي للتمييز */
+--gold-soft: #D9BC7E;  /* ذهبي فاتح للنصوص المميزة */
+--blush: #C89485;      /* لمسة وردية ترابية */
+--parchment: #F3E6D6;  /* لون النص الأساسي (أبيض دافئ، مو أبيض ناصع) */
+--parchment-dim: #B7A794; /* نص ثانوي */
+الخطوط (من Google Fonts):
+
+خط العناوين: Amiri (خط عربي كلاسيكي أنيق، وزن 400 و700)
+خط النصوص العادية وواجهة الاستخدام: IBM Plex Sans Arabic (أوزان 300-600)
+عناصر التصميم الإلزامية:
+
+خطوط فاصلة رفيعة بلون ذهبي شفاف (rgba(217,188,126,0.18)) بدل خطوط بيضاء عادية
+زوايا حادة تقريباً (border-radius صغير جداً، 2-4px) — يعطي إحساس بوتيك راقي، مو تطبيق موبايل عادي بزوايا دائرية كبيرة
+هرم الرائحة بصفحة تفاصيل منتج العطر: ثلاث أشرطة أفقية (مقدمة/قلب/قاعدة) تمتلئ بحركة تدريجية (animation) بلون ذهبي متدرج عند فتح الصفحة
+ختم شمعي دائري (Wax Seal) بدل علامة "✓" عادية بصفحة تأكيد الطلب — دائرة ذهبية متدرجة فيها الحرف الأول لاسم المتجر، بحركة "ختم" (تكبير ثم استقرار)
+التصميم موبايل فرست إلزامي (95% من الزوار جوال)، RTL بالكامل
+التقنيات المطلوبة بالضبط
+الخادم: Node.js + Express.js
+المحرك القالبي (Templates): EJS — صفحات مُصيّرة من الخادم (Server-Side Rendering)، بدون React أو أي Frontend Framework
+قاعدة البيانات: PostgreSQL عبر Sequelize (ORM) — عرّف كل جدول كـ Model منفصل مع العلاقات بينها (associations: hasMany / belongsTo) بدل كتابة SQL يدوي. استخدم sequelize-cli لإدارة الـ Migrations (لا تعتمد على sync() بالإنتاج — Migrations فقط، حتى يقدر التاجر/المطور يتتبع تغييرات قاعدة البيانات بوضوح)
+الجلسات (Sessions): express-session لجلسة تسجيل دخول التاجر، وجلسة سلة الزبون
+رفع الصور: multer لحفظ صور المنتجات محلياً بمجلد /public/uploads (لا تبني تكامل مع خدمة تخزين سحابي بالـMVP)
+تشفير كلمات المرور: bcrypt
+التحقق من الطلبات (Validation): استخدم مكتبة بسيطة زي express-validator أو تحقق يدوي واضح
+نماذج قاعدة البيانات (Sequelize Models) — نقطة انطلاق، عدّل حسب الحاجة
+عرّف الموديلات التالية بمجلد /src/models، واستخدم sequelize-cli لتوليد Migration مطابق لكل موديل. لا تنسَ تعريف العلاقات (associations) بملف /src/models/index.js أو بكل موديل عبر Model.associate.
+Merchant
+
+js
+
+{
+  slug: { type: DataTypes.STRING(100), unique: true, allowNull: false },
+  storeName: { type: DataTypes.STRING(150), allowNull: false },
+  email: { type: DataTypes.STRING(150), unique: true, allowNull: false },
+  passwordHash: { type: DataTypes.TEXT, allowNull: false },
+  logoUrl: DataTypes.TEXT,
+  bannerUrl: DataTypes.TEXT,
+  description: DataTypes.TEXT,
+  accentColor: { type: DataTypes.STRING(7), defaultValue: '#B08D4F' },
+  bankTransferInfo: DataTypes.TEXT,
+  phone: DataTypes.STRING(20),}// hasMany: Product, DiscountCode, Order
+Product
+
+js
+
+{
+  merchantId: { type: DataTypes.INTEGER, allowNull: false }, // belongsTo Merchant
+  name: { type: DataTypes.STRING(200), allowNull: false },
+  description: DataTypes.TEXT,
+  category: { type: DataTypes.ENUM('perfume_men','perfume_women','oud','skincare','makeup','gifts'), allowNull: false },
+  imageUrls: DataTypes.ARRAY(DataTypes.TEXT),
+  noteTop: DataTypes.STRING(100),      // خاص بالعطور
+  noteHeart: DataTypes.STRING(100),    // خاص بالعطور
+  noteBase: DataTypes.STRING(100),     // خاص بالعطور
+  skinType: DataTypes.STRING(100),     // خاص بالكوزمتك
+  ingredients: DataTypes.TEXT,         // خاص بالكوزمتك
+  batchExpiry: DataTypes.DATEONLY,
+  isActive: { type: DataTypes.BOOLEAN, defaultValue: true },}// belongsTo: Merchant | hasMany: ProductVariant
+ProductVariant
+
+js
+
+{
+  productId: { type: DataTypes.INTEGER, allowNull: false }, // belongsTo Product
+  variantLabel: { type: DataTypes.STRING(50), allowNull: false }, // مثال: 'عينة 5مل', 'عبوة 50مل'
+  price: { type: DataTypes.INTEGER, allowNull: false },          // بالدينار العراقي، رقم صحيح
+  stock: { type: DataTypes.INTEGER, defaultValue: 0 },}// belongsTo: Product
+DiscountCode
+
+js
+
+{
+  merchantId: { type: DataTypes.INTEGER, allowNull: false },
+  code: { type: DataTypes.STRING(30), allowNull: false },
+  percentOff: { type: DataTypes.INTEGER, allowNull: false },
+  isActive: { type: DataTypes.BOOLEAN, defaultValue: true },}// unique index مركّب على (merchantId, code)// belongsTo: Merchant
+Order
+
+js
+
+{
+  merchantId: { type: DataTypes.INTEGER, allowNull: false },
+  customerName: { type: DataTypes.STRING(150), allowNull: false },
+  customerPhone: { type: DataTypes.STRING(20), allowNull: false },
+  customerAddress: { type: DataTypes.TEXT, allowNull: false },
+  paymentMethod: { type: DataTypes.ENUM('cod','bank_transfer'), allowNull: false },
+  isGift: { type: DataTypes.BOOLEAN, defaultValue: false },
+  giftMessage: DataTypes.TEXT,
+  discountCode: DataTypes.STRING(30),
+  subtotal: { type: DataTypes.INTEGER, allowNull: false },
+  total: { type: DataTypes.INTEGER, allowNull: false },
+  status: { type: DataTypes.ENUM('new','processing','shipped','delivered','cancelled'), defaultValue: 'new' },}// belongsTo: Merchant | hasMany: OrderItem
+OrderItem
+
+js
+
+{
+  orderId: { type: DataTypes.INTEGER, allowNull: false },
+  variantId: DataTypes.INTEGER, // belongsTo ProductVariant
+  productName: { type: DataTypes.STRING(200), allowNull: false }, // نسخة عند وقت الطلب حتى لو تغيّر المنتج لاحقاً
+  variantLabel: { type: DataTypes.STRING(50), allowNull: false },
+  quantity: { type: DataTypes.INTEGER, allowNull: false },
+  priceAtOrder: { type: DataTypes.INTEGER, allowNull: false },}// belongsTo: Order, ProductVariant
+هيكلة المشروع المقترحة
+
+/src
+  /routes
+    auth.js          → تسجيل دخول/حساب التاجر
+    dashboard.js      → كل صفحات لوحة التحكم
+    storefront.js      → المتجر العام + السلة + الطلب
+  /controllers          → منطق كل route منفصل عن التوجيه نفسه
+  /models              → موديلات Sequelize (Merchant, Product, ProductVariant, DiscountCode, Order, OrderItem) + index.js لتجميع العلاقات
+  /migrations            → ملفات Migration مولّدة بـ sequelize-cli (لا تستخدم sync() بالإنتاج)
+  /config
+    config.js/.json       → إعدادات اتصال Sequelize (تُقرأ من .env)
+  /middleware
+    requireAuth.js      → حماية صفحات لوحة التحكم
+  /views (EJS)
+    /layouts
+    /dashboard
+    /storefront
+    /partials            → هيدر، فوتر، بطاقة منتج، إلخ (لإعادة الاستخدام)
+  /public
+    /css
+    /uploads              → صور المنتجات المرفوعة
+app.js
+.sequelizerc
+.env.example
+خطوات التنفيذ المطلوبة منك
+جهّز مشروع Node.js + Express + EJS، وثبّت Sequelize + sequelize-cli + pg/pg-hstore، واضبط اتصال قاعدة البيانات عبر /src/config/config.js و.env
+عرّف الموديلات أعلاه بـSequelize، ثم ولّد وشغّل Migrations مطابقة لها (عدّل الحقول إذا لقيت تحسين ضروري)
+ابنِ تسجيل دخول/حساب التاجر مع تشفير كلمة المرور وجلسة محمية
+ابنِ لوحة تحكم كاملة: إعدادات المتجر، CRUD منتجات مع المتغيرات والحقول الخاصة بالعطور/الكوزمتك، إدارة طلبات، أكواد خصم، لوحة إحصائيات بسيطة
+ابنِ صفحة المتجر العامة بالهوية البصرية الموضحة أعلاه بالضبط (الألوان، الخطوط، هرم الرائحة، الختم الشمعي)
+ابنِ تدفق السلة والطلب كامل، واربطه بقاعدة البيانات، وتأكد إن الطلب يظهر فوراً بلوحة التاجر
+أضف حالات تحميل وأخطاء واضحة بكل نموذج (رسائل بالعربي)
+اكتب ملف README.md يشرح: متطلبات التشغيل، كيفية إعداد PostgreSQL محلياً، متغيرات البيئة (.env.example)، وأوامر التشغيل
+معايير القبول (Definition of Done)
+تاجر عطور تجريبي يقدر يسجل حساب، يضبط هوية متجره، ويضيف منتج عطر بمتغيرين (عينة + عبوة كاملة) مع هرم رائحة كامل
+تاجر كوزمتك تجريبي يضيف منتج عناية ببشرة بحقول نوع البشرة والمكونات
+زبون يفتح رابط المتجر، يشوف هرم الرائحة بصفحة تفاصيل منتج العطر، يختار متغير، يضيف للسلة
+الزبون يكمل الطلب مع خيار "هدية" وكود خصم صحيح، ويشوف صفحة تأكيد بتصميم الختم الشمعي
+الطلب يظهر فوراً بلوحة تحكم التاجر بكل تفاصيله وحالة "جديد"
+كل الصفحات العامة تشتغل بسلاسة على عرض 375px (جوال) وRTL كامل
+لا فيه أي إشارة أو كود لبوابة دفع إلكتروني بالمشروع كامل
+ملاحظة أخيرة مهمة
+هذا المشروع لشخص واحد (Solo Founder) بخلفية برمجية، بدون فريق. اكتب كود نظيف، مباشر، وموثّق بتعليقات بالأماكن غير البديهية. استخدم Sequelize بشكل مباشر وواضح (Models + Associations + Migrations) بدون طبقات تجريد إضافية فوقه غير ضرورية. الهدف تطبيق كامل يشتغل فعلياً، مو Prototype.
+
+
+
+هدا البرومبت الدي اعطيته الى انتيغرافتي و هده النتيجة الان اريد فقط التعديل على الui اريده فخم اكثر و بلون ابيض و اسود على الخفيف و فيه تفاصيل اكثر تشرح عن المتجر المسجل معي ناف بار فخم و تفاصيل فنية 

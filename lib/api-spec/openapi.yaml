@@ -3,20 +3,26 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: متجري — SaaS perfume & cosmetics storefront platform API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Merchant authentication
+  - name: dashboard
+    description: Merchant dashboard (protected)
+  - name: storefront
+    description: Public storefront for customers
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +30,1048 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ─── Auth ───────────────────────────────────────────────
+  /auth/register:
+    post:
+      operationId: registerMerchant
+      tags: [auth]
+      summary: Register a new merchant account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MerchantRegister"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: loginMerchant
+      tags: [auth]
+      summary: Login merchant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MerchantLogin"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logoutMerchant
+      tags: [auth]
+      summary: Logout merchant
+      responses:
+        "204":
+          description: Logged out
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current authenticated merchant
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Merchant"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── Dashboard Stats ─────────────────────────────────────
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get merchant dashboard stats — orders this month, revenue, top products
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── Dashboard Settings ───────────────────────────────────
+  /dashboard/settings:
+    get:
+      operationId: getDashboardSettings
+      tags: [dashboard]
+      summary: Get merchant store settings
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Merchant"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateDashboardSettings
+      tags: [dashboard]
+      summary: Update merchant store settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MerchantUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Merchant"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── Products ─────────────────────────────────────────────
+  /dashboard/products:
+    get:
+      operationId: listProducts
+      tags: [dashboard]
+      summary: List merchant products
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: q
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+    post:
+      operationId: createProduct
+      tags: [dashboard]
+      summary: Create a product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /dashboard/products/{id}:
+    get:
+      operationId: getProduct
+      tags: [dashboard]
+      summary: Get a single product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateProduct
+      tags: [dashboard]
+      summary: Update a product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteProduct
+      tags: [dashboard]
+      summary: Delete a product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── Orders ───────────────────────────────────────────────
+  /dashboard/orders:
+    get:
+      operationId: listOrders
+      tags: [dashboard]
+      summary: List merchant orders
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: number
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderListResponse"
+
+  /dashboard/orders/{id}:
+    get:
+      operationId: getOrder
+      tags: [dashboard]
+      summary: Get a single order with items
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /dashboard/orders/{id}/status:
+    patch:
+      operationId: updateOrderStatus
+      tags: [dashboard]
+      summary: Update order status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderStatusUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── Discount Codes ───────────────────────────────────────
+  /dashboard/discounts:
+    get:
+      operationId: listDiscounts
+      tags: [dashboard]
+      summary: List merchant discount codes
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DiscountCode"
+    post:
+      operationId: createDiscount
+      tags: [dashboard]
+      summary: Create a discount code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DiscountInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscountCode"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /dashboard/discounts/{id}:
+    delete:
+      operationId: deleteDiscount
+      tags: [dashboard]
+      summary: Delete a discount code
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Deleted
+
+  /dashboard/discounts/{id}/toggle:
+    patch:
+      operationId: toggleDiscount
+      tags: [dashboard]
+      summary: Toggle discount code active/inactive
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscountCode"
+
+  # ─── Storefront (Public) ──────────────────────────────────
+  /stores/{slug}:
+    get:
+      operationId: getStore
+      tags: [storefront]
+      summary: Get a public store
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorePublic"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /stores/{slug}/products:
+    get:
+      operationId: browseStoreProducts
+      tags: [storefront]
+      summary: Browse all products in a public store
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+        "404":
+          description: Store not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /stores/{slug}/products/{productId}:
+    get:
+      operationId: getStoreProduct
+      tags: [storefront]
+      summary: Get a product on the public storefront
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /stores/{slug}/validate-discount:
+    post:
+      operationId: validateDiscount
+      tags: [storefront]
+      summary: Validate a discount code for a store
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DiscountValidation"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscountValidationResult"
+        "400":
+          description: Invalid or inactive code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /stores/{slug}/orders:
+    post:
+      operationId: placeOrder
+      tags: [storefront]
+      summary: Place a new order on a store
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderInput"
+      responses:
+        "201":
+          description: Order placed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderConfirmation"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Store not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    # ─── Auth ───────────────────────────────────────────────
+    MerchantRegister:
+      type: object
+      required: [storeName, slug, email, password]
+      properties:
+        storeName:
+          type: string
+        slug:
+          type: string
+          description: Unique store URL slug
+        email:
+          type: string
+        password:
+          type: string
+
+    MerchantLogin:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [merchant, token]
+      properties:
+        merchant:
+          $ref: "#/components/schemas/Merchant"
+        token:
+          type: string
+
+    Merchant:
+      type: object
+      required: [id, slug, storeName, email, accentColor, createdAt]
+      properties:
+        id:
+          type: number
+        slug:
+          type: string
+        storeName:
+          type: string
+        email:
+          type: string
+        logoUrl:
+          type: ["string", "null"]
+        bannerUrl:
+          type: ["string", "null"]
+        description:
+          type: ["string", "null"]
+        accentColor:
+          type: string
+        bankTransferInfo:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        productCount:
+          type: ["number", "null"]
+        orderCount:
+          type: ["number", "null"]
+
+    MerchantUpdate:
+      type: object
+      properties:
+        storeName:
+          type: string
+        logoUrl:
+          type: ["string", "null"]
+        bannerUrl:
+          type: ["string", "null"]
+        description:
+          type: ["string", "null"]
+        accentColor:
+          type: string
+        bankTransferInfo:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+
+    # ─── Dashboard ──────────────────────────────────────────
+    DashboardStats:
+      type: object
+      required: [ordersThisMonth, revenueThisMonth, totalOrders, totalRevenue, topProducts, ordersByStatus, recentOrders]
+      properties:
+        ordersThisMonth:
+          type: number
+        revenueThisMonth:
+          type: number
+        totalOrders:
+          type: number
+        totalRevenue:
+          type: number
+        topProducts:
+          type: array
+          items:
+            $ref: "#/components/schemas/TopProduct"
+        ordersByStatus:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatusCount"
+        recentOrders:
+          type: array
+          items:
+            $ref: "#/components/schemas/Order"
+
+    TopProduct:
+      type: object
+      required: [productId, productName, totalSold, totalRevenue]
+      properties:
+        productId:
+          type: number
+        productName:
+          type: string
+        totalSold:
+          type: number
+        totalRevenue:
+          type: number
+
+    StatusCount:
+      type: object
+      required: [status, count]
+      properties:
+        status:
+          type: string
+        count:
+          type: number
+
+    # ─── Products ───────────────────────────────────────────
+    ProductVariant:
+      type: object
+      required: [id, variantLabel, price, stock]
+      properties:
+        id:
+          type: number
+        variantLabel:
+          type: string
+        price:
+          type: number
+        stock:
+          type: number
+
+    ProductVariantInput:
+      type: object
+      required: [variantLabel, price]
+      properties:
+        variantLabel:
+          type: string
+        price:
+          type: number
+        stock:
+          type: number
+
+    Product:
+      type: object
+      required: [id, merchantId, name, category, isActive, createdAt, variants]
+      properties:
+        id:
+          type: number
+        merchantId:
+          type: number
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        category:
+          type: string
+        imageUrls:
+          type: array
+          items:
+            type: string
+        noteTop:
+          type: ["string", "null"]
+        noteHeart:
+          type: ["string", "null"]
+        noteBase:
+          type: ["string", "null"]
+        skinType:
+          type: ["string", "null"]
+        ingredients:
+          type: ["string", "null"]
+        batchExpiry:
+          type: ["string", "null"]
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+        variants:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductVariant"
+
+    ProductInput:
+      type: object
+      required: [name, category, variants]
+      properties:
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        category:
+          type: string
+        imageUrls:
+          type: array
+          items:
+            type: string
+        noteTop:
+          type: ["string", "null"]
+        noteHeart:
+          type: ["string", "null"]
+        noteBase:
+          type: ["string", "null"]
+        skinType:
+          type: ["string", "null"]
+        ingredients:
+          type: ["string", "null"]
+        batchExpiry:
+          type: ["string", "null"]
+        isActive:
+          type: boolean
+        variants:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductVariantInput"
+
+    ProductUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        category:
+          type: string
+        imageUrls:
+          type: array
+          items:
+            type: string
+        noteTop:
+          type: ["string", "null"]
+        noteHeart:
+          type: ["string", "null"]
+        noteBase:
+          type: ["string", "null"]
+        skinType:
+          type: ["string", "null"]
+        ingredients:
+          type: ["string", "null"]
+        batchExpiry:
+          type: ["string", "null"]
+        isActive:
+          type: boolean
+        variants:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductVariantInput"
+
+    # ─── Orders ─────────────────────────────────────────────
+    OrderItem:
+      type: object
+      required: [id, productName, variantLabel, quantity, priceAtOrder]
+      properties:
+        id:
+          type: number
+        variantId:
+          type: ["number", "null"]
+        productName:
+          type: string
+        variantLabel:
+          type: string
+        quantity:
+          type: number
+        priceAtOrder:
+          type: number
+
+    Order:
+      type: object
+      required: [id, merchantId, customerName, customerPhone, customerAddress, paymentMethod, isGift, subtotal, total, status, createdAt]
+      properties:
+        id:
+          type: number
+        merchantId:
+          type: number
+        customerName:
+          type: string
+        customerPhone:
+          type: string
+        customerAddress:
+          type: string
+        paymentMethod:
+          type: string
+        isGift:
+          type: boolean
+        giftMessage:
+          type: ["string", "null"]
+        discountCode:
+          type: ["string", "null"]
+        subtotal:
+          type: number
+        total:
+          type: number
+        status:
+          type: string
+        createdAt:
+          type: string
+
+    OrderDetail:
+      allOf:
+        - $ref: "#/components/schemas/Order"
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/OrderItem"
+
+    OrderListResponse:
+      type: object
+      required: [orders, total, page, pageSize]
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: "#/components/schemas/Order"
+        total:
+          type: number
+        page:
+          type: number
+        pageSize:
+          type: number
+
+    OrderStatusUpdate:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+
+    OrderItemInput:
+      type: object
+      required: [variantId, quantity]
+      properties:
+        variantId:
+          type: number
+        quantity:
+          type: number
+
+    OrderInput:
+      type: object
+      required: [customerName, customerPhone, customerAddress, paymentMethod, items]
+      properties:
+        customerName:
+          type: string
+        customerPhone:
+          type: string
+        customerAddress:
+          type: string
+        paymentMethod:
+          type: string
+        isGift:
+          type: boolean
+        giftMessage:
+          type: ["string", "null"]
+        discountCode:
+          type: ["string", "null"]
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderItemInput"
+
+    OrderConfirmation:
+      type: object
+      required: [orderId, total, storeName]
+      properties:
+        orderId:
+          type: number
+        total:
+          type: number
+        storeName:
+          type: string
+        storeSlug:
+          type: string
+
+    # ─── Discounts ───────────────────────────────────────────
+    DiscountCode:
+      type: object
+      required: [id, merchantId, code, percentOff, isActive, createdAt]
+      properties:
+        id:
+          type: number
+        merchantId:
+          type: number
+        code:
+          type: string
+        percentOff:
+          type: number
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+
+    DiscountInput:
+      type: object
+      required: [code, percentOff]
+      properties:
+        code:
+          type: string
+        percentOff:
+          type: number
+        isActive:
+          type: boolean
+
+    DiscountValidation:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+
+    DiscountValidationResult:
+      type: object
+      required: [valid, percentOff, code]
+      properties:
+        valid:
+          type: boolean
+        percentOff:
+          type: number
+        code:
+          type: string
+
+    # ─── Storefront ──────────────────────────────────────────
+    StorePublic:
+      type: object
+      required: [slug, storeName, accentColor, createdAt]
+      properties:
+        slug:
+          type: string
+        storeName:
+          type: string
+        logoUrl:
+          type: ["string", "null"]
+        bannerUrl:
+          type: ["string", "null"]
+        description:
+          type: ["string", "null"]
+        accentColor:
+          type: string
+        phone:
+          type: ["string", "null"]
+        bankTransferInfo:
+          type: ["string", "null"]
+        createdAt:
+          type: string
