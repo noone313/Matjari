@@ -60,7 +60,7 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
   const handleShare = () => {
     const url = window.location.href;
     if (navigator.share) {
-      navigator.share({ title: product?.name, url });
+      navigator.share({ title: product?.name, url }).catch(() => {/* user cancelled */});
     } else {
       navigator.clipboard.writeText(url).then(() => {
         setShared(true);
