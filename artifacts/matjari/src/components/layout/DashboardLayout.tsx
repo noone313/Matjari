@@ -5,6 +5,34 @@ import { useGetMe, useGetDashboardStats, getGetDashboardStatsQueryKey } from '@w
 import { LayoutDashboard, Package, ShoppingBag, Tags, Settings, LogOut, Store, ExternalLink, Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/hooks/use-toast';
+import { ToastAction } from '@/components/ui/toast';
+
+/** Play a short two-tone chime using the Web Audio API. Fails silently if unavailable. */
+function playNewOrderSound() {
+  try {
+    const AudioContext = window.AudioContext || (window as unknown as { webkitAudioContext: typeof window.AudioContext }).webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    const frequencies = [880, 1100];
+    frequencies.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const start = ctx.currentTime + i * 0.18;
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.25, start + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.25);
+      osc.start(start);
+      osc.stop(start + 0.25);
+    });
+  } catch {
+    // Audio unavailable — skip silently
+  }
+}
 
 const seenKey = (merchantId: number) => `matjari_seen_new_orders_${merchantId}`;
 
@@ -70,6 +98,32 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     !isOnOrdersPage && seenNewOrdersCount !== null && stats
       ? Math.max(0, stats.newOrdersCount - seenNewOrdersCount)
       : 0;
+
+  // ─── New-order toast + sound ──────────────────────────────────────────────
+  // prevBadgeRef tracks the last known badge count so we can detect an increase
+  // caused by genuine polling (not the initial render).
+  const prevBadgeRef = React.useRef<number | null>(null);
+
+  React.useEffect(() => {
+    if (prevBadgeRef.current === null) {
+      // First time we have a stable value — record it without alerting
+      prevBadgeRef.current = newOrdersBadge;
+      return;
+    }
+    if (newOrdersBadge > prevBadgeRef.current) {
+      playNewOrderSound();
+      toast({
+        title: '🛍️ طلب جديد وصل!',
+        description: 'لديك طلب جديد في انتظار المراجعة.',
+        action: (
+          <ToastAction altText="عرض الطلبات" asChild>
+            <Link href="/dashboard/orders">عرض الطلبات</Link>
+          </ToastAction>
+        ),
+      });
+    }
+    prevBadgeRef.current = newOrdersBadge;
+  }, [newOrdersBadge]);
   // ─────────────────────────────────────────────────────────────────────────
 
   const navItems = [
