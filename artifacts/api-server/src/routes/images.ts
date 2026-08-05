@@ -23,7 +23,7 @@ router.post(
   upload.single("image"),
   async (req: AuthRequest, res) => {
     try {
-      const productId = parseInt(req.params.id, 10);
+      const productId = parseInt(String(req.params.id), 10);
       if (isNaN(productId)) return res.status(400).json({ error: "Invalid product id" });
       if (!req.file) return res.status(400).json({ error: "No image provided" });
 
@@ -55,7 +55,7 @@ router.post(
 // ── Delete an image (auth required) ──────────────────────────────────────────
 router.delete("/dashboard/images/:imageId", requireAuth, async (req: AuthRequest, res) => {
   try {
-    const imageId = parseInt(req.params.imageId, 10);
+    const imageId = parseInt(String(req.params.imageId), 10);
     if (isNaN(imageId)) return res.status(400).json({ error: "Invalid image id" });
 
     // Verify ownership via join

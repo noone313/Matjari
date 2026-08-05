@@ -39,11 +39,15 @@ const seenKey = (merchantId: number) => `matjari_seen_new_orders_${merchantId}`;
 // ─── Push notification helpers ────────────────────────────────────────────────
 
 /** Convert a base64url string to a Uint8Array (required by pushManager.subscribe). */
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
+function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
   const rawData = atob(base64);
-  return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+  const out = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i++) {
+    out[i] = rawData.charCodeAt(i);
+  }
+  return out;
 }
 
 /** Fetch the VAPID public key from the server. */

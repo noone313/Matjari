@@ -211,7 +211,12 @@ router.post("/products", upload.array("images", 10), async (req: AuthRequest, re
 
   const [product] = await db
     .insert(productsTable)
-    .values({ ...productData, merchantId: req.merchantId!, imageUrls: [] })
+    .values({
+      ...productData,
+      category: productData.category as any,
+      merchantId: req.merchantId!,
+      imageUrls: [],
+    })
     .returning();
 
   const files = (req.files as Express.Multer.File[]) ?? [];
@@ -295,7 +300,7 @@ router.put("/products/:id", upload.array("images", 10), async (req: AuthRequest,
 
   const [product] = await db
     .update(productsTable)
-    .set({ ...productData, imageUrls })
+    .set({ ...productData, category: productData.category as any, imageUrls })
     .where(and(eq(productsTable.id, params.data.id), eq(productsTable.merchantId, req.merchantId!)))
     .returning();
 
