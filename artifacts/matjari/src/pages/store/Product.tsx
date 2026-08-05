@@ -87,6 +87,8 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
 
   const currentVariant = product.variants.find(v => v.id === selectedVariant) || product.variants[0];
   const totalStock = product.variants.reduce((s, v) => s + (v.stock ?? 0), 0);
+  const currentStock = currentVariant?.stock ?? 0;
+  const isOutOfStock = currentStock <= 0;
   const relatedProducts = allProducts
     ?.filter(p => p.category === product.category && p.id !== product.id)
     .slice(0, 3) ?? [];
@@ -95,13 +97,19 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
 
   const handleAddToCart = () => {
     if (!currentVariant) return;
+    if (currentStock <= 0) {
+      toast({ title: 'هذا المنتج غير متوفر حالياً' });
+      return;
+    }
+    const qty = Math.min(quantity, currentStock);
+    if (qty < 1) return;
     addToCart({
       productId: product.id,
       variantId: currentVariant.id,
       productName: product.name,
       variantLabel: currentVariant.variantLabel,
       price: currentVariant.price,
-      quantity,
+      quantity: qty,
       image: product.imageUrls?.[0],
       category: product.category
     });
@@ -207,14 +215,20 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
                 {product.variants.map(v => (
                   <button
                     key={v.id}
-                    onClick={() => setSelectedVariant(v.id)}
+                    onClick={() => { setSelectedVariant(v.id); setQuantity(1); }}
                     className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all border ${
                       selectedVariant === v.id 
                         ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary))] text-white shadow-sm' 
                         : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
-                    }`}
+                    } ${(v.stock ?? 0) <= 0 ? 'opacity-40 cursor-not-allowed' : ''}`}
+                    disabled={(v.stock ?? 0) <= 0}
                   >
                     {v.variantLabel}
+                    {(v.stock ?? 0) <= 0 && (
+                      <span className={`mr-2 text-[10px] uppercase tracking-widest ${selectedVariant === v.id ? 'text-white/80' : 'text-red-500'}`}>
+                        غير متوفر
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -236,17 +250,19 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
               />
               <button 
                 type="button"
-                className="w-10 h-full flex items-center justify-center text-gray-500 hover:text-gray-900"
-                onClick={() => setQuantity(quantity + 1)}
+                className="w-10 h-full flex items-center justify-center text-gray-500 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed"
+                onClick={() => setQuantity(Math.min(quantity + 1, Math.max(currentStock, 1)))}
+                disabled={isOutOfStock || quantity >= currentStock}
               >+</button>
             </div>
             
             <Button 
               onClick={handleAddToCart} 
-              className="h-14 flex-1 text-lg font-bold shadow-lg hover:shadow-xl transition-shadow bg-gray-900 text-white hover:bg-gray-800"
+              disabled={isOutOfStock}
+              className="h-14 flex-1 text-lg font-bold shadow-lg hover:shadow-xl transition-shadow bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900"
               style={{ backgroundColor: 'hsl(var(--primary))' }}
             >
-              إضافة للسلة
+              {isOutOfStock ? 'غير متوفر' : 'إضافة للسلة'}
             </Button>
           </div>
         </div>

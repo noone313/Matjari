@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, merchantsTable, productsTable, productVariantsTable, ordersTable, orderItemsTable, discountCodesTable } from "@workspace/db";
-import { eq, and, ilike } from "drizzle-orm";
+import { eq, and, ilike, sql, gte } from "drizzle-orm";
 import { sendPushToMerchant } from "../lib/push";
 import {
   GetStoreParams,
@@ -314,41 +314,78 @@ router.post("/:slug/orders", async (req, res): Promise<void> => {
     }
   }
 
-  // Create order
-  const [order] = await db
-    .insert(ordersTable)
-    .values({
-      merchantId: merchant.id,
-      customerName,
-      customerPhone,
-      customerAddress,
-      paymentMethod: paymentMethod as any,
-      isGift: isGift ?? false,
-      giftMessage: giftMessage ?? null,
-      discountCode: appliedDiscount,
-      subtotal,
-      total,
-      status: "new",
-    })
-    .returning();
+  try {
+    const result = await db.transaction(async (tx) => {
+      // Create order
+      const [order] = await tx
+        .insert(ordersTable)
+        .values({
+          merchantId: merchant.id,
+          customerName,
+          customerPhone,
+          customerAddress,
+          paymentMethod: paymentMethod as any,
+          isGift: isGift ?? false,
+          giftMessage: giftMessage ?? null,
+          discountCode: appliedDiscount,
+          subtotal,
+          total,
+          status: "new",
+        })
+        .returning();
 
-  await db.insert(orderItemsTable).values(
-    orderItemsData.map((item) => ({ ...item, orderId: order.id })),
-  );
+      // Atomically decrement stock for every line item, then arm order items.
+      // Stock check + decrement happen in ONE SQL statement to avoid race conditions.
+      for (const row of orderItemsData) {
+        const updated = await tx
+          .update(productVariantsTable)
+          .set({ stock: sql`${productVariantsTable.stock} - ${row.quantity}` })
+          .where(
+            and(
+              eq(productVariantsTable.id, row.variantId),
+              gte(productVariantsTable.stock, row.quantity),
+            ),
+          )
+          .returning({ id: productVariantsTable.id });
 
-  // Fire push notification to the merchant (non-blocking — never fails the response)
-  sendPushToMerchant(merchant.id, {
-    title: `🛍️ طلب جديد — ${merchant.storeName}`,
-    body: `طلب جديد من ${customerName} بقيمة ${(total / 1000).toFixed(3)} د.ع`,
-    url: "/dashboard/orders",
-  }).catch(() => undefined);
+        if (updated.length === 0) {
+          // Variant missing or insufficient stock → abort the whole order (rollback).
+          throw new Error(`غير متوفر: ${row.productName} (${row.variantLabel})`);
+        }
+      }
 
-  res.status(201).json({
-    orderId: order.id,
-    total: order.total,
-    storeName: merchant.storeName,
-    storeSlug: merchant.slug,
-  });
+      await tx.insert(orderItemsTable).values(
+        orderItemsData.map((item) => ({ ...item, orderId: order.id })),
+      );
+
+      return order;
+    });
+
+    // Fire push notification to the merchant (non-blocking — never fails the response)
+    sendPushToMerchant(merchant.id, {
+      title: `🛍️ طلب جديد — ${merchant.storeName}`,
+      body: `طلب جديد من ${customerName} بقيمة ${(total / 1000).toFixed(3)} د.ع`,
+      url: "/dashboard/orders",
+    }).catch(() => undefined);
+
+    res.status(201).json({
+      orderId: result.id,
+      total: result.total,
+      storeName: merchant.storeName,
+      storeSlug: merchant.slug,
+    });
+    return;
+  } catch (err) {
+    if (err instanceof Error && err.message.startsWith("غير متوفر:")) {
+      res.status(409).json({
+        error: `عذراً، الكمية المتوفرة من ${err.message.slice("غير متوفر:".length).trim()} أقل مما طلبت`,
+      });
+      return;
+    }
+    console.error("Failed to place order", err);
+    res.status(500).json({ error: "حدث خطأ أثناء إنشاء الطلب" });
+    return;
+  }
 });
 
 export default router;
