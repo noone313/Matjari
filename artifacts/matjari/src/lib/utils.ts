@@ -42,3 +42,18 @@ export function getCategoryLabel(cat: string) {
 export function getApiUrl(path: string): string {
   return `${window.location.origin}${path}`;
 }
+
+/**
+ * Normalize a WhatsApp number for a wa.me link.
+ * Strips non-digit characters; if the number starts with a leading `0`
+ * (common local Iraqi format like 07701234567), the `0` is replaced with
+ * the +964 country code → 9647701234567.
+ */
+export function normalizeWhatsAppNumber(raw: string | null | undefined): string {
+  const digits = (raw ?? '').replace(/\D/g, '');
+  if (!digits) return '';
+  if (digits.length > 1 && digits.startsWith('0')) {
+    return `964${digits.slice(1)}`;
+  }
+  return digits;
+}

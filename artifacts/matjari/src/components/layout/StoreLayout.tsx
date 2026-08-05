@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useGetStore, getGetStoreQueryKey } from '@workspace/api-client-react';
 import { useCart } from '@/contexts/CartContext';
+import { normalizeWhatsAppNumber } from '@/lib/utils';
 import { ShoppingBag, Menu, X, Phone, MessageCircle, Instagram } from 'lucide-react';
 
 export default function StoreLayout({ children, slug }: { children: React.ReactNode; slug: string }) {
@@ -195,7 +196,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
               )}
               {store.whatsappNumber && (
                 <a
-                  href={`https://wa.me/${store.whatsappNumber.replace(/\D/g, '')}`}
+                  href={`https://wa.me/${normalizeWhatsAppNumber(store.whatsappNumber)}`}
                   target="_blank"
                   rel="noreferrer"
                   aria-label="واتساب"
