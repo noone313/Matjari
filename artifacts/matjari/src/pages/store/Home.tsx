@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useBrowseStoreProducts, getBrowseStoreProductsQueryKey } from '@workspace/api-client-react';
+import type { Product } from '@workspace/api-client-react';
 import { formatPrice, getCategoryLabel } from '@/lib/utils';
 import { Link, useLocation } from 'wouter';
-import { SlidersHorizontal, X } from 'lucide-react';
+import { SlidersHorizontal, X, Scale, Check } from 'lucide-react';
+import { useComparison } from '@/contexts/ComparisonContext';
+import { useToast } from '@/hooks/use-toast';
 
 const CATEGORIES = [
   { value: '', label: 'الكل' },
@@ -30,6 +33,8 @@ export default function StoreHome({ slug }: { slug: string }) {
   const [filterOpen, setFilterOpen] = useState(false);
   const [brokenImages, setBrokenImages] = useState<Set<number>>(new Set());
   const [location, setLocation] = useLocation();
+  const { addToCompare, isInCompare } = useComparison();
+  const { toast } = useToast();
 
   const debouncedSearch = useDebounced(search, 300);
 
@@ -96,6 +101,19 @@ export default function StoreHome({ slug }: { slug: string }) {
   }
 
   const totalCount = products.length;
+
+  const handleCompare = (e: React.MouseEvent, product: Product) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const result = addToCompare(product);
+    if (result === 'full') {
+      toast({ title: 'يمكن مقارنة 3 منتجات كحد أقصى' });
+    } else if (result === 'already') {
+      toast({ title: 'المنتج مضاف مسبقاً للمقارنة' });
+    } else {
+      toast({ title: 'تمت الإضافة للمقارنة' });
+    }
+  };
 
   return (
     <div className="flex gap-10">
@@ -265,6 +283,23 @@ export default function StoreHome({ slug }: { slug: string }) {
                           </div>
                         ) : null;
                       })()}
+                      {/* Compare button */}
+                      <button
+                        onClick={(e) => handleCompare(e, product)}
+                        aria-label={isInCompare(product.id) ? 'إزالة من المقارنة' : 'إضافة للمقارنة'}
+                        className={`absolute bottom-2 right-2 z-10 flex items-center gap-1.5 text-[10px] tracking-widest uppercase px-3 py-1.5 shadow-sm transition-colors ${
+                          isInCompare(product.id)
+                            ? 'bg-[hsl(var(--primary))] text-white'
+                            : 'bg-white text-zinc-900 hover:bg-[hsl(var(--primary))] hover:text-white'
+                        }`}
+                      >
+                        {isInCompare(product.id) ? (
+                          <Check className="w-3 h-3" />
+                        ) : (
+                          <Scale className="w-3 h-3" />
+                        )}
+                        {isInCompare(product.id) ? 'مضاف' : 'قارن'}
+                      </button>
                     </div>
 
                     {/* Info */}

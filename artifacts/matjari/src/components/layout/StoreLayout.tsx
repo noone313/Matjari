@@ -2,14 +2,16 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useGetStore, getGetStoreQueryKey } from '@workspace/api-client-react';
 import { useCart } from '@/contexts/CartContext';
+import { useComparison, MAX_COMPARISON } from '@/contexts/ComparisonContext';
 import { normalizeWhatsAppNumber } from '@/lib/utils';
-import { ShoppingBag, Menu, X, Phone, MessageCircle, Instagram } from 'lucide-react';
+import { ShoppingBag, Menu, X, Phone, MessageCircle, Instagram, Scale } from 'lucide-react';
 
 export default function StoreLayout({ children, slug }: { children: React.ReactNode; slug: string }) {
   const { data: store, isLoading } = useGetStore(slug, {
     query: { enabled: !!slug, queryKey: getGetStoreQueryKey(slug) },
   });
   const { itemCount } = useCart();
+  const { items: comparisonItems } = useComparison();
   const [menuOpen, setMenuOpen] = useState(false);
   const [location] = useLocation();
 
@@ -213,6 +215,25 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
           </p>
         </div>
       </footer>
+
+      {/* ── Comparison floating indicator ────── */}
+      {comparisonItems.length > 0 && (
+        <Link
+          href={`/store/${slug}/compare`}
+          aria-label="عرض المقارنة"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-zinc-900 text-white pl-3 pr-5 py-3 shadow-2xl hover:bg-zinc-800 transition-colors"
+        >
+          <span className="relative flex items-center justify-center w-8 h-8 rounded-full bg-[hsl(var(--primary))] text-white">
+            <Scale className="w-4 h-4" />
+            <span className="absolute -top-1.5 -left-1.5 min-w-5 h-5 px-1 rounded-full bg-white text-zinc-900 text-[10px] font-bold flex items-center justify-center">
+              {comparisonItems.length}
+            </span>
+          </span>
+          <span className="text-xs tracking-widest uppercase">
+            مقارنة ({comparisonItems.length}/{MAX_COMPARISON}) — عرض
+          </span>
+        </Link>
+      )}
 
       {/* ── WhatsApp floating button ─────────── */}
       {store.phone && (() => {
