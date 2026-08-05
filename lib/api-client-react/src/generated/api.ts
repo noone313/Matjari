@@ -43,9 +43,11 @@ import type {
   OrderListResponse,
   OrderStatusUpdate,
   Product,
-  ProductInput,
-  ProductUpdate,
-  StorePublic
+  ProductCreateBody,
+  ProductUpdateBody,
+  PushSubscriptionInput,
+  StorePublic,
+  VapidPublicKey
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -760,16 +762,21 @@ export const getCreateProductUrl = () => {
 }
 
 /**
- * @summary Create a product
+ * @summary Create a product (multipart with optional image uploads)
  */
-export const createProduct = async (productInput: ProductInput, options?: Parameters<typeof customFetch>[1]): Promise<Product> => {
+export const createProduct = async (productCreateBody: ProductCreateBody, options?: Parameters<typeof customFetch>[1]): Promise<Product> => {
+    const formData = new FormData();
+formData.append(`data`, JSON.stringify(productCreateBody.data));
+if(productCreateBody.images !== undefined) {
+ productCreateBody.images.forEach(value => formData.append(`images`, value));
+ }
 
   return customFetch<Product>(getCreateProductUrl(),
   {
     ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(productInput)
+    method: 'POST'
+    ,
+    body: formData
   }
 );}
 
@@ -778,8 +785,8 @@ export const createProduct = async (productInput: ProductInput, options?: Parame
 
 
 export const getCreateProductMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createProduct>>, TError,{data: BodyType<ProductInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof createProduct>>, TError,{data: BodyType<ProductInput>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createProduct>>, TError,{data: BodyType<ProductCreateBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createProduct>>, TError,{data: BodyType<ProductCreateBody>}, TContext> => {
 
 const mutationKey = ['createProduct'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -791,7 +798,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createProduct>>, {data: BodyType<ProductInput>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createProduct>>, {data: BodyType<ProductCreateBody>}> = (props) => {
           const {data} = props ?? {};
 
           return  createProduct(data,requestOptions)
@@ -805,18 +812,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreateProductMutationResult = NonNullable<Awaited<ReturnType<typeof createProduct>>>
-    export type CreateProductMutationBody = BodyType<ProductInput>
+    export type CreateProductMutationBody = BodyType<ProductCreateBody>
     export type CreateProductMutationError = ErrorType<ErrorResponse>
 
     /**
- * @summary Create a product
+ * @summary Create a product (multipart with optional image uploads)
  */
 export const useCreateProduct = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createProduct>>, TError,{data: BodyType<ProductInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createProduct>>, TError,{data: BodyType<ProductCreateBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof createProduct>>,
         TError,
-        {data: BodyType<ProductInput>},
+        {data: BodyType<ProductCreateBody>},
         TContext
       > => {
       return useMutation(getCreateProductMutationOptions(options));
@@ -908,17 +915,25 @@ export const getUpdateProductUrl = (id: number,) => {
 }
 
 /**
- * @summary Update a product
+ * @summary Update a product (multipart with optional image uploads)
  */
 export const updateProduct = async (id: number,
-    productUpdate: ProductUpdate, options?: Parameters<typeof customFetch>[1]): Promise<Product> => {
+    productUpdateBody: ProductUpdateBody, options?: Parameters<typeof customFetch>[1]): Promise<Product> => {
+    const formData = new FormData();
+formData.append(`data`, JSON.stringify(productUpdateBody.data));
+if(productUpdateBody.keepUrls !== undefined) {
+ formData.append(`keepUrls`, productUpdateBody.keepUrls);
+ }
+if(productUpdateBody.images !== undefined) {
+ productUpdateBody.images.forEach(value => formData.append(`images`, value));
+ }
 
   return customFetch<Product>(getUpdateProductUrl(id),
   {
     ...options,
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(productUpdate)
+    method: 'PUT'
+    ,
+    body: formData
   }
 );}
 
@@ -927,8 +942,8 @@ export const updateProduct = async (id: number,
 
 
 export const getUpdateProductMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProduct>>, TError,{id: number;data: BodyType<ProductUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateProduct>>, TError,{id: number;data: BodyType<ProductUpdate>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProduct>>, TError,{id: number;data: BodyType<ProductUpdateBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateProduct>>, TError,{id: number;data: BodyType<ProductUpdateBody>}, TContext> => {
 
 const mutationKey = ['updateProduct'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -940,7 +955,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateProduct>>, {id: number;data: BodyType<ProductUpdate>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateProduct>>, {id: number;data: BodyType<ProductUpdateBody>}> = (props) => {
           const {id,data} = props ?? {};
 
           return  updateProduct(id,data,requestOptions)
@@ -954,18 +969,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdateProductMutationResult = NonNullable<Awaited<ReturnType<typeof updateProduct>>>
-    export type UpdateProductMutationBody = BodyType<ProductUpdate>
+    export type UpdateProductMutationBody = BodyType<ProductUpdateBody>
     export type UpdateProductMutationError = ErrorType<ErrorResponse>
 
     /**
- * @summary Update a product
+ * @summary Update a product (multipart with optional image uploads)
  */
 export const useUpdateProduct = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProduct>>, TError,{id: number;data: BodyType<ProductUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProduct>>, TError,{id: number;data: BodyType<ProductUpdateBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof updateProduct>>,
         TError,
-        {id: number;data: BodyType<ProductUpdate>},
+        {id: number;data: BodyType<ProductUpdateBody>},
         TContext
       > => {
       return useMutation(getUpdateProductMutationOptions(options));
@@ -1563,6 +1578,225 @@ export const useToggleDiscount = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getToggleDiscountMutationOptions(options));
+    }
+
+export const getGetVapidPublicKeyUrl = () => {
+
+
+
+
+  return `/api/dashboard/push/vapid-public-key`
+}
+
+/**
+ * @summary Get the public VAPID key for web-push subscriptions
+ */
+export const getVapidPublicKey = async ( options?: Parameters<typeof customFetch>[1]): Promise<VapidPublicKey> => {
+
+  return customFetch<VapidPublicKey>(getGetVapidPublicKeyUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetVapidPublicKeyQueryKey = () => {
+    return [
+    `/api/dashboard/push/vapid-public-key`
+    ] as const;
+    }
+
+
+export const getGetVapidPublicKeyQueryOptions = <TData = Awaited<ReturnType<typeof getVapidPublicKey>>, TError = ErrorType<ErrorResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getVapidPublicKey>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetVapidPublicKeyQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getVapidPublicKey>>> = ({ signal }) => getVapidPublicKey({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getVapidPublicKey>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetVapidPublicKeyQueryResult = NonNullable<Awaited<ReturnType<typeof getVapidPublicKey>>>
+export type GetVapidPublicKeyQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Get the public VAPID key for web-push subscriptions
+ */
+
+export function useGetVapidPublicKey<TData = Awaited<ReturnType<typeof getVapidPublicKey>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getVapidPublicKey>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetVapidPublicKeyQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSubscribeToPushUrl = () => {
+
+
+
+
+  return `/api/dashboard/push/subscribe`
+}
+
+/**
+ * @summary Save a web-push subscription for the merchant (upsert by endpoint)
+ */
+export const subscribeToPush = async (pushSubscriptionInput: PushSubscriptionInput, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getSubscribeToPushUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(pushSubscriptionInput)
+  }
+);}
+
+
+
+
+
+export const getSubscribeToPushMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof subscribeToPush>>, TError,{data: BodyType<PushSubscriptionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof subscribeToPush>>, TError,{data: BodyType<PushSubscriptionInput>}, TContext> => {
+
+const mutationKey = ['subscribeToPush'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof subscribeToPush>>, {data: BodyType<PushSubscriptionInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  subscribeToPush(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SubscribeToPushMutationResult = NonNullable<Awaited<ReturnType<typeof subscribeToPush>>>
+    export type SubscribeToPushMutationBody = BodyType<PushSubscriptionInput>
+    export type SubscribeToPushMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Save a web-push subscription for the merchant (upsert by endpoint)
+ */
+export const useSubscribeToPush = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof subscribeToPush>>, TError,{data: BodyType<PushSubscriptionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof subscribeToPush>>,
+        TError,
+        {data: BodyType<PushSubscriptionInput>},
+        TContext
+      > => {
+      return useMutation(getSubscribeToPushMutationOptions(options));
+    }
+
+export const getUnsubscribeFromPushUrl = () => {
+
+
+
+
+  return `/api/dashboard/push/unsubscribe`
+}
+
+/**
+ * @summary Remove all push subscriptions for this merchant on an endpoint
+ */
+export const unsubscribeFromPush = async (pushSubscriptionInput: PushSubscriptionInput, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getUnsubscribeFromPushUrl(),
+  {
+    ...options,
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(pushSubscriptionInput)
+  }
+);}
+
+
+
+
+
+export const getUnsubscribeFromPushMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unsubscribeFromPush>>, TError,{data: BodyType<PushSubscriptionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof unsubscribeFromPush>>, TError,{data: BodyType<PushSubscriptionInput>}, TContext> => {
+
+const mutationKey = ['unsubscribeFromPush'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof unsubscribeFromPush>>, {data: BodyType<PushSubscriptionInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  unsubscribeFromPush(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UnsubscribeFromPushMutationResult = NonNullable<Awaited<ReturnType<typeof unsubscribeFromPush>>>
+    export type UnsubscribeFromPushMutationBody = BodyType<PushSubscriptionInput>
+    export type UnsubscribeFromPushMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Remove all push subscriptions for this merchant on an endpoint
+ */
+export const useUnsubscribeFromPush = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unsubscribeFromPush>>, TError,{data: BodyType<PushSubscriptionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof unsubscribeFromPush>>,
+        TError,
+        {data: BodyType<PushSubscriptionInput>},
+        TContext
+      > => {
+      return useMutation(getUnsubscribeFromPushMutationOptions(options));
     }
 
 export const getGetStoreUrl = (slug: string,) => {

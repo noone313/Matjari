@@ -3,7 +3,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useLocation, useParams } from 'wouter';
-import { useGetProduct } from '@workspace/api-client-react';
+import { useGetProduct, useCreateProduct, useUpdateProduct } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { CATEGORIES, getApiUrl } from '@/lib/utils';
-import { handleApiError } from '@/lib/sessionExpired';
 import { Trash2, Plus, Upload, X, Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 
@@ -133,32 +132,6 @@ function ImageUploader({
   );
 }
 
-// ─── helpers ──────────────────────────────────────────────────────────────────
-function buildFormData(data: FormValues, savedUrls: string[], newFiles: File[]): FormData {
-  const fd = new FormData();
-  fd.append('data', JSON.stringify(data));
-  fd.append('keepUrls', JSON.stringify(savedUrls));
-  newFiles.forEach((f) => fd.append('images', f));
-  return fd;
-}
-
-async function submitProduct(
-  method: 'POST' | 'PUT',
-  url: string,
-  fd: FormData,
-): Promise<Response> {
-  const token = localStorage.getItem('matjari_token');
-  const res = await fetch(url, {
-    method,
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-    body: fd,
-  });
-  // This call path bypasses React Query caches, so the centralized 401 handler
-  // is wired manually here (raw fetch must behave like a protected mutation).
-  if (res.status === 401) handleApiError({ status: 401, url });
-  return res;
-}
-
 // ─── ProductForm ───────────────────────────────────────────────────────────────
 export default function ProductForm() {
   const [, setLocation] = useLocation();
@@ -191,6 +164,11 @@ export default function ProductForm() {
   const isFragrance = ['perfume_men', 'perfume_women', 'oud'].includes(categoryWatch);
   const isSkincare = ['skincare', 'makeup'].includes(categoryWatch);
 
+  // Generated Orval multipart hooks — they build the FormData (data + keepUrls + images)
+  // from the documented ProductCreateBody / ProductUpdateBody, so no manual fetch.
+  const createProductMutation = useCreateProduct();
+  const updateProductMutation = useUpdateProduct();
+
   useEffect(() => {
     if (isEdit && product) {
       form.reset({
@@ -222,15 +200,20 @@ export default function ProductForm() {
   const onSubmit = async (data: FormValues) => {
     setSubmitting(true);
     try {
-      const fd = buildFormData(data, savedUrls, newFiles);
-      const url = isEdit
-        ? getApiUrl(`/api/dashboard/products/${id}`)
-        : getApiUrl('/api/dashboard/products');
-      const res = await submitProduct(isEdit ? 'PUT' : 'POST', url, fd);
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error ?? 'فشل الحفظ');
+      const images = newFiles.length > 0 ? newFiles : undefined;
+      if (isEdit) {
+        await updateProductMutation.mutateAsync({
+          id: Number(id),
+          data: {
+            data,
+            keepUrls: JSON.stringify(savedUrls),
+            images,
+          },
+        });
+      } else {
+        await createProductMutation.mutateAsync({
+          data: { data, images },
+        });
       }
 
       // Invalidate React-Query caches

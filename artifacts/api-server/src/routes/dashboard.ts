@@ -204,7 +204,7 @@ router.post("/products", upload.array("images", 10), async (req: AuthRequest, re
   let body: unknown;
   try { body = JSON.parse(req.body.data ?? "{}"); } catch { res.status(400).json({ error: "Invalid JSON in data field" }); return; }
 
-  const parsed = CreateProductBody.safeParse(body);
+  const parsed = CreateProductBody.shape.data.safeParse(body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
   const { variants: variantInputs, ...productData } = parsed.data;
@@ -269,7 +269,7 @@ router.put("/products/:id", upload.array("images", 10), async (req: AuthRequest,
   let body: unknown;
   try { body = JSON.parse(req.body.data ?? "{}"); } catch { res.status(400).json({ error: "Invalid JSON in data field" }); return; }
 
-  const parsed = UpdateProductBody.safeParse(body);
+  const parsed = UpdateProductBody.shape.data.safeParse(body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
   const { variants: variantInputs, ...productData } = parsed.data;

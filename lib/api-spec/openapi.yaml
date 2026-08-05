@@ -206,13 +206,13 @@ paths:
     post:
       operationId: createProduct
       tags: [dashboard]
-      summary: Create a product
+      summary: Create a product (multipart with optional image uploads)
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              $ref: "#/components/schemas/ProductInput"
+              $ref: "#/components/schemas/ProductCreateBody"
       responses:
         "201":
           description: Created
@@ -254,7 +254,7 @@ paths:
     put:
       operationId: updateProduct
       tags: [dashboard]
-      summary: Update a product
+      summary: Update a product (multipart with optional image uploads)
       parameters:
         - name: id
           in: path
@@ -264,9 +264,9 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              $ref: "#/components/schemas/ProductUpdate"
+              $ref: "#/components/schemas/ProductUpdateBody"
       responses:
         "200":
           description: OK
@@ -451,6 +451,68 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DiscountCode"
+
+  # ─── Push Notifications ──────────────────────────────────
+  /dashboard/push/vapid-public-key:
+    get:
+      operationId: getVapidPublicKey
+      tags: [dashboard]
+      summary: Get the public VAPID key for web-push subscriptions
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VapidPublicKey"
+        "503":
+          description: Push notifications not configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /dashboard/push/subscribe:
+    post:
+      operationId: subscribeToPush
+      tags: [dashboard]
+      summary: Save a web-push subscription for the merchant (upsert by endpoint)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PushSubscriptionInput"
+      responses:
+        "201":
+          description: Subscribed
+        "400":
+          description: Invalid subscription data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /dashboard/push/unsubscribe:
+    delete:
+      operationId: unsubscribeFromPush
+      tags: [dashboard]
+      summary: Remove all push subscriptions for this merchant on an endpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PushSubscriptionInput"
+      responses:
+        "204":
+          description: Unsubscribed
+        "400":
+          description: Invalid subscription data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   # ─── Storefront (Public) ──────────────────────────────────
   /stores/{slug}:
@@ -933,6 +995,68 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ProductVariantInput"
+
+    ProductCreateBody:
+      type: object
+      required: [data]
+      description: >-
+        multipart/form-data body for POST /dashboard/products. The product
+        payload object is sent in the `data` field (serialized as JSON on the
+        wire); optional image files go in `images` (max 10).
+      properties:
+        data:
+          $ref: "#/components/schemas/ProductInput"
+        images:
+          type: array
+          maxItems: 10
+          items:
+            type: string
+            format: binary
+            description: Product image file (max 10)
+
+    ProductUpdateBody:
+      type: object
+      required: [data]
+      description: >-
+        multipart/form-data body for PUT /dashboard/products/{id}. The updated
+        product payload object is sent in `data` (serialized as JSON on the
+        wire); `keepUrls` lists the existing /api/images/{id} URLs to keep; new
+        image files go in `images`.
+      properties:
+        data:
+          $ref: "#/components/schemas/ProductUpdate"
+        keepUrls:
+          type: string
+          description: JSON array of existing image URLs to keep
+        images:
+          type: array
+          maxItems: 10
+          items:
+            type: string
+            format: binary
+            description: Product image file (max 10)
+
+    VapidPublicKey:
+      type: object
+      required: [publicKey]
+      properties:
+        publicKey:
+          type: string
+
+    PushSubscriptionInput:
+      type: object
+      required: [endpoint, keys]
+      properties:
+        endpoint:
+          type: string
+        keys:
+          type: object
+          required: [p256dh, auth]
+          properties:
+            p256dh:
+              type: string
+            auth:
+              type: string
 
     # ─── Orders ─────────────────────────────────────────────
     OrderItem:

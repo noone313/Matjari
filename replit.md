@@ -71,6 +71,17 @@ _Populate as you build — explicit user instructions worth remembering across s
 - **Diagnosis note:** the `export * from './generated/types'` line (previous gotcha) only re-exports TS *types*, which are erased at runtime — it can never cause a runtime "stuck loading"/blank-page symptom. The generated react-query client imports its types from its own `./api.schemas`, not from `@workspace/api-zod`.
 - **Exact fix:** restart the frontend dev server after codegen / workspace-package edits: stop the process on port 5173 and run `pnpm --filter @workspace/matjari run dev` (env: `PORT=5173`, `BASE_PATH=/`, `API_PORT=8080`). A hard browser refresh (cache clear) is the quick workaround if you can't restart.
 
+### Multipart product endpoints: type the `data` field as an object `$ref`, never `type: string`
+
+- **Recurring:** Yes — `ProductCreateBody` / `ProductUpdateBody` in `openapi.yaml` are the multipart bodies for POST/PUT `/dashboard/products`. The product payload object lives in the `data` field; image files go in `images` (max 10) and PUT also has `keepUrls`.
+- **Why `data` must be `$ref`-typed, not `type: string`:** when `data` is a plain string schema, orval emits `formData.append('data', productCreateBody.data)` and treats `ProductInput`/`ProductUpdate` as orphaned — it then generates **no** zod const for the product shape, so the server has nothing to validate the parsed payload against. When `data` is `$ref: "#/components/schemas/ProductInput"` (and `ProductUpdate` for PUT), orval instead emits `formData.append('data', JSON.stringify(productCreateBody.data))` — the wire format stays a JSON string (what multer delivers in `req.body.data`) — and the inner product schema becomes reachable as `CreateProductBody.shape.data` / `UpdateProductBody.shape.data`.
+- **Server side** (`artifacts/api-server/src/routes/dashboard.ts`): the handlers `JSON.parse(req.body.data)` then validate with `CreateProductBody.shape.data.safeParse(body)` (NOT `CreateProductBody.safeParse(body)` — the top-level const is the transport wrapper). The client (`ProductForm.tsx`) passes the product **object**, never `JSON.stringify(...)`.
+- **Because consumers resolve `@workspace/api-zod` via project references → its built `dist`, codegen must end with `pnpm -w run typecheck:libs` (`tsc --build`).** If that step fails (e.g. the duplicate-export gotcha above), the stale dist keeps old types and the server typecheck reports phantom errors like `Property 'variants' does not exist on type 'String'`.
+
+### Generated api-zod needs DOM lib for `File`/`Blob`
+
+- **Recurring:** Yes — after any codegen that touches multipart schemas, `lib/api-zod/tsconfig.json` must include `"lib": ["dom", "es2022"]` (it mirrors `lib/api-client-react/tsconfig.json`). Without it, typecheck fails on the generated `zod.instanceof(File)` references.
+
 _Sharp edges: "always run X before Y" rules go here._
 
 ## Pointers

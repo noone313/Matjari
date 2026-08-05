@@ -203,6 +203,40 @@ export interface ProductUpdate {
   variants?: ProductVariantInput[];
 }
 
+/**
+ * multipart/form-data body for POST /dashboard/products. The product payload object is sent in the `data` field (serialized as JSON on the wire); optional image files go in `images` (max 10).
+ */
+export interface ProductCreateBody {
+  data: ProductInput;
+  /** @maxItems 10 */
+  images?: Blob[];
+}
+
+/**
+ * multipart/form-data body for PUT /dashboard/products/{id}. The updated product payload object is sent in `data` (serialized as JSON on the wire); `keepUrls` lists the existing /api/images/{id} URLs to keep; new image files go in `images`.
+ */
+export interface ProductUpdateBody {
+  data: ProductUpdate;
+  /** JSON array of existing image URLs to keep */
+  keepUrls?: string;
+  /** @maxItems 10 */
+  images?: Blob[];
+}
+
+export interface VapidPublicKey {
+  publicKey: string;
+}
+
+export type PushSubscriptionInputKeys = {
+  p256dh: string;
+  auth: string;
+};
+
+export interface PushSubscriptionInput {
+  endpoint: string;
+  keys: PushSubscriptionInputKeys;
+}
+
 export interface OrderItem {
   id: number;
   /** @nullable */

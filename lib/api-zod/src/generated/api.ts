@@ -235,9 +235,14 @@ export const ListProductsResponse = zod.array(ListProductsResponseItem)
 
 
 /**
- * @summary Create a product
+ * @summary Create a product (multipart with optional image uploads)
  */
+export const createProductBodyImagesMax = 10;
+
+
+
 export const CreateProductBody = zod.object({
+  "data": zod.object({
   "name": zod.string(),
   "description": zod.string().nullish(),
   "category": zod.string(),
@@ -254,7 +259,9 @@ export const CreateProductBody = zod.object({
   "price": zod.number(),
   "stock": zod.number().optional()
 }))
-})
+}),
+  "images": zod.array(zod.instanceof(File).describe('Product image file (max 10)')).max(createProductBodyImagesMax).optional()
+}).describe('multipart\/form-data body for POST \/dashboard\/products. The product payload object is sent in the `data` field (serialized as JSON on the wire); optional image files go in `images` (max 10).')
 
 export const CreateProductResponse = zod.object({
   "id": zod.number(),
@@ -312,13 +319,18 @@ export const GetProductResponse = zod.object({
 
 
 /**
- * @summary Update a product
+ * @summary Update a product (multipart with optional image uploads)
  */
 export const UpdateProductParams = zod.object({
   "id": zod.coerce.number()
 })
 
+export const updateProductBodyImagesMax = 10;
+
+
+
 export const UpdateProductBody = zod.object({
+  "data": zod.object({
   "name": zod.string().optional(),
   "description": zod.string().nullish(),
   "category": zod.string().optional(),
@@ -335,7 +347,10 @@ export const UpdateProductBody = zod.object({
   "price": zod.number(),
   "stock": zod.number().optional()
 })).optional()
-})
+}),
+  "keepUrls": zod.string().optional().describe('JSON array of existing image URLs to keep'),
+  "images": zod.array(zod.instanceof(File).describe('Product image file (max 10)')).max(updateProductBodyImagesMax).optional()
+}).describe('multipart\/form-data body for PUT \/dashboard\/products\/{id}. The updated product payload object is sent in `data` (serialized as JSON on the wire); `keepUrls` lists the existing \/api\/images\/{id} URLs to keep; new image files go in `images`.')
 
 export const UpdateProductResponse = zod.object({
   "id": zod.number(),
@@ -520,6 +535,42 @@ export const ToggleDiscountResponse = zod.object({
   "isActive": zod.boolean(),
   "createdAt": zod.string()
 })
+
+
+/**
+ * @summary Get the public VAPID key for web-push subscriptions
+ */
+export const GetVapidPublicKeyResponse = zod.object({
+  "publicKey": zod.string()
+})
+
+
+/**
+ * @summary Save a web-push subscription for the merchant (upsert by endpoint)
+ */
+export const SubscribeToPushBody = zod.object({
+  "endpoint": zod.string(),
+  "keys": zod.object({
+  "p256dh": zod.string(),
+  "auth": zod.string()
+})
+})
+
+export const SubscribeToPushResponse = zod.void()
+
+
+/**
+ * @summary Remove all push subscriptions for this merchant on an endpoint
+ */
+export const UnsubscribeFromPushBody = zod.object({
+  "endpoint": zod.string(),
+  "keys": zod.object({
+  "p256dh": zod.string(),
+  "auth": zod.string()
+})
+})
+
+export const UnsubscribeFromPushResponse = zod.void()
 
 
 /**
