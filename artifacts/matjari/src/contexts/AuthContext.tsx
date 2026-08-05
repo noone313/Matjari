@@ -16,6 +16,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [merchant, setMerchant] = useState<Merchant | null>(null);
 
   useEffect(() => {
+    // Hydrate the session from localStorage. Expiry is handled separately:
+    // proactively in main.tsx (before first paint) and reactively by the
+    // centralized 401 handler on any protected dashboard request.
     const savedToken = localStorage.getItem('matjari_token');
     const savedMerchant = localStorage.getItem('matjari_merchant');
     if (savedToken && savedMerchant) {

@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useGetMe, useGetDashboardStats, getGetDashboardStatsQueryKey } from '@workspace/api-client-react';
 import { LayoutDashboard, Package, ShoppingBag, Tags, Settings, LogOut, Store, ExternalLink, Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { handleApiError } from '@/lib/sessionExpired';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { ToastAction } from '@/components/ui/toast';
@@ -56,6 +57,7 @@ async function fetchVapidPublicKey(): Promise<string> {
   const res = await fetch('/api/dashboard/push/vapid-public-key', {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
+  if (res.status === 401) handleApiError({ status: 401, url: '/api/dashboard/push/vapid-public-key' });
   if (!res.ok) throw new Error('Could not fetch VAPID public key');
   const data = await res.json();
   return data.publicKey as string;
@@ -65,7 +67,7 @@ async function fetchVapidPublicKey(): Promise<string> {
 async function savePushSubscription(sub: PushSubscription): Promise<void> {
   const token = localStorage.getItem('matjari_token');
   const json = sub.toJSON();
-  await fetch('/api/dashboard/push/subscribe', {
+  const res = await fetch('/api/dashboard/push/subscribe', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -76,6 +78,7 @@ async function savePushSubscription(sub: PushSubscription): Promise<void> {
       keys: { p256dh: json.keys?.p256dh, auth: json.keys?.auth },
     }),
   });
+  if (res.status === 401) handleApiError({ status: 401, url: '/api/dashboard/push/subscribe' });
 }
 
 /** Register the service worker and subscribe to push notifications.

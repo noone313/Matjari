@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Route, Switch, Router as WouterRouter, Redirect } from 'wouter';
 
+import { handleApiError } from '@/lib/sessionExpired';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import NotFound from '@/pages/not-found';
@@ -28,7 +29,12 @@ import StoreCart from '@/pages/store/Cart';
 import StoreCheckout from '@/pages/store/Checkout';
 import StoreConfirmation from '@/pages/store/Confirmation';
 
-const queryClient = new QueryClient();
+// Centralized 401 handling: an expired/invalid session on any protected
+// dashboard request clears the stored session and redirects to /login.
+const queryClient = new QueryClient({
+  queryCache: new QueryCache({ onError: (error) => handleApiError(error) }),
+  mutationCache: new MutationCache({ onError: (error) => handleApiError(error) }),
+});
 
 function DashboardRouter() {
   const { isAuthenticated } = useAuth();

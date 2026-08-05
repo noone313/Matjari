@@ -6,6 +6,7 @@ import { Link, useLocation } from 'wouter';
 import { useLoginMerchant } from '@workspace/api-client-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { consumeSessionExpiredMessage } from '@/lib/sessionExpired';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +21,7 @@ export default function Login() {
   const { login } = useAuth();
   const { toast } = useToast();
   const loginMutation = useLoginMerchant();
+  const [sessionNotice] = useState(() => consumeSessionExpiredMessage());
 
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -50,6 +52,12 @@ export default function Login() {
           <h1 className="text-3xl font-bold font-serif text-gray-900 mb-2">متجري</h1>
           <p className="text-gray-500">تسجيل الدخول للوحة التحكم</p>
         </div>
+
+        {sessionNotice && (
+          <div role="alert" className="mb-6 rounded-md border border-destructive bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {sessionNotice}
+          </div>
+        )}
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-2">

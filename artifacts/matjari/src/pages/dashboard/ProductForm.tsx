@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { CATEGORIES, getApiUrl } from '@/lib/utils';
+import { handleApiError } from '@/lib/sessionExpired';
 import { Trash2, Plus, Upload, X, Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 
@@ -147,11 +148,15 @@ async function submitProduct(
   fd: FormData,
 ): Promise<Response> {
   const token = localStorage.getItem('matjari_token');
-  return fetch(url, {
+  const res = await fetch(url, {
     method,
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     body: fd,
   });
+  // This call path bypasses React Query caches, so the centralized 401 handler
+  // is wired manually here (raw fetch must behave like a protected mutation).
+  if (res.status === 401) handleApiError({ status: 401, url });
+  return res;
 }
 
 // ─── ProductForm ───────────────────────────────────────────────────────────────
