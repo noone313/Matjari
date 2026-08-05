@@ -22,6 +22,7 @@ import type {
 import type {
   AuthResponse,
   BrowseStoreProductsParams,
+  DashboardReviewsResponse,
   DashboardStats,
   DiscountCode,
   DiscountCodeValidationResult,
@@ -32,6 +33,7 @@ import type {
   HealthStatus,
   ListOrdersParams,
   ListProductsParams,
+  ListReviewsParams,
   Merchant,
   MerchantLogin,
   MerchantRegister,
@@ -44,8 +46,12 @@ import type {
   OrderStatusUpdate,
   Product,
   ProductCreateBody,
+  ProductReviewInput,
+  ProductReviewsResponse,
   ProductUpdateBody,
   PushSubscriptionInput,
+  Review,
+  ReviewDecision,
   StorePublic,
   VapidPublicKey
 } from './api.schemas';
@@ -1799,6 +1805,233 @@ export const useUnsubscribeFromPush = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUnsubscribeFromPushMutationOptions(options));
     }
 
+export const getListReviewsUrl = (params?: ListReviewsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/dashboard/reviews?${stringifiedParams}` : `/api/dashboard/reviews`
+}
+
+/**
+ * @summary List reviews for the current merchant's products
+ */
+export const listReviews = async (params?: ListReviewsParams, options?: Parameters<typeof customFetch>[1]): Promise<DashboardReviewsResponse> => {
+
+  return customFetch<DashboardReviewsResponse>(getListReviewsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListReviewsQueryKey = (params?: ListReviewsParams,) => {
+    return [
+    `/api/dashboard/reviews`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListReviewsQueryOptions = <TData = Awaited<ReturnType<typeof listReviews>>, TError = ErrorType<unknown>>(params?: ListReviewsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listReviews>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListReviewsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listReviews>>> = ({ signal }) => listReviews(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listReviews>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListReviewsQueryResult = NonNullable<Awaited<ReturnType<typeof listReviews>>>
+export type ListReviewsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List reviews for the current merchant's products
+ */
+
+export function useListReviews<TData = Awaited<ReturnType<typeof listReviews>>, TError = ErrorType<unknown>>(
+ params?: ListReviewsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listReviews>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListReviewsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getDecideReviewUrl = (id: number,) => {
+
+
+
+
+  return `/api/dashboard/reviews/${id}`
+}
+
+/**
+ * @summary Approve or unapprove a review
+ */
+export const decideReview = async (id: number,
+    reviewDecision: ReviewDecision, options?: Parameters<typeof customFetch>[1]): Promise<Review> => {
+
+  return customFetch<Review>(getDecideReviewUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(reviewDecision)
+  }
+);}
+
+
+
+
+
+export const getDecideReviewMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof decideReview>>, TError,{id: number;data: BodyType<ReviewDecision>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof decideReview>>, TError,{id: number;data: BodyType<ReviewDecision>}, TContext> => {
+
+const mutationKey = ['decideReview'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof decideReview>>, {id: number;data: BodyType<ReviewDecision>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  decideReview(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DecideReviewMutationResult = NonNullable<Awaited<ReturnType<typeof decideReview>>>
+    export type DecideReviewMutationBody = BodyType<ReviewDecision>
+    export type DecideReviewMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Approve or unapprove a review
+ */
+export const useDecideReview = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof decideReview>>, TError,{id: number;data: BodyType<ReviewDecision>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof decideReview>>,
+        TError,
+        {id: number;data: BodyType<ReviewDecision>},
+        TContext
+      > => {
+      return useMutation(getDecideReviewMutationOptions(options));
+    }
+
+export const getDeleteReviewUrl = (id: number,) => {
+
+
+
+
+  return `/api/dashboard/reviews/${id}`
+}
+
+/**
+ * @summary Delete a review (reject/remove from queue)
+ */
+export const deleteReview = async (id: number, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getDeleteReviewUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteReviewMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteReview>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteReview>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteReview'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteReview>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteReview(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteReviewMutationResult = NonNullable<Awaited<ReturnType<typeof deleteReview>>>
+
+    export type DeleteReviewMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete a review (reject/remove from queue)
+ */
+export const useDeleteReview = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteReview>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteReview>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteReviewMutationOptions(options));
+    }
+
 export const getGetStoreUrl = (slug: string,) => {
 
 
@@ -2128,6 +2361,162 @@ export function useGetRelatedProducts<TData = Awaited<ReturnType<typeof getRelat
 
 
 
+
+export const getGetProductReviewsUrl = (slug: string,
+    productId: number,) => {
+
+
+
+
+  return `/api/stores/${slug}/products/${productId}/reviews`
+}
+
+/**
+ * @summary Get approved reviews and average rating for a product
+ */
+export const getProductReviews = async (slug: string,
+    productId: number, options?: Parameters<typeof customFetch>[1]): Promise<ProductReviewsResponse> => {
+
+  return customFetch<ProductReviewsResponse>(getGetProductReviewsUrl(slug,productId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetProductReviewsQueryKey = (slug: string,
+    productId: number,) => {
+    return [
+    `/api/stores/${slug}/products/${productId}/reviews`
+    ] as const;
+    }
+
+
+export const getGetProductReviewsQueryOptions = <TData = Awaited<ReturnType<typeof getProductReviews>>, TError = ErrorType<ErrorResponse>>(slug: string,
+    productId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getProductReviews>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProductReviewsQueryKey(slug,productId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProductReviews>>> = ({ signal }) => getProductReviews(slug,productId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: slug !== null && slug !== undefined && productId !== null && productId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProductReviews>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetProductReviewsQueryResult = NonNullable<Awaited<ReturnType<typeof getProductReviews>>>
+export type GetProductReviewsQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Get approved reviews and average rating for a product
+ */
+
+export function useGetProductReviews<TData = Awaited<ReturnType<typeof getProductReviews>>, TError = ErrorType<ErrorResponse>>(
+ slug: string,
+    productId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getProductReviews>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetProductReviewsQueryOptions(slug,productId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateProductReviewUrl = (slug: string,
+    productId: number,) => {
+
+
+
+
+  return `/api/stores/${slug}/products/${productId}/reviews`
+}
+
+/**
+ * @summary Submit a review for a product (stored pending approval)
+ */
+export const createProductReview = async (slug: string,
+    productId: number,
+    productReviewInput: ProductReviewInput, options?: Parameters<typeof customFetch>[1]): Promise<Review> => {
+
+  return customFetch<Review>(getCreateProductReviewUrl(slug,productId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(productReviewInput)
+  }
+);}
+
+
+
+
+
+export const getCreateProductReviewMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createProductReview>>, TError,{slug: string;productId: number;data: BodyType<ProductReviewInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createProductReview>>, TError,{slug: string;productId: number;data: BodyType<ProductReviewInput>}, TContext> => {
+
+const mutationKey = ['createProductReview'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createProductReview>>, {slug: string;productId: number;data: BodyType<ProductReviewInput>}> = (props) => {
+          const {slug,productId,data} = props ?? {};
+
+          return  createProductReview(slug,productId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateProductReviewMutationResult = NonNullable<Awaited<ReturnType<typeof createProductReview>>>
+    export type CreateProductReviewMutationBody = BodyType<ProductReviewInput>
+    export type CreateProductReviewMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Submit a review for a product (stored pending approval)
+ */
+export const useCreateProductReview = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createProductReview>>, TError,{slug: string;productId: number;data: BodyType<ProductReviewInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createProductReview>>,
+        TError,
+        {slug: string;productId: number;data: BodyType<ProductReviewInput>},
+        TContext
+      > => {
+      return useMutation(getCreateProductReviewMutationOptions(options));
+    }
 
 export const getValidateDiscountUrl = (slug: string,) => {
 

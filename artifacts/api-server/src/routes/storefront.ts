@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, merchantsTable, productsTable, productVariantsTable, ordersTable, orderItemsTable, discountCodesTable } from "@workspace/db";
-import { eq, and, ilike, sql, gte, ne } from "drizzle-orm";
+import { db, merchantsTable, productsTable, productVariantsTable, ordersTable, orderItemsTable, discountCodesTable, reviewsTable } from "@workspace/db";
+import { eq, and, ilike, sql, gte, ne, desc, count, avg } from "drizzle-orm";
 import { sendPushToMerchant } from "../lib/push";
 import {
   GetStoreParams,
@@ -8,6 +8,9 @@ import {
   BrowseStoreProductsQueryParams,
   GetStoreProductParams,
   GetRelatedProductsParams,
+  GetProductReviewsParams,
+  CreateProductReviewParams,
+  CreateProductReviewBody,
   ValidateDiscountParams,
   ValidateDiscountBody,
   ValidateDiscountCodeParams,
@@ -257,6 +260,113 @@ router.get("/:slug/products/:productId/related", async (req, res): Promise<void>
       variants: variantMap.get(p.id) ?? [],
     })),
   );
+});
+
+// GET /stores/:slug/products/:productId/reviews
+// Approved reviews only, with the average rating.
+router.get("/:slug/products/:productId/reviews", async (req, res): Promise<void> => {
+  const params = GetProductReviewsParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: "معرّف غير صالح" });
+    return;
+  }
+
+  const [merchant] = await db
+    .select()
+    .from(merchantsTable)
+    .where(eq(merchantsTable.slug, params.data.slug))
+    .limit(1);
+
+  if (!merchant) {
+    res.status(404).json({ error: "المتجر غير موجود" });
+    return;
+  }
+
+  const [product] = await db
+    .select()
+    .from(productsTable)
+    .where(
+      and(
+        eq(productsTable.id, params.data.productId),
+        eq(productsTable.merchantId, merchant.id),
+        eq(productsTable.isActive, true),
+      ),
+    )
+    .limit(1);
+
+  if (!product) {
+    res.status(404).json({ error: "المنتج غير موجود" });
+    return;
+  }
+
+  const reviews = await db
+    .select()
+    .from(reviewsTable)
+    .where(and(eq(reviewsTable.productId, product.id), eq(reviewsTable.isApproved, true)))
+    .orderBy(desc(reviewsTable.createdAt));
+
+  const [avgRow] = await db
+    .select({ average: avg(reviewsTable.rating) })
+    .from(reviewsTable)
+    .where(and(eq(reviewsTable.productId, product.id), eq(reviewsTable.isApproved, true)));
+
+  res.json({
+    reviews,
+    averageRating: avgRow?.average != null ? Math.round(Number(avgRow.average) * 10) / 10 : 0,
+  });
+});
+
+// POST /stores/:slug/products/:productId/reviews
+// Public review submission — always stored pending approval.
+router.post("/:slug/products/:productId/reviews", async (req, res): Promise<void> => {
+  const params = CreateProductReviewParams.safeParse(req.params);
+  const body = CreateProductReviewBody.safeParse(req.body);
+
+  if (!params.success || !body.success) {
+    res.status(400).json({ error: body.success ? "معرّف غير صالح" : body.error.message });
+    return;
+  }
+
+  const [merchant] = await db
+    .select()
+    .from(merchantsTable)
+    .where(eq(merchantsTable.slug, params.data.slug))
+    .limit(1);
+
+  if (!merchant) {
+    res.status(404).json({ error: "المتجر غير موجود" });
+    return;
+  }
+
+  const [product] = await db
+    .select()
+    .from(productsTable)
+    .where(
+      and(
+        eq(productsTable.id, params.data.productId),
+        eq(productsTable.merchantId, merchant.id),
+        eq(productsTable.isActive, true),
+      ),
+    )
+    .limit(1);
+
+  if (!product) {
+    res.status(404).json({ error: "المنتج غير موجود" });
+    return;
+  }
+
+  const [review] = await db
+    .insert(reviewsTable)
+    .values({
+      productId: product.id,
+      customerName: body.data.customerName,
+      rating: body.data.rating,
+      comment: body.data.comment ?? null,
+      isApproved: false,
+    })
+    .returning();
+
+  res.status(201).json(review);
 });
 
 // POST /stores/:slug/validate-discount

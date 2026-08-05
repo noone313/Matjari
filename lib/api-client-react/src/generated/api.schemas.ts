@@ -338,6 +338,58 @@ export interface StorePublic {
   createdAt: string;
 }
 
+export interface Review {
+  id: number;
+  productId: number;
+  customerName: string;
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  rating: number;
+  /** @nullable */
+  comment?: string | null;
+  isApproved: boolean;
+  createdAt: string;
+}
+
+export interface ProductReviewInput {
+  /** @maxLength 100 */
+  customerName: string;
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  rating: number;
+  /** @nullable */
+  comment?: string | null;
+}
+
+export interface ProductReviewsResponse {
+  reviews: Review[];
+  averageRating: number;
+}
+
+export interface DashboardReview {
+  id: number;
+  productId: number;
+  productName: string;
+  customerName: string;
+  rating: number;
+  /** @nullable */
+  comment?: string | null;
+  isApproved: boolean;
+  createdAt: string;
+}
+
+export interface DashboardReviewsResponse {
+  reviews: DashboardReview[];
+}
+
+export interface ReviewDecision {
+  isApproved: boolean;
+}
+
 export type ListProductsParams = {
 category?: string;
 q?: string;
@@ -347,6 +399,19 @@ export type ListOrdersParams = {
 status?: string;
 page?: number;
 };
+
+export type ListReviewsParams = {
+status?: ListReviewsStatus;
+};
+
+export type ListReviewsStatus = typeof ListReviewsStatus[keyof typeof ListReviewsStatus];
+
+
+export const ListReviewsStatus = {
+  pending: 'pending',
+  approved: 'approved',
+  all: 'all',
+} as const;
 
 export type BrowseStoreProductsParams = {
 /**

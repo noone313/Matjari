@@ -514,6 +514,77 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  # ─── Dashboard Reviews ──────────────────────────────────
+  /dashboard/reviews:
+    get:
+      operationId: listReviews
+      tags: [dashboard]
+      summary: List reviews for the current merchant's products
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [pending, approved, all]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardReviewsResponse"
+
+  /dashboard/reviews/{id}:
+    patch:
+      operationId: decideReview
+      tags: [dashboard]
+      summary: Approve or unapprove a review
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewDecision"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+        "404":
+          description: Review not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteReview
+      tags: [dashboard]
+      summary: Delete a review (reject/remove from queue)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Review not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   # ─── Storefront (Public) ──────────────────────────────────
   /stores/{slug}:
     get:
@@ -634,6 +705,76 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Product"
+        "404":
+          description: Product or store not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /stores/{slug}/products/{productId}/reviews:
+    get:
+      operationId: getProductReviews
+      tags: [storefront]
+      summary: Get approved reviews and average rating for a product
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductReviewsResponse"
+        "404":
+          description: Product or store not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createProductReview
+      tags: [storefront]
+      summary: Submit a review for a product (stored pending approval)
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductReviewInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+        "400":
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Product or store not found
           content:
@@ -1300,3 +1441,87 @@ components:
           type: ["string", "null"]
         createdAt:
           type: string
+
+    # ─── Reviews ────────────────────────────────────────────
+    Review:
+      type: object
+      required: [id, productId, customerName, rating, isApproved, createdAt]
+      properties:
+        id:
+          type: number
+        productId:
+          type: number
+        customerName:
+          type: string
+        rating:
+          type: number
+          minimum: 1
+          maximum: 5
+        comment:
+          type: ["string", "null"]
+        isApproved:
+          type: boolean
+        createdAt:
+          type: string
+
+    ProductReviewInput:
+      type: object
+      required: [customerName, rating]
+      properties:
+        customerName:
+          type: string
+          maxLength: 100
+        rating:
+          type: number
+          minimum: 1
+          maximum: 5
+        comment:
+          type: ["string", "null"]
+
+    ProductReviewsResponse:
+      type: object
+      required: [reviews, averageRating]
+      properties:
+        reviews:
+          type: array
+          items:
+            $ref: "#/components/schemas/Review"
+        averageRating:
+          type: number
+
+    DashboardReview:
+      type: object
+      required: [id, productId, productName, customerName, rating, isApproved, createdAt]
+      properties:
+        id:
+          type: number
+        productId:
+          type: number
+        productName:
+          type: string
+        customerName:
+          type: string
+        rating:
+          type: number
+        comment:
+          type: ["string", "null"]
+        isApproved:
+          type: boolean
+        createdAt:
+          type: string
+
+    DashboardReviewsResponse:
+      type: object
+      required: [reviews]
+      properties:
+        reviews:
+          type: array
+          items:
+            $ref: "#/components/schemas/DashboardReview"
+
+    ReviewDecision:
+      type: object
+      required: [isApproved]
+      properties:
+        isApproved:
+          type: boolean

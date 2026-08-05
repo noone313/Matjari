@@ -19,6 +19,7 @@ import ProductForm from '@/pages/dashboard/ProductForm';
 import Orders from '@/pages/dashboard/Orders';
 import OrderDetail from '@/pages/dashboard/OrderDetail';
 import Discounts from '@/pages/dashboard/Discounts';
+import Reviews from '@/pages/dashboard/Reviews';
 import Settings from '@/pages/dashboard/Settings';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 
@@ -63,6 +64,7 @@ function DashboardRouter() {
         <Route path="/dashboard/orders" component={Orders} />
         <Route path="/dashboard/orders/:id" component={OrderDetail} />
         <Route path="/dashboard/discounts" component={Discounts} />
+        <Route path="/dashboard/reviews" component={Reviews} />
         <Route path="/dashboard/settings" component={Settings} />
         <Route component={NotFound} />
       </Switch>

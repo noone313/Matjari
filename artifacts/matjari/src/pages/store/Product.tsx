@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useGetStoreProduct, getGetStoreProductQueryKey, useGetRelatedProducts, getGetRelatedProductsQueryKey } from '@workspace/api-client-react';
+import { useGetStoreProduct, getGetStoreProductQueryKey, useGetRelatedProducts, getGetRelatedProductsQueryKey, useGetProductReviews, getGetProductReviewsQueryKey, useCreateProductReview } from '@workspace/api-client-react';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice, getCategoryLabel } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { ChevronRight, Droplet, Leaf, Share2, Check } from 'lucide-react';
+import { ChevronRight, Droplet, Leaf, Share2, Check, Star } from 'lucide-react';
 import { Link } from 'wouter';
 import { FragrancePyramid } from '@/components/store/FragrancePyramid';
 
@@ -17,6 +20,10 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState<string>('');
   const [shared, setShared] = useState(false);
+  const [reviewName, setReviewName] = useState('');
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
 
   const handleShare = () => {
     const url = window.location.href;
@@ -42,6 +49,34 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
   const { data: relatedProducts } = useGetRelatedProducts(slug, Number(productId), {
     query: { enabled: !!slug && !!productId, queryKey: getGetRelatedProductsQueryKey(slug, Number(productId)) },
   });
+
+  const { data: reviewsData, refetch: refetchReviews } = useGetProductReviews(slug, Number(productId), {
+    query: { enabled: !!slug && !!productId, queryKey: getGetProductReviewsQueryKey(slug, Number(productId)) },
+  });
+
+  const createReview = useCreateProductReview();
+
+  const handleSubmitReview = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reviewName.trim() || reviewRating < 1) return;
+    createReview.mutate({
+      slug,
+      productId: Number(productId),
+      data: {
+        customerName: reviewName.trim(),
+        rating: reviewRating,
+        comment: reviewComment.trim() || undefined,
+      },
+    }, {
+      onSuccess: () => {
+        setReviewSubmitted(true);
+        refetchReviews();
+      },
+      onError: () => {
+        toast({ title: 'تعذر إرسال التقييم، حاول مرة أخرى' });
+      },
+    });
+  };
 
   if (isLoading) return <div className="text-center py-24">جاري التحميل...</div>;
   if (!product) return <div className="text-center py-24">المنتج غير موجود</div>;
@@ -114,6 +149,16 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
               <span className="text-sm text-[hsl(var(--primary))] font-medium tracking-wide">
                 {getCategoryLabel(product.category)}
               </span>
+              {reviewsData && reviewsData.averageRating > 0 && (
+                <div className="flex items-center gap-1.5" title="متوسط تقييم العملاء">
+                  <div className="flex">
+                    {[1, 2, 3, 4, 5].map(i => (
+                      <Star key={i} className={`w-3.5 h-3.5 ${i <= Math.round(reviewsData.averageRating) ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`} />
+                    ))}
+                  </div>
+                  <span className="text-xs text-gray-500">{reviewsData.averageRating} ({reviewsData.reviews.length})</span>
+                </div>
+              )}
               {totalStock > 0 && totalStock <= 5 && (
                 <span className="text-[10px] uppercase tracking-widest bg-zinc-900 text-white px-2 py-0.5">
                   متبقي {totalStock} فقط
@@ -258,6 +303,95 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
           </div>
         </div>
       )}
+
+      {/* ── Reviews ─────────────────────────────── */}
+      <div className="border-t border-zinc-100 px-6 py-10">
+        <h2 className="text-lg font-bold text-gray-900 mb-6">تقييمات العملاء</h2>
+
+        {reviewsData && reviewsData.reviews.length > 0 ? (
+          <div className="space-y-4">
+            {reviewsData.reviews.map(r => (
+              <div key={r.id} className="border border-gray-100 rounded-lg p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-500">
+                      {r.customerName.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-bold text-gray-900">{r.customerName}</p>
+                      <div className="flex">
+                        {[1, 2, 3, 4, 5].map(i => (
+                          <Star key={i} className={`w-3.5 h-3.5 ${i <= r.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`} />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-xs text-gray-400">{new Date(r.createdAt).toLocaleDateString('ar-IQ')}</span>
+                </div>
+                {r.comment && <p className="text-gray-600 leading-relaxed">{r.comment}</p>}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-400 text-center py-8">لا توجد تقييمات بعد — كن أول من يقيّم هذا المنتج</p>
+        )}
+
+        {/* Add review form */}
+        <div className="mt-10 bg-gray-50 border border-gray-100 rounded-xl p-6">
+          {reviewSubmitted ? (
+            <p className="text-green-600 font-medium">شكراً لك! سيظهر تقييمك بعد مراجعة المتجر.</p>
+          ) : (
+            <form onSubmit={handleSubmitReview} className="space-y-4">
+              <h3 className="font-bold text-gray-900">أضف تقييمك</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>اسمك</Label>
+                  <Input
+                    value={reviewName}
+                    onChange={(e) => setReviewName(e.target.value)}
+                    placeholder="مثال: زينب"
+                    required
+                    maxLength={100}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>تقييمك</Label>
+                  <div className="flex items-center gap-1 pt-2">
+                    {[1, 2, 3, 4, 5].map(i => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setReviewRating(i)}
+                        className="p-0.5 transition-transform hover:scale-110"
+                        aria-label={`${i} من 5`}
+                      >
+                        <Star className={`w-7 h-7 ${i <= reviewRating ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>تعليقك (اختياري)</Label>
+                <Textarea
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  rows={3}
+                  placeholder="شارك تجربتك مع هذا المنتج..."
+                />
+              </div>
+              <Button
+                type="submit"
+                disabled={!reviewName.trim() || reviewRating < 1 || createReview.isPending}
+                className="h-11 px-8 font-bold"
+                style={{ backgroundColor: 'hsl(var(--primary))' }}
+              >
+                {createReview.isPending ? 'جاري الإرسال...' : 'إرسال التقييم'}
+              </Button>
+            </form>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

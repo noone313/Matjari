@@ -1,6 +1,6 @@
 import { Router } from "express";
 import multer from "multer";
-import { db, merchantsTable, productsTable, productVariantsTable, productImagesTable, ordersTable, orderItemsTable, discountCodesTable, pushSubscriptionsTable } from "@workspace/db";
+import { db, merchantsTable, productsTable, productVariantsTable, productImagesTable, ordersTable, orderItemsTable, discountCodesTable, pushSubscriptionsTable, reviewsTable } from "@workspace/db";
 import { eq, and, gte, sql, desc, count, inArray, notInArray } from "drizzle-orm";
 import { requireAuth, type AuthRequest } from "../middleware/auth";
 import { VAPID_PUBLIC_KEY, sendPushToMerchant } from "../lib/push";
@@ -37,6 +37,10 @@ import {
   DeleteDiscountParams,
   ToggleDiscountParams,
   CreateDiscountBody,
+  ListReviewsQueryParams,
+  DecideReviewParams,
+  DecideReviewBody,
+  DeleteReviewParams,
 } from "@workspace/api-zod";
 
 const router = Router();
@@ -500,6 +504,103 @@ router.patch("/discounts/:id/toggle", async (req: AuthRequest, res): Promise<voi
     .returning();
 
   res.json(updated);
+});
+
+// ─── Reviews ────────────────────────────────────────────────────────────────
+
+router.get("/reviews", async (req: AuthRequest, res): Promise<void> => {
+  const query = ListReviewsQueryParams.safeParse(req.query);
+  const status = query.success ? query.data.status : undefined;
+
+  const reviews = await db
+    .select({
+      id: reviewsTable.id,
+      productId: reviewsTable.productId,
+      productName: productsTable.name,
+      customerName: reviewsTable.customerName,
+      rating: reviewsTable.rating,
+      comment: reviewsTable.comment,
+      isApproved: reviewsTable.isApproved,
+      createdAt: reviewsTable.createdAt,
+    })
+    .from(reviewsTable)
+    .innerJoin(productsTable, eq(reviewsTable.productId, productsTable.id))
+    .where(
+      and(
+        eq(productsTable.merchantId, req.merchantId!),
+        status === "pending"
+          ? eq(reviewsTable.isApproved, false)
+          : status === "approved"
+            ? eq(reviewsTable.isApproved, true)
+            : undefined,
+      ),
+    )
+    .orderBy(desc(reviewsTable.createdAt));
+
+  res.json({ reviews });
+});
+
+router.patch("/reviews/:id", async (req: AuthRequest, res): Promise<void> => {
+  const params = DecideReviewParams.safeParse(req.params);
+  const body = DecideReviewBody.safeParse(req.body);
+
+  if (!params.success || !body.success) {
+    res.status(400).json({ error: "بيانات غير صالحة" });
+    return;
+  }
+
+  const [owned] = await db
+    .select({ reviewId: reviewsTable.id })
+    .from(reviewsTable)
+    .innerJoin(productsTable, eq(reviewsTable.productId, productsTable.id))
+    .where(
+      and(
+        eq(reviewsTable.id, params.data.id),
+        eq(productsTable.merchantId, req.merchantId!),
+      ),
+    )
+    .limit(1);
+
+  if (!owned) {
+    res.status(404).json({ error: "التقييم غير موجود" });
+    return;
+  }
+
+  const [review] = await db
+    .update(reviewsTable)
+    .set({ isApproved: body.data.isApproved })
+    .where(eq(reviewsTable.id, params.data.id))
+    .returning();
+
+  res.json(review);
+});
+
+router.delete("/reviews/:id", async (req: AuthRequest, res): Promise<void> => {
+  const params = DeleteReviewParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: "معرّف غير صالح" });
+    return;
+  }
+
+  const [owned] = await db
+    .select({ reviewId: reviewsTable.id })
+    .from(reviewsTable)
+    .innerJoin(productsTable, eq(reviewsTable.productId, productsTable.id))
+    .where(
+      and(
+        eq(reviewsTable.id, params.data.id),
+        eq(productsTable.merchantId, req.merchantId!),
+      ),
+    )
+    .limit(1);
+
+  if (!owned) {
+    res.status(404).json({ error: "التقييم غير موجود" });
+    return;
+  }
+
+  await db.delete(reviewsTable).where(eq(reviewsTable.id, params.data.id));
+  res.sendStatus(204);
 });
 
 // ─── Push Notifications ──────────────────────────────────────────────────────

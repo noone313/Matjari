@@ -3,7 +3,7 @@ import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGetMe, useGetDashboardStats, getGetDashboardStatsQueryKey, getGetVapidPublicKeyQueryOptions, useSubscribeToPush } from '@workspace/api-client-react';
 import { useQueryClient, type QueryClient } from '@tanstack/react-query';
-import { LayoutDashboard, Package, ShoppingBag, Tags, Settings, LogOut, Store, ExternalLink, Copy, Check } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, Tags, Star as StarIcon, Settings, LogOut, Store, ExternalLink, Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
@@ -249,6 +249,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { href: '/dashboard/products', label: 'المنتجات', icon: Package },
     { href: '/dashboard/orders', label: 'الطلبات', icon: ShoppingBag, badge: newOrdersBadge },
     { href: '/dashboard/discounts', label: 'الخصومات', icon: Tags },
+    { href: '/dashboard/reviews', label: 'التقييمات', icon: StarIcon },
     { href: '/dashboard/settings', label: 'الإعدادات', icon: Settings },
   ];
 

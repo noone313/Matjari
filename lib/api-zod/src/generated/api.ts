@@ -574,6 +574,63 @@ export const UnsubscribeFromPushResponse = zod.void()
 
 
 /**
+ * @summary List reviews for the current merchant's products
+ */
+export const ListReviewsQueryParams = zod.object({
+  "status": zod.enum(['pending', 'approved', 'all']).optional()
+})
+
+export const ListReviewsResponse = zod.object({
+  "reviews": zod.array(zod.object({
+  "id": zod.number(),
+  "productId": zod.number(),
+  "productName": zod.string(),
+  "customerName": zod.string(),
+  "rating": zod.number(),
+  "comment": zod.string().nullish(),
+  "isApproved": zod.boolean(),
+  "createdAt": zod.string()
+}))
+})
+
+
+/**
+ * @summary Approve or unapprove a review
+ */
+export const DecideReviewParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DecideReviewBody = zod.object({
+  "isApproved": zod.boolean()
+})
+
+export const decideReviewResponseRatingMax = 5;
+
+
+
+export const DecideReviewResponse = zod.object({
+  "id": zod.number(),
+  "productId": zod.number(),
+  "customerName": zod.string(),
+  "rating": zod.number().min(1).max(decideReviewResponseRatingMax),
+  "comment": zod.string().nullish(),
+  "isApproved": zod.boolean(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Delete a review (reject/remove from queue)
+ */
+export const DeleteReviewParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteReviewResponse = zod.void()
+
+
+/**
  * @summary Get a public store
  */
 export const GetStoreParams = zod.object({
@@ -695,6 +752,67 @@ export const GetRelatedProductsResponseItem = zod.object({
 }))
 })
 export const GetRelatedProductsResponse = zod.array(GetRelatedProductsResponseItem)
+
+
+/**
+ * @summary Get approved reviews and average rating for a product
+ */
+export const GetProductReviewsParams = zod.object({
+  "slug": zod.coerce.string(),
+  "productId": zod.coerce.number()
+})
+
+export const getProductReviewsResponseReviewsItemRatingMax = 5;
+
+
+
+export const GetProductReviewsResponse = zod.object({
+  "reviews": zod.array(zod.object({
+  "id": zod.number(),
+  "productId": zod.number(),
+  "customerName": zod.string(),
+  "rating": zod.number().min(1).max(getProductReviewsResponseReviewsItemRatingMax),
+  "comment": zod.string().nullish(),
+  "isApproved": zod.boolean(),
+  "createdAt": zod.string()
+})),
+  "averageRating": zod.number()
+})
+
+
+/**
+ * @summary Submit a review for a product (stored pending approval)
+ */
+export const CreateProductReviewParams = zod.object({
+  "slug": zod.coerce.string(),
+  "productId": zod.coerce.number()
+})
+
+export const createProductReviewBodyCustomerNameMax = 100;
+
+export const createProductReviewBodyRatingMax = 5;
+
+
+
+export const CreateProductReviewBody = zod.object({
+  "customerName": zod.string().max(createProductReviewBodyCustomerNameMax),
+  "rating": zod.number().min(1).max(createProductReviewBodyRatingMax),
+  "comment": zod.string().nullish()
+})
+
+export const createProductReviewResponseRatingMax = 5;
+
+
+
+export const CreateProductReviewResponse = zod.object({
+  "id": zod.number(),
+  "productId": zod.number(),
+  "customerName": zod.string(),
+  "rating": zod.number().min(1).max(createProductReviewResponseRatingMax),
+  "comment": zod.string().nullish(),
+  "isApproved": zod.boolean(),
+  "createdAt": zod.string()
+})
 
 
 /**
