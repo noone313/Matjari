@@ -2047,6 +2047,88 @@ export function useGetStoreProduct<TData = Awaited<ReturnType<typeof getStorePro
 
 
 
+export const getGetRelatedProductsUrl = (slug: string,
+    productId: number,) => {
+
+
+
+
+  return `/api/stores/${slug}/products/${productId}/related`
+}
+
+/**
+ * @summary Get related products in the same store and category as a product
+ */
+export const getRelatedProducts = async (slug: string,
+    productId: number, options?: Parameters<typeof customFetch>[1]): Promise<Product[]> => {
+
+  return customFetch<Product[]>(getGetRelatedProductsUrl(slug,productId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetRelatedProductsQueryKey = (slug: string,
+    productId: number,) => {
+    return [
+    `/api/stores/${slug}/products/${productId}/related`
+    ] as const;
+    }
+
+
+export const getGetRelatedProductsQueryOptions = <TData = Awaited<ReturnType<typeof getRelatedProducts>>, TError = ErrorType<ErrorResponse>>(slug: string,
+    productId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRelatedProducts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetRelatedProductsQueryKey(slug,productId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRelatedProducts>>> = ({ signal }) => getRelatedProducts(slug,productId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: slug !== null && slug !== undefined && productId !== null && productId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRelatedProducts>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetRelatedProductsQueryResult = NonNullable<Awaited<ReturnType<typeof getRelatedProducts>>>
+export type GetRelatedProductsQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Get related products in the same store and category as a product
+ */
+
+export function useGetRelatedProducts<TData = Awaited<ReturnType<typeof getRelatedProducts>>, TError = ErrorType<ErrorResponse>>(
+ slug: string,
+    productId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRelatedProducts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetRelatedProductsQueryOptions(slug,productId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export const getValidateDiscountUrl = (slug: string,) => {
 
 

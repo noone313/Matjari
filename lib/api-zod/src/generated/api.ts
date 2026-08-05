@@ -665,6 +665,39 @@ export const GetStoreProductResponse = zod.object({
 
 
 /**
+ * @summary Get related products in the same store and category as a product
+ */
+export const GetRelatedProductsParams = zod.object({
+  "slug": zod.coerce.string(),
+  "productId": zod.coerce.number()
+})
+
+export const GetRelatedProductsResponseItem = zod.object({
+  "id": zod.number(),
+  "merchantId": zod.number(),
+  "name": zod.string(),
+  "description": zod.string().nullish(),
+  "category": zod.string(),
+  "imageUrls": zod.array(zod.string()).optional(),
+  "noteTop": zod.string().nullish(),
+  "noteHeart": zod.string().nullish(),
+  "noteBase": zod.string().nullish(),
+  "skinType": zod.string().nullish(),
+  "ingredients": zod.string().nullish(),
+  "batchExpiry": zod.string().nullish(),
+  "isActive": zod.boolean(),
+  "createdAt": zod.string(),
+  "variants": zod.array(zod.object({
+  "id": zod.number(),
+  "variantLabel": zod.string(),
+  "price": zod.number(),
+  "stock": zod.number()
+}))
+})
+export const GetRelatedProductsResponse = zod.array(GetRelatedProductsResponseItem)
+
+
+/**
  * @summary Validate a discount code for a store
  */
 export const ValidateDiscountParams = zod.object({

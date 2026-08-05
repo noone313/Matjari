@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useGetStoreProduct, getGetStoreProductQueryKey, useBrowseStoreProducts, getBrowseStoreProductsQueryKey } from '@workspace/api-client-react';
+import { useGetStoreProduct, getGetStoreProductQueryKey, useGetRelatedProducts, getGetRelatedProductsQueryKey } from '@workspace/api-client-react';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice, getCategoryLabel } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -39,8 +39,8 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
     }
   }, [product, selectedVariant, activeImage]);
 
-  const { data: allProducts } = useBrowseStoreProducts(slug, undefined, {
-    query: { enabled: !!slug, queryKey: getBrowseStoreProductsQueryKey(slug) },
+  const { data: relatedProducts } = useGetRelatedProducts(slug, Number(productId), {
+    query: { enabled: !!slug && !!productId, queryKey: getGetRelatedProductsQueryKey(slug, Number(productId)) },
   });
 
   if (isLoading) return <div className="text-center py-24">جاري التحميل...</div>;
@@ -50,9 +50,6 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
   const totalStock = product.variants.reduce((s, v) => s + (v.stock ?? 0), 0);
   const currentStock = currentVariant?.stock ?? 0;
   const isOutOfStock = currentStock <= 0;
-  const relatedProducts = allProducts
-    ?.filter(p => p.category === product.category && p.id !== product.id)
-    .slice(0, 3) ?? [];
   const isFragrance = product.category.startsWith('perfume') || product.category === 'oud';
   const isSkincare = product.category === 'skincare' || product.category === 'makeup';
 
@@ -230,15 +227,17 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
       </div>
 
       {/* ── Related products ─────────────────── */}
-      {relatedProducts.length > 0 && (
+      {relatedProducts && relatedProducts.length > 0 && (
         <div className="mt-12 border-t border-zinc-100 pt-10 px-6 pb-8">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 text-center mb-6">منتجات مشابهة</p>
-          <div className="grid grid-cols-3 gap-px bg-zinc-100">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 text-center mb-6">
+            {isFragrance ? 'عطور مشابهة' : isSkincare ? 'أكمل مجموعتك' : 'منتجات مشابهة'}
+          </p>
+          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
             {relatedProducts.map(p => {
               const minPrice = p.variants?.length ? Math.min(...p.variants.map(v => v.price)) : 0;
               return (
-                <Link key={p.id} href={`/store/${slug}/product/${p.id}`}>
-                  <div className="bg-white group cursor-pointer">
+                <Link key={p.id} href={`/store/${slug}/product/${p.id}`} className="shrink-0 w-40 sm:w-44">
+                  <div className="bg-white group cursor-pointer border border-zinc-100">
                     <div className="aspect-[3/4] overflow-hidden bg-zinc-50">
                       {p.imageUrls?.[0] ? (
                         <img src={p.imageUrls[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700" />

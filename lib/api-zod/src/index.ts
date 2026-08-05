@@ -34,3 +34,13 @@ export type {
   StorePublic,
   TopProduct,
 } from "./generated/types";
+
+// Additional generated types not listed above, re-exported explicitly to avoid
+// colliding with the generated zod consts of the same names in ./generated/api.
+export type {
+  ProductCreateBody,
+  ProductUpdateBody,
+  PushSubscriptionInput,
+  PushSubscriptionInputKeys,
+  VapidPublicKey,
+} from "./generated/types";

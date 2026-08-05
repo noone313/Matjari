@@ -1,12 +1,13 @@
 import { Router } from "express";
 import { db, merchantsTable, productsTable, productVariantsTable, ordersTable, orderItemsTable, discountCodesTable } from "@workspace/db";
-import { eq, and, ilike, sql, gte } from "drizzle-orm";
+import { eq, and, ilike, sql, gte, ne } from "drizzle-orm";
 import { sendPushToMerchant } from "../lib/push";
 import {
   GetStoreParams,
   BrowseStoreProductsParams,
   BrowseStoreProductsQueryParams,
   GetStoreProductParams,
+  GetRelatedProductsParams,
   ValidateDiscountParams,
   ValidateDiscountBody,
   ValidateDiscountCodeParams,
@@ -176,6 +177,86 @@ router.get("/:slug/products/:productId", async (req, res): Promise<void> => {
     .where(eq(productVariantsTable.productId, product.id));
 
   res.json({ ...product, variants });
+});
+
+// GET /stores/:slug/products/:productId/related
+// Other active products in the same store and category, excluding the current
+// product, capped at 4. Matches the "عطور مشابهة / أكمل مجموعتك" strip.
+router.get("/:slug/products/:productId/related", async (req, res): Promise<void> => {
+  const params = GetRelatedProductsParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: "معرّف غير صالح" });
+    return;
+  }
+
+  const [merchant] = await db
+    .select()
+    .from(merchantsTable)
+    .where(eq(merchantsTable.slug, params.data.slug))
+    .limit(1);
+
+  if (!merchant) {
+    res.status(404).json({ error: "المتجر غير موجود" });
+    return;
+  }
+
+  const [product] = await db
+    .select()
+    .from(productsTable)
+    .where(
+      and(
+        eq(productsTable.id, params.data.productId),
+        eq(productsTable.merchantId, merchant.id),
+        eq(productsTable.isActive, true),
+      ),
+    )
+    .limit(1);
+
+  if (!product) {
+    res.status(404).json({ error: "المنتج غير موجود" });
+    return;
+  }
+
+  const products = await db
+    .select()
+    .from(productsTable)
+    .where(
+      and(
+        eq(productsTable.merchantId, merchant.id),
+        eq(productsTable.isActive, true),
+        eq(productsTable.category, product.category),
+        ne(productsTable.id, product.id),
+      ),
+    )
+    .limit(4);
+
+  const related = products;
+
+  const variantMap = new Map<number, typeof productVariantsTable.$inferSelect[]>();
+  if (related.length > 0) {
+    const allProductVariants = await db.execute(
+      `SELECT * FROM product_variants WHERE product_id = ANY(ARRAY[${related.map((p) => p.id).join(",")}])`,
+    ) as any;
+    const rows = allProductVariants.rows ?? allProductVariants;
+    for (const row of rows) {
+      const pid = row.product_id;
+      if (!variantMap.has(pid)) variantMap.set(pid, []);
+      variantMap.get(pid)!.push({
+        id: row.id,
+        productId: row.product_id,
+        variantLabel: row.variant_label,
+        price: row.price,
+        stock: row.stock,
+      });
+    }
+  }
+
+  res.json(
+    related.map((p) => ({
+      ...p,
+      variants: variantMap.get(p.id) ?? [],
+    })),
+  );
 });
 
 // POST /stores/:slug/validate-discount
