@@ -62,6 +62,13 @@ _Populate as you build — explicit user instructions worth remembering across s
   4. Run `pnpm run typecheck` — must pass.
 - Example: before typecheck, the file must end with `} from "./generated/types";` and have **no** extra trailing export line.
 
+### After codegen (or edits to `lib/api-zod` / `lib/api-client-react`), restart the Vite dev server
+
+- **Recurring:** Yes — `@workspace/api-client-react` and `@workspace/api-zod` are pnpm-symlinked into `node_modules`, and Vite does **not** watch node_modules by default. After regenerating these packages (or fixing `lib/api-zod/src/index.ts`), the long-running dev server keeps serving the stale/cached module graph from before the change.
+- **Symptom it caused:** dashboard pages rendered a broken/inconsistent state — Overview showed nothing and Settings stuck on "جاري التحميل..." forever, with **no** JS console errors and the backend returning 200. The committed code was healthy; it was purely a stale dev-server/HMR state.
+- **Diagnosis note:** the `export * from './generated/types'` line (previous gotcha) only re-exports TS *types*, which are erased at runtime — it can never cause a runtime "stuck loading"/blank-page symptom. The generated react-query client imports its types from its own `./api.schemas`, not from `@workspace/api-zod`.
+- **Exact fix:** restart the frontend dev server after codegen / workspace-package edits: stop the process on port 5173 and run `pnpm --filter @workspace/matjari run dev` (env: `PORT=5173`, `BASE_PATH=/`, `API_PORT=8080`). A hard browser refresh (cache clear) is the quick workaround if you can't restart.
+
 _Sharp edges: "always run X before Y" rules go here._
 
 ## Pointers
