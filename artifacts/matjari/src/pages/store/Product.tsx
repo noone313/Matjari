@@ -78,7 +78,7 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
     }
   }, [product, selectedVariant, activeImage]);
 
-  const { data: allProducts } = useBrowseStoreProducts(slug, {
+  const { data: allProducts } = useBrowseStoreProducts(slug, undefined, {
     query: { enabled: !!slug, queryKey: getBrowseStoreProductsQueryKey(slug) },
   });
 

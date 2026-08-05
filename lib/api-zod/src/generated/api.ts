@@ -537,6 +537,11 @@ export const BrowseStoreProductsParams = zod.object({
   "slug": zod.coerce.string()
 })
 
+export const BrowseStoreProductsQueryParams = zod.object({
+  "search": zod.coerce.string().optional().describe('Partial match against the product name'),
+  "category": zod.coerce.string().optional().describe('Filter by product category')
+})
+
 export const BrowseStoreProductsResponseItem = zod.object({
   "id": zod.number(),
   "merchantId": zod.number(),

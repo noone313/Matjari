@@ -489,6 +489,18 @@ paths:
           required: true
           schema:
             type: string
+        - name: search
+          in: query
+          required: false
+          description: Partial match against the product name
+          schema:
+            type: string
+        - name: category
+          in: query
+          required: false
+          description: Filter by product category
+          schema:
+            type: string
       responses:
         "200":
           description: OK

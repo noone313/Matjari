@@ -7,6 +7,7 @@
  */
 
 export * from './authResponse';
+export * from './browseStoreProductsParams';
 export * from './dashboardStats';
 export * from './discountCode';
 export * from './discountInput';

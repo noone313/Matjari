@@ -297,3 +297,14 @@ status?: string;
 page?: number;
 };
 
+export type BrowseStoreProductsParams = {
+/**
+ * Partial match against the product name
+ */
+search?: string;
+/**
+ * Filter by product category
+ */
+category?: string;
+};
+

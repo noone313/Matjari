@@ -21,6 +21,7 @@ import type {
 
 import type {
   AuthResponse,
+  BrowseStoreProductsParams,
   DashboardStats,
   DiscountCode,
   DiscountInput,
@@ -1640,20 +1641,29 @@ export function useGetStore<TData = Awaited<ReturnType<typeof getStore>>, TError
 
 
 
-export const getBrowseStoreProductsUrl = (slug: string,) => {
+export const getBrowseStoreProductsUrl = (slug: string,
+    params?: BrowseStoreProductsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/stores/${slug}/products`
+  return stringifiedParams.length > 0 ? `/api/stores/${slug}/products?${stringifiedParams}` : `/api/stores/${slug}/products`
 }
 
 /**
  * @summary Browse all products in a public store
  */
-export const browseStoreProducts = async (slug: string, options?: Parameters<typeof customFetch>[1]): Promise<Product[]> => {
+export const browseStoreProducts = async (slug: string,
+    params?: BrowseStoreProductsParams, options?: Parameters<typeof customFetch>[1]): Promise<Product[]> => {
 
-  return customFetch<Product[]>(getBrowseStoreProductsUrl(slug),
+  return customFetch<Product[]>(getBrowseStoreProductsUrl(slug,params),
   {
     ...options,
     method: 'GET'
@@ -1666,23 +1676,25 @@ export const browseStoreProducts = async (slug: string, options?: Parameters<typ
 
 
 
-export const getBrowseStoreProductsQueryKey = (slug: string,) => {
+export const getBrowseStoreProductsQueryKey = (slug: string,
+    params?: BrowseStoreProductsParams,) => {
     return [
-    `/api/stores/${slug}/products`
+    `/api/stores/${slug}/products`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getBrowseStoreProductsQueryOptions = <TData = Awaited<ReturnType<typeof browseStoreProducts>>, TError = ErrorType<ErrorResponse>>(slug: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof browseStoreProducts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getBrowseStoreProductsQueryOptions = <TData = Awaited<ReturnType<typeof browseStoreProducts>>, TError = ErrorType<ErrorResponse>>(slug: string,
+    params?: BrowseStoreProductsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof browseStoreProducts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getBrowseStoreProductsQueryKey(slug);
+  const queryKey =  queryOptions?.queryKey ?? getBrowseStoreProductsQueryKey(slug,params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof browseStoreProducts>>> = ({ signal }) => browseStoreProducts(slug, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof browseStoreProducts>>> = ({ signal }) => browseStoreProducts(slug,params, { signal, ...requestOptions });
 
 
 
@@ -1700,11 +1712,12 @@ export type BrowseStoreProductsQueryError = ErrorType<ErrorResponse>
  */
 
 export function useBrowseStoreProducts<TData = Awaited<ReturnType<typeof browseStoreProducts>>, TError = ErrorType<ErrorResponse>>(
- slug: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof browseStoreProducts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ slug: string,
+    params?: BrowseStoreProductsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof browseStoreProducts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getBrowseStoreProductsQueryOptions(slug,options)
+  const queryOptions = getBrowseStoreProductsQueryOptions(slug,params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

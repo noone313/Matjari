@@ -1,2 +1,35 @@
 export * from "./generated/api";
-export * from "./generated/types";
+// Explicit type re-exports (excluding BrowseStoreProductsParams, which
+// collides with the generated zod const of the same name in ./generated/api).
+export type {
+  AuthResponse,
+  DashboardStats,
+  DiscountCode,
+  DiscountInput,
+  DiscountValidation,
+  DiscountValidationResult,
+  ErrorResponse,
+  HealthStatus,
+  ListOrdersParams,
+  ListProductsParams,
+  Merchant,
+  MerchantLogin,
+  MerchantRegister,
+  MerchantUpdate,
+  Order,
+  OrderConfirmation,
+  OrderDetail,
+  OrderInput,
+  OrderItem,
+  OrderItemInput,
+  OrderListResponse,
+  OrderStatusUpdate,
+  Product,
+  ProductInput,
+  ProductUpdate,
+  ProductVariant,
+  ProductVariantInput,
+  StatusCount,
+  StorePublic,
+  TopProduct,
+} from "./generated/types";

@@ -5,6 +5,7 @@ import { sendPushToMerchant } from "../lib/push";
 import {
   GetStoreParams,
   BrowseStoreProductsParams,
+  BrowseStoreProductsQueryParams,
   GetStoreProductParams,
   ValidateDiscountParams,
   ValidateDiscountBody,
@@ -49,8 +50,15 @@ router.get("/:slug", async (req, res): Promise<void> => {
 // GET /stores/:slug/products
 router.get("/:slug/products", async (req, res): Promise<void> => {
   const params = BrowseStoreProductsParams.safeParse(req.params);
+  const query = BrowseStoreProductsQueryParams.safeParse(req.query);
+
   if (!params.success) {
     res.status(400).json({ error: "معرّف غير صالح" });
+    return;
+  }
+
+  if (!query.success) {
+    res.status(400).json({ error: "بيانات البحث غير صالحة" });
     return;
   }
 
@@ -65,10 +73,25 @@ router.get("/:slug/products", async (req, res): Promise<void> => {
     return;
   }
 
+  const { search, category } = query.data;
+
+  const filters = [
+    eq(productsTable.merchantId, merchant.id),
+    eq(productsTable.isActive, true),
+  ];
+
+  if (category) {
+    filters.push(eq(productsTable.category, category as any));
+  }
+
+  if (search && search.trim()) {
+    filters.push(ilike(productsTable.name, `%${search.trim()}%`));
+  }
+
   const products = await db
     .select()
     .from(productsTable)
-    .where(and(eq(productsTable.merchantId, merchant.id), eq(productsTable.isActive, true)));
+    .where(and(...filters));
 
   const allVariants = await db
     .select()

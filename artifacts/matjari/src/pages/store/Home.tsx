@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useBrowseStoreProducts, getBrowseStoreProductsQueryKey } from '@workspace/api-client-react';
 import { formatPrice, getCategoryLabel } from '@/lib/utils';
 import { Link, useLocation } from 'wouter';
@@ -14,37 +14,71 @@ const CATEGORIES = [
   { value: 'gifts', label: 'هدايا' },
 ];
 
+function useDebounced<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return debounced;
+}
+
 export default function StoreHome({ slug }: { slug: string }) {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('');
   const [sortBy, setSortBy] = useState<'default' | 'price_asc' | 'price_desc'>('default');
   const [filterOpen, setFilterOpen] = useState(false);
   const [brokenImages, setBrokenImages] = useState<Set<number>>(new Set());
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
 
-  // Sync category from URL ?cat= param
+  const debouncedSearch = useDebounced(search, 300);
+
+  // Sync category & search from URL query params
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const cat = params.get('cat') || '';
+    const q = params.get('q') || '';
     setActiveCategory(cat);
+    setSearch(q);
   }, [location]);
 
-  const { data: allProducts, isLoading } = useBrowseStoreProducts(slug, {
+  // Keep the URL query string in sync so links stay shareable
+  const updateUrl = (cat: string, q: string) => {
+    const params = new URLSearchParams(window.location.search);
+    if (cat) params.set('cat', cat);
+    else params.delete('cat');
+    if (q) params.set('q', q);
+    else params.delete('q');
+    const qs = params.toString();
+    setLocation(qs ? `${location.split('?')[0]}?${qs}` : location.split('?')[0], { replace: true });
+  };
+
+  const handleCategory = (value: string) => {
+    setActiveCategory(value);
+    updateUrl(value, search);
+  };
+
+  const handleSearch = (value: string) => {
+    setSearch(value);
+    updateUrl(activeCategory, value);
+  };
+
+  const browseParams = useMemo(
+    () => ({ search: debouncedSearch || undefined, category: activeCategory || undefined }),
+    [debouncedSearch, activeCategory],
+  );
+
+  const { data: allProducts, isLoading } = useBrowseStoreProducts(slug, browseParams, {
     query: {
       enabled: !!slug,
-      queryKey: getBrowseStoreProductsQueryKey(slug),
+      queryKey: getBrowseStoreProductsQueryKey(slug, browseParams),
     },
   });
 
   let products = allProducts?.filter((p) => {
     if (!p.imageUrls?.length || !p.imageUrls.some((u) => u?.trim())) return false;
     if (brokenImages.has(p.id)) return false;
-    const matchCat = !activeCategory || p.category === activeCategory;
-    const matchSearch =
-      !search ||
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      (p.description ?? '').toLowerCase().includes(search.toLowerCase());
-    return matchCat && matchSearch;
+    return true;
   }) ?? [];
 
   if (sortBy === 'price_asc') {
@@ -74,7 +108,7 @@ export default function StoreHome({ slug }: { slug: string }) {
             {CATEGORIES.map(({ value, label }) => (
               <li key={value}>
                 <button
-                  onClick={() => setActiveCategory(value)}
+                  onClick={() => handleCategory(value)}
                   className={`text-sm w-full text-right py-1.5 transition-colors ${
                     activeCategory === value
                       ? 'text-zinc-900 font-semibold'
@@ -124,12 +158,12 @@ export default function StoreHome({ slug }: { slug: string }) {
               type="text"
               placeholder="بحث..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => handleSearch(e.target.value)}
               className="w-full text-sm bg-transparent border-b border-zinc-200 focus:border-zinc-900 outline-none py-2 pr-0 pl-6 placeholder:text-zinc-300 transition-colors"
             />
             {search && (
               <button
-                onClick={() => setSearch('')}
+                onClick={() => handleSearch('')}
                 className="absolute left-0 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-900"
               >
                 <X className="w-3.5 h-3.5" />
@@ -157,7 +191,7 @@ export default function StoreHome({ slug }: { slug: string }) {
           <div className="flex items-center gap-2 mb-6">
             <span className="text-xs tracking-widest uppercase text-zinc-500 border border-zinc-200 px-3 py-1.5 flex items-center gap-2">
               {getCategoryLabel(activeCategory)}
-              <button onClick={() => setActiveCategory('')} className="text-zinc-400 hover:text-zinc-900">
+              <button onClick={() => handleCategory('')} className="text-zinc-400 hover:text-zinc-900">
                 <X className="w-3 h-3" />
               </button>
             </span>
@@ -273,7 +307,7 @@ export default function StoreHome({ slug }: { slug: string }) {
                 {CATEGORIES.map(({ value, label }) => (
                   <li key={value}>
                     <button
-                      onClick={() => { setActiveCategory(value); setFilterOpen(false); }}
+                      onClick={() => { handleCategory(value); setFilterOpen(false); }}
                       className={`text-sm w-full text-right py-2 border-b border-zinc-50 transition-colors ${
                         activeCategory === value ? 'text-zinc-900 font-semibold' : 'text-zinc-400'
                       }`}
