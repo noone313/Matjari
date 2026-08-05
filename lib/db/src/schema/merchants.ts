@@ -14,6 +14,8 @@ export const merchantsTable = pgTable("merchants", {
   accentColor: varchar("accent_color", { length: 7 }).notNull().default("#B08D4F"),
   bankTransferInfo: text("bank_transfer_info"),
   phone: varchar("phone", { length: 20 }),
+  instagramHandle: varchar("instagram_handle", { length: 100 }),
+  whatsappNumber: varchar("whatsapp_number", { length: 20 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

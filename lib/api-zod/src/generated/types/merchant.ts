@@ -22,6 +22,10 @@ export interface Merchant {
   bankTransferInfo?: string | null;
   /** @nullable */
   phone?: string | null;
+  /** @nullable */
+  instagramHandle?: string | null;
+  /** @nullable */
+  whatsappNumber?: string | null;
   createdAt: string;
   /** @nullable */
   productCount?: number | null;

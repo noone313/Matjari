@@ -44,6 +44,8 @@ router.get("/:slug", async (req, res): Promise<void> => {
     accentColor: merchant.accentColor,
     phone: merchant.phone,
     bankTransferInfo: merchant.bankTransferInfo,
+    instagramHandle: merchant.instagramHandle,
+    whatsappNumber: merchant.whatsappNumber,
     createdAt: merchant.createdAt,
   });
 });

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useGetStore, getGetStoreQueryKey } from '@workspace/api-client-react';
 import { useCart } from '@/contexts/CartContext';
-import { ShoppingBag, Menu, X, Phone, MessageCircle } from 'lucide-react';
+import { ShoppingBag, Menu, X, Phone, MessageCircle, Instagram } from 'lucide-react';
 
 export default function StoreLayout({ children, slug }: { children: React.ReactNode; slug: string }) {
   const { data: store, isLoading } = useGetStore(slug, {
@@ -179,6 +179,32 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
               <Phone className="w-4 h-4" />
               {store.phone}
             </a>
+          )}
+          {(store.instagramHandle || store.whatsappNumber) && (
+            <div className="flex items-center gap-4">
+              {store.instagramHandle && (
+                <a
+                  href={`https://instagram.com/${store.instagramHandle.replace(/^@/, '')}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="انستقرام"
+                  className="flex items-center gap-2 text-zinc-900 hover:text-primary transition-colors"
+                >
+                  <Instagram className="w-4 h-4" />
+                </a>
+              )}
+              {store.whatsappNumber && (
+                <a
+                  href={`https://wa.me/${store.whatsappNumber.replace(/\D/g, '')}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="واتساب"
+                  className="flex items-center gap-2 text-zinc-900 hover:text-primary transition-colors"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                </a>
+              )}
+            </div>
           )}
           <p className="text-xs">
             مشغل بواسطة{' '}

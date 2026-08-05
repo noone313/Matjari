@@ -15,6 +15,8 @@ const schema = z.object({
   logoUrl: z.string().optional().nullable(),
   bannerUrl: z.string().optional().nullable(),
   phone: z.string().optional().nullable(),
+  instagramHandle: z.string().optional().nullable(),
+  whatsappNumber: z.string().optional().nullable(),
   bankTransferInfo: z.string().optional().nullable(),
   accentColor: z.string().default('43 74% 49%'), // Provide an HSL value text field or color picker simplified
 });
@@ -32,6 +34,8 @@ export default function Settings() {
       logoUrl: '',
       bannerUrl: '',
       phone: '',
+      instagramHandle: '',
+      whatsappNumber: '',
       bankTransferInfo: '',
       accentColor: '43 74% 49%',
     }
@@ -45,6 +49,8 @@ export default function Settings() {
         logoUrl: settings.logoUrl,
         bannerUrl: settings.bannerUrl,
         phone: settings.phone,
+        instagramHandle: settings.instagramHandle,
+        whatsappNumber: settings.whatsappNumber,
         bankTransferInfo: settings.bankTransferInfo,
         accentColor: settings.accentColor || '43 74% 49%',
       });
@@ -107,6 +113,19 @@ export default function Settings() {
           <div className="space-y-2">
             <Label>رقم الهاتف للطلبات (اختياري)</Label>
             <Input {...form.register('phone')} dir="ltr" className="text-left" placeholder="+964..." />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label>حساب انستقرام (اختياري)</Label>
+              <Input {...form.register('instagramHandle')} dir="ltr" className="text-left" placeholder="@" />
+              <p className="text-xs text-gray-500">سيظهر أيقونة انستقرام بالمتجر العام إن أُدخل</p>
+            </div>
+            <div className="space-y-2">
+              <Label>رقم واتساب (اختياري)</Label>
+              <Input {...form.register('whatsappNumber')} dir="ltr" className="text-left" placeholder="+964..." />
+              <p className="text-xs text-gray-500">سيظهر زر واتساب بالمتجر العام إن أُدخل</p>
+            </div>
           </div>
 
           <div className="space-y-2">

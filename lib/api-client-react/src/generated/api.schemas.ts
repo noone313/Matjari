@@ -42,6 +42,10 @@ export interface Merchant {
   bankTransferInfo?: string | null;
   /** @nullable */
   phone?: string | null;
+  /** @nullable */
+  instagramHandle?: string | null;
+  /** @nullable */
+  whatsappNumber?: string | null;
   createdAt: string;
   /** @nullable */
   productCount?: number | null;
@@ -69,6 +73,10 @@ export interface MerchantUpdate {
   bankTransferInfo?: string | null;
   /** @nullable */
   phone?: string | null;
+  /** @nullable */
+  instagramHandle?: string | null;
+  /** @nullable */
+  whatsappNumber?: string | null;
 }
 
 export interface TopProduct {
@@ -289,6 +297,10 @@ export interface StorePublic {
   phone?: string | null;
   /** @nullable */
   bankTransferInfo?: string | null;
+  /** @nullable */
+  instagramHandle?: string | null;
+  /** @nullable */
+  whatsappNumber?: string | null;
   createdAt: string;
 }
 

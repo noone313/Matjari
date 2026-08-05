@@ -721,6 +721,10 @@ components:
           type: ["string", "null"]
         phone:
           type: ["string", "null"]
+        instagramHandle:
+          type: ["string", "null"]
+        whatsappNumber:
+          type: ["string", "null"]
         createdAt:
           type: string
         productCount:
@@ -744,6 +748,10 @@ components:
         bankTransferInfo:
           type: ["string", "null"]
         phone:
+          type: ["string", "null"]
+        instagramHandle:
+          type: ["string", "null"]
+        whatsappNumber:
           type: ["string", "null"]
 
     # ─── Dashboard ──────────────────────────────────────────
@@ -1129,6 +1137,10 @@ components:
         phone:
           type: ["string", "null"]
         bankTransferInfo:
+          type: ["string", "null"]
+        instagramHandle:
+          type: ["string", "null"]
+        whatsappNumber:
           type: ["string", "null"]
         createdAt:
           type: string

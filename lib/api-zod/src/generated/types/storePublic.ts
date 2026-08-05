@@ -20,5 +20,9 @@ export interface StorePublic {
   phone?: string | null;
   /** @nullable */
   bankTransferInfo?: string | null;
+  /** @nullable */
+  instagramHandle?: string | null;
+  /** @nullable */
+  whatsappNumber?: string | null;
   createdAt: string;
 }

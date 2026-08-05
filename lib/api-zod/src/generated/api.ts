@@ -38,6 +38,8 @@ export const RegisterMerchantResponse = zod.object({
   "accentColor": zod.string(),
   "bankTransferInfo": zod.string().nullish(),
   "phone": zod.string().nullish(),
+  "instagramHandle": zod.string().nullish(),
+  "whatsappNumber": zod.string().nullish(),
   "createdAt": zod.string(),
   "productCount": zod.number().nullish(),
   "orderCount": zod.number().nullish()
@@ -67,6 +69,8 @@ export const LoginMerchantResponse = zod.object({
   "accentColor": zod.string(),
   "bankTransferInfo": zod.string().nullish(),
   "phone": zod.string().nullish(),
+  "instagramHandle": zod.string().nullish(),
+  "whatsappNumber": zod.string().nullish(),
   "createdAt": zod.string(),
   "productCount": zod.number().nullish(),
   "orderCount": zod.number().nullish()
@@ -96,6 +100,8 @@ export const GetMeResponse = zod.object({
   "accentColor": zod.string(),
   "bankTransferInfo": zod.string().nullish(),
   "phone": zod.string().nullish(),
+  "instagramHandle": zod.string().nullish(),
+  "whatsappNumber": zod.string().nullish(),
   "createdAt": zod.string(),
   "productCount": zod.number().nullish(),
   "orderCount": zod.number().nullish()
@@ -153,6 +159,8 @@ export const GetDashboardSettingsResponse = zod.object({
   "accentColor": zod.string(),
   "bankTransferInfo": zod.string().nullish(),
   "phone": zod.string().nullish(),
+  "instagramHandle": zod.string().nullish(),
+  "whatsappNumber": zod.string().nullish(),
   "createdAt": zod.string(),
   "productCount": zod.number().nullish(),
   "orderCount": zod.number().nullish()
@@ -169,7 +177,9 @@ export const UpdateDashboardSettingsBody = zod.object({
   "description": zod.string().nullish(),
   "accentColor": zod.string().optional(),
   "bankTransferInfo": zod.string().nullish(),
-  "phone": zod.string().nullish()
+  "phone": zod.string().nullish(),
+  "instagramHandle": zod.string().nullish(),
+  "whatsappNumber": zod.string().nullish()
 })
 
 export const UpdateDashboardSettingsResponse = zod.object({
@@ -183,6 +193,8 @@ export const UpdateDashboardSettingsResponse = zod.object({
   "accentColor": zod.string(),
   "bankTransferInfo": zod.string().nullish(),
   "phone": zod.string().nullish(),
+  "instagramHandle": zod.string().nullish(),
+  "whatsappNumber": zod.string().nullish(),
   "createdAt": zod.string(),
   "productCount": zod.number().nullish(),
   "orderCount": zod.number().nullish()
@@ -526,6 +538,8 @@ export const GetStoreResponse = zod.object({
   "accentColor": zod.string(),
   "phone": zod.string().nullish(),
   "bankTransferInfo": zod.string().nullish(),
+  "instagramHandle": zod.string().nullish(),
+  "whatsappNumber": zod.string().nullish(),
   "createdAt": zod.string()
 })
 
