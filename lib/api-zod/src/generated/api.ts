@@ -618,6 +618,20 @@ export const ValidateDiscountResponse = zod.object({
 
 
 /**
+ * @summary Validate a discount code for a store (no side effects)
+ */
+export const ValidateDiscountCodeParams = zod.object({
+  "slug": zod.coerce.string(),
+  "code": zod.coerce.string()
+})
+
+export const ValidateDiscountCodeResponse = zod.object({
+  "valid": zod.boolean(),
+  "percentOff": zod.number().optional()
+})
+
+
+/**
  * @summary Place a new order on a store
  */
 export const PlaceOrderParams = zod.object({

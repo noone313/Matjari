@@ -10,6 +10,7 @@ export * from './authResponse';
 export * from './browseStoreProductsParams';
 export * from './dashboardStats';
 export * from './discountCode';
+export * from './discountCodeValidationResult';
 export * from './discountInput';
 export * from './discountValidation';
 export * from './discountValidationResult';

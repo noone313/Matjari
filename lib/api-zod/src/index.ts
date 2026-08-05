@@ -5,6 +5,7 @@ export type {
   AuthResponse,
   DashboardStats,
   DiscountCode,
+  DiscountCodeValidationResult,
   DiscountInput,
   DiscountValidation,
   DiscountValidationResult,

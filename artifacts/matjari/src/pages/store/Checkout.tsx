@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useCart } from '@/contexts/CartContext';
-import { usePlaceOrder, useGetStore, useValidateDiscount, getGetStoreQueryKey } from '@workspace/api-client-react';
+import { usePlaceOrder, useGetStore, validateDiscountCode, getGetStoreQueryKey } from '@workspace/api-client-react';
 import { formatPrice } from '@/lib/utils';
 import { Link, useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { ChevronRight, CreditCard, Banknote, AlertCircle } from 'lucide-react';
+import { ChevronRight, CreditCard, Banknote, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const schema = z.object({
@@ -23,6 +23,15 @@ const schema = z.object({
   giftMessage: z.string().optional().nullable(),
 });
 
+function useDebounced<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return debounced;
+}
+
 export default function StoreCheckout({ slug }: { slug: string }) {
   const { items, subtotal, clearCart } = useCart();
   const [, setLocation] = useLocation();
@@ -31,20 +40,48 @@ export default function StoreCheckout({ slug }: { slug: string }) {
   const { toast } = useToast();
 
   const searchParams = new URLSearchParams(window.location.search);
-  const discountCode = searchParams.get('discount');
+  const urlDiscountCode = searchParams.get('discount') ?? '';
+  const [discountInput, setDiscountInput] = useState(urlDiscountCode);
+  const debouncedDiscount = useDebounced(discountInput.trim(), 400);
   const [appliedDiscount, setAppliedDiscount] = useState<number>(0);
+  const [discountMessage, setDiscountMessage] = useState<{ type: 'valid' | 'invalid'; text: string } | null>(null);
+  const [discountChecking, setDiscountChecking] = useState(false);
+  const validatedRef = useRef('');
 
-  const validateMutation = useValidateDiscount();
-
-  React.useEffect(() => {
-    if (discountCode) {
-      validateMutation.mutate({ slug, data: { code: discountCode } }, {
-        onSuccess: (res) => {
-          if (res.valid) setAppliedDiscount(res.percentOff);
-        }
-      });
+  // Validate whenever the debounced discount field changes or on initial load from URL
+  useEffect(() => {
+    const code = debouncedDiscount.trim();
+    if (!code) {
+      setAppliedDiscount(0);
+      setDiscountMessage(null);
+      validatedRef.current = '';
+      return;
     }
-  }, [discountCode]);
+    let cancelled = false;
+    setDiscountChecking(true);
+    validateDiscountCode(slug, code)
+      .then((res) => {
+        if (cancelled) return;
+        validatedRef.current = code;
+        if (res.valid) {
+          setAppliedDiscount(res.percentOff ?? 0);
+          setDiscountMessage({ type: 'valid', text: `تم تطبيق الخصم ${res.percentOff}%` });
+        } else {
+          setAppliedDiscount(0);
+          setDiscountMessage({ type: 'invalid', text: 'الكود غير صالح أو منتهي' });
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        validatedRef.current = code;
+        setAppliedDiscount(0);
+        setDiscountMessage({ type: 'invalid', text: 'الكود غير صالح أو منتهي' });
+      })
+      .finally(() => {
+        if (!cancelled) setDiscountChecking(false);
+      });
+    return () => { cancelled = true; };
+  }, [debouncedDiscount, slug]);
 
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -69,9 +106,10 @@ export default function StoreCheckout({ slug }: { slug: string }) {
   const total = subtotal - discountAmount;
 
   const onSubmit = (data: z.infer<typeof schema>) => {
+    const validDiscount = discountMessage?.type === 'valid' ? discountInput.trim().toUpperCase() : null;
     const payload = {
       ...data,
-      discountCode: discountCode || null,
+      discountCode: validDiscount,
       items: items.map(item => ({
         variantId: item.variantId,
         quantity: item.quantity
@@ -187,6 +225,32 @@ export default function StoreCheckout({ slug }: { slug: string }) {
               ))}
             </div>
 
+            <div className="space-y-2">
+              <Label className="text-gray-400 text-xs">كود الخصم</Label>
+              <Input
+                value={discountInput}
+                onChange={(e) => { setDiscountInput(e.target.value); setDiscountMessage(null); }}
+                placeholder="أدخل الكود هنا"
+                className="h-11 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 text-left"
+                dir="ltr"
+              />
+              {discountChecking && !discountMessage && (
+                <p className="text-xs text-gray-400">جاري التحقق...</p>
+              )}
+              {discountMessage?.type === 'valid' && (
+                <p className="text-xs text-green-400 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  {discountMessage.text}
+                </p>
+              )}
+              {discountMessage?.type === 'invalid' && (
+                <p className="text-xs text-red-400 flex items-center gap-1.5">
+                  <XCircle className="w-3.5 h-3.5" />
+                  {discountMessage.text}
+                </p>
+              )}
+            </div>
+
             <div className="pt-6 border-t border-gray-800 space-y-3 text-sm">
               <div className="flex justify-between text-gray-400">
                 <span>المجموع الفرعي</span>
@@ -195,7 +259,7 @@ export default function StoreCheckout({ slug }: { slug: string }) {
               
               {appliedDiscount > 0 && (
                 <div className="flex justify-between text-[hsl(var(--primary))] font-bold">
-                  <span>خصم الترويج</span>
+                  <span>خصم الترويج ({discountInput.trim().toUpperCase()})</span>
                   <span>- {formatPrice(discountAmount)}</span>
                 </div>
               )}

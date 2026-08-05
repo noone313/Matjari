@@ -270,6 +270,11 @@ export interface DiscountValidationResult {
   code: string;
 }
 
+export interface DiscountCodeValidationResult {
+  valid: boolean;
+  percentOff?: number;
+}
+
 export interface StorePublic {
   slug: string;
   storeName: string;

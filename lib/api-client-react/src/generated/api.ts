@@ -24,6 +24,7 @@ import type {
   BrowseStoreProductsParams,
   DashboardStats,
   DiscountCode,
+  DiscountCodeValidationResult,
   DiscountInput,
   DiscountValidation,
   DiscountValidationResult,
@@ -1883,6 +1884,88 @@ export const useValidateDiscount = <TError = ErrorType<ErrorResponse>,
       > => {
       return useMutation(getValidateDiscountMutationOptions(options));
     }
+
+export const getValidateDiscountCodeUrl = (slug: string,
+    code: string,) => {
+
+
+
+
+  return `/api/stores/${slug}/discounts/${code}/validate`
+}
+
+/**
+ * @summary Validate a discount code for a store (no side effects)
+ */
+export const validateDiscountCode = async (slug: string,
+    code: string, options?: Parameters<typeof customFetch>[1]): Promise<DiscountCodeValidationResult> => {
+
+  return customFetch<DiscountCodeValidationResult>(getValidateDiscountCodeUrl(slug,code),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getValidateDiscountCodeQueryKey = (slug: string,
+    code: string,) => {
+    return [
+    `/api/stores/${slug}/discounts/${code}/validate`
+    ] as const;
+    }
+
+
+export const getValidateDiscountCodeQueryOptions = <TData = Awaited<ReturnType<typeof validateDiscountCode>>, TError = ErrorType<ErrorResponse>>(slug: string,
+    code: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof validateDiscountCode>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getValidateDiscountCodeQueryKey(slug,code);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof validateDiscountCode>>> = ({ signal }) => validateDiscountCode(slug,code, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: slug !== null && slug !== undefined && code !== null && code !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof validateDiscountCode>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ValidateDiscountCodeQueryResult = NonNullable<Awaited<ReturnType<typeof validateDiscountCode>>>
+export type ValidateDiscountCodeQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Validate a discount code for a store (no side effects)
+ */
+
+export function useValidateDiscountCode<TData = Awaited<ReturnType<typeof validateDiscountCode>>, TError = ErrorType<ErrorResponse>>(
+ slug: string,
+    code: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof validateDiscountCode>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getValidateDiscountCodeQueryOptions(slug,code,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getPlaceOrderUrl = (slug: string,) => {
 

@@ -9,6 +9,7 @@ import {
   GetStoreProductParams,
   ValidateDiscountParams,
   ValidateDiscountBody,
+  ValidateDiscountCodeParams,
   PlaceOrderParams,
   PlaceOrderBody,
 } from "@workspace/api-zod";
@@ -214,6 +215,47 @@ router.post("/:slug/validate-discount", async (req, res): Promise<void> => {
   }
 
   res.json({ valid: true, percentOff: discount.percentOff, code: discount.code });
+});
+
+// GET /stores/:slug/discounts/:code/validate
+// Read-only validation: code exists, belongs to this merchant, and is active.
+// No side effects. The authoritative check still happens at order creation.
+router.get("/:slug/discounts/:code/validate", async (req, res): Promise<void> => {
+  const params = ValidateDiscountCodeParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: "معرّف غير صالح" });
+    return;
+  }
+
+  const [merchant] = await db
+    .select()
+    .from(merchantsTable)
+    .where(eq(merchantsTable.slug, params.data.slug))
+    .limit(1);
+
+  if (!merchant) {
+    res.status(404).json({ error: "المتجر غير موجود" });
+    return;
+  }
+
+  const [discount] = await db
+    .select()
+    .from(discountCodesTable)
+    .where(
+      and(
+        eq(discountCodesTable.merchantId, merchant.id),
+        eq(discountCodesTable.code, params.data.code.toUpperCase()),
+        eq(discountCodesTable.isActive, true),
+      ),
+    )
+    .limit(1);
+
+  if (!discount) {
+    res.json({ valid: false });
+    return;
+  }
+
+  res.json({ valid: true, percentOff: discount.percentOff });
 });
 
 // POST /stores/:slug/orders

@@ -578,6 +578,36 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /stores/{slug}/discounts/{code}/validate:
+    get:
+      operationId: validateDiscountCode
+      tags: [storefront]
+      summary: Validate a discount code for a store (no side effects)
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscountCodeValidationResult"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /stores/{slug}/orders:
     post:
       operationId: placeOrder
@@ -1069,6 +1099,15 @@ components:
           type: number
         code:
           type: string
+
+    DiscountCodeValidationResult:
+      type: object
+      required: [valid]
+      properties:
+        valid:
+          type: boolean
+        percentOff:
+          type: number
 
     # ─── Storefront ──────────────────────────────────────────
     StorePublic:
