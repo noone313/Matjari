@@ -1,8 +1,4 @@
-// Load .env from project root when running locally
-import { config } from "dotenv";
-import { resolve } from "path";
-config({ path: resolve(process.cwd(), "../../.env") }); // monorepo root
-config({ path: resolve(process.cwd(), ".env") });       // artifact root fallback
+import "./env"; // loads dotenv before any module reads process.env
 
 import app from "./app";
 import { logger } from "./lib/logger";
