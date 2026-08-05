@@ -38,7 +38,20 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+### After every codegen run, remove the duplicate re-export line from `lib/api-zod/src/index.ts`
+
+- **Recurring:** Yes — orval appends `export * from './generated/types';` to the end of the hand-maintained `lib/api-zod/src/index.ts` **every single time** `pnpm --filter @workspace/api-spec run codegen` runs. It will reappear after every future codegen run.
+- **Why it breaks:** the first line `export * from "./generated/api"` already exports the zod const `BrowseStoreProductsParams`, while `generated/types` exports a *type* of the same name. The appended barrel re-export makes the two collide, and typecheck fails with:
+  `lib/api-zod/src/index.ts: error TS2308: Module "./generated/api" has already exported a member named 'BrowseStoreProductsParams'`.
+- **Exact fix steps (in this order):**
+  1. Run codegen: `pnpm --filter @workspace/api-spec run codegen`
+  2. Open `lib/api-zod/src/index.ts` and delete the last line, which is exactly:
+     `export * from './generated/types';`
+  3. Do **not** touch the explicit `export type { ... } from "./generated/types";` block above it — it intentionally lists every type except `BrowseStoreProductsParams` (which collides).
+  4. Run `pnpm run typecheck` — must pass.
+- Example: before typecheck, the file must end with `} from "./generated/types";` and have **no** extra trailing export line.
+
+_Sharp edges: "always run X before Y" rules go here._
 
 ## Pointers
 
