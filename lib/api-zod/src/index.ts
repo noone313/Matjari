@@ -56,3 +56,14 @@ export type {
   Review,
   ReviewDecision,
 } from "./generated/types";
+
+// Stock-notification types: same story as above — the zod consts for these
+// names live in ./generated/api, so re-export explicitly to avoid collisions.
+export type {
+  ListStockNotificationsParams,
+  StockNotification,
+  StockNotificationCreate,
+  StockNotificationItem,
+  StockNotificationListResponse,
+  StockNotificationUpdate,
+} from "./generated/types";

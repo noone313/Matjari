@@ -631,6 +631,47 @@ export const DeleteReviewResponse = zod.void()
 
 
 /**
+ * @summary List stock notifications for the current merchant's product variants
+ */
+export const ListStockNotificationsQueryParams = zod.object({
+  "productId": zod.coerce.number().optional()
+})
+
+export const ListStockNotificationsResponse = zod.object({
+  "notifications": zod.array(zod.object({
+  "id": zod.number(),
+  "variantId": zod.number(),
+  "productId": zod.number(),
+  "productName": zod.string(),
+  "variantLabel": zod.string(),
+  "customerPhone": zod.string(),
+  "notified": zod.boolean(),
+  "createdAt": zod.string()
+}))
+})
+
+
+/**
+ * @summary Mark a stock notification as contacted
+ */
+export const UpdateStockNotificationParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateStockNotificationBody = zod.object({
+  "notified": zod.boolean()
+})
+
+export const UpdateStockNotificationResponse = zod.object({
+  "id": zod.number(),
+  "variantId": zod.number(),
+  "customerPhone": zod.string(),
+  "notified": zod.boolean(),
+  "createdAt": zod.string()
+})
+
+
+/**
  * @summary Get a public store
  */
 export const GetStoreParams = zod.object({
@@ -811,6 +852,32 @@ export const CreateProductReviewResponse = zod.object({
   "rating": zod.number().min(1).max(createProductReviewResponseRatingMax),
   "comment": zod.string().nullish(),
   "isApproved": zod.boolean(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Register a phone number to be notified when an out-of-stock variant becomes available
+ */
+export const CreateStockNotificationParams = zod.object({
+  "slug": zod.coerce.string(),
+  "productId": zod.coerce.number(),
+  "variantId": zod.coerce.number()
+})
+
+export const createStockNotificationBodyCustomerPhoneMax = 20;
+
+
+
+export const CreateStockNotificationBody = zod.object({
+  "customerPhone": zod.string().max(createStockNotificationBodyCustomerPhoneMax)
+})
+
+export const CreateStockNotificationResponse = zod.object({
+  "id": zod.number(),
+  "variantId": zod.number(),
+  "customerPhone": zod.string(),
+  "notified": zod.boolean(),
   "createdAt": zod.string()
 })
 

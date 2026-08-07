@@ -1,6 +1,6 @@
 import { Router } from "express";
 import multer from "multer";
-import { db, merchantsTable, productsTable, productVariantsTable, productImagesTable, ordersTable, orderItemsTable, discountCodesTable, pushSubscriptionsTable, reviewsTable } from "@workspace/db";
+import { db, merchantsTable, productsTable, productVariantsTable, productImagesTable, ordersTable, orderItemsTable, discountCodesTable, pushSubscriptionsTable, reviewsTable, stockNotificationsTable } from "@workspace/db";
 import { eq, and, gte, sql, desc, count, inArray, notInArray } from "drizzle-orm";
 import { requireAuth, type AuthRequest } from "../middleware/auth";
 import { VAPID_PUBLIC_KEY, sendPushToMerchant } from "../lib/push";
@@ -41,6 +41,9 @@ import {
   DecideReviewParams,
   DecideReviewBody,
   DeleteReviewParams,
+  ListStockNotificationsQueryParams,
+  UpdateStockNotificationParams,
+  UpdateStockNotificationBody,
 } from "@workspace/api-zod";
 
 const router = Router();
@@ -601,6 +604,81 @@ router.delete("/reviews/:id", async (req: AuthRequest, res): Promise<void> => {
 
   await db.delete(reviewsTable).where(eq(reviewsTable.id, params.data.id));
   res.sendStatus(204);
+});
+
+// ─── Stock Notifications ─────────────────────────────────────────────────────
+
+router.get("/stock-notifications", async (req: AuthRequest, res): Promise<void> => {
+  const query = ListStockNotificationsQueryParams.safeParse(req.query);
+  const productId = query.success ? query.data.productId : undefined;
+
+  const notifications = await db
+    .select({
+      id: stockNotificationsTable.id,
+      variantId: stockNotificationsTable.variantId,
+      productId: productsTable.id,
+      productName: productsTable.name,
+      variantLabel: productVariantsTable.variantLabel,
+      customerPhone: stockNotificationsTable.customerPhone,
+      notified: stockNotificationsTable.notified,
+      createdAt: stockNotificationsTable.createdAt,
+    })
+    .from(stockNotificationsTable)
+    .innerJoin(
+      productVariantsTable,
+      eq(stockNotificationsTable.variantId, productVariantsTable.id),
+    )
+    .innerJoin(productsTable, eq(productVariantsTable.productId, productsTable.id))
+    .where(
+      and(
+        eq(productsTable.merchantId, req.merchantId!),
+        productId !== undefined
+          ? eq(productsTable.id, productId)
+          : undefined,
+      ),
+    )
+    .orderBy(desc(stockNotificationsTable.createdAt));
+
+  res.json({ notifications });
+});
+
+router.patch("/stock-notifications/:id", async (req: AuthRequest, res): Promise<void> => {
+  const params = UpdateStockNotificationParams.safeParse(req.params);
+  const body = UpdateStockNotificationBody.safeParse(req.body);
+
+  if (!params.success || !body.success) {
+    res.status(400).json({ error: "بيانات غير صالحة" });
+    return;
+  }
+
+  const [owned] = await db
+    .select({ notificationId: stockNotificationsTable.id })
+    .from(stockNotificationsTable)
+    .innerJoin(
+      productVariantsTable,
+      eq(stockNotificationsTable.variantId, productVariantsTable.id),
+    )
+    .innerJoin(productsTable, eq(productVariantsTable.productId, productsTable.id))
+    .where(
+      and(
+        eq(stockNotificationsTable.id, params.data.id),
+        eq(productsTable.merchantId, req.merchantId!),
+      ),
+    )
+    .limit(1);
+
+  if (!owned) {
+    res.status(404).json({ error: "الإشعار غير موجود" });
+    return;
+  }
+
+  const [notification] = await db
+    .update(stockNotificationsTable)
+    .set({ notified: body.data.notified })
+    .where(eq(stockNotificationsTable.id, params.data.id))
+    .returning();
+
+  res.json(notification);
 });
 
 // ─── Push Notifications ──────────────────────────────────────────────────────

@@ -390,6 +390,38 @@ export interface ReviewDecision {
   isApproved: boolean;
 }
 
+export interface StockNotification {
+  id: number;
+  variantId: number;
+  customerPhone: string;
+  notified: boolean;
+  createdAt: string;
+}
+
+export interface StockNotificationCreate {
+  /** @maxLength 20 */
+  customerPhone: string;
+}
+
+export interface StockNotificationUpdate {
+  notified: boolean;
+}
+
+export interface StockNotificationItem {
+  id: number;
+  variantId: number;
+  productId: number;
+  productName: string;
+  variantLabel: string;
+  customerPhone: string;
+  notified: boolean;
+  createdAt: string;
+}
+
+export interface StockNotificationListResponse {
+  notifications: StockNotificationItem[];
+}
+
 export type ListProductsParams = {
 category?: string;
 q?: string;
@@ -412,6 +444,10 @@ export const ListReviewsStatus = {
   approved: 'approved',
   all: 'all',
 } as const;
+
+export type ListStockNotificationsParams = {
+productId?: number;
+};
 
 export type BrowseStoreProductsParams = {
 /**

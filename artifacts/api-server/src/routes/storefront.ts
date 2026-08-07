@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, merchantsTable, productsTable, productVariantsTable, ordersTable, orderItemsTable, discountCodesTable, reviewsTable } from "@workspace/db";
+import { db, merchantsTable, productsTable, productVariantsTable, ordersTable, orderItemsTable, discountCodesTable, reviewsTable, stockNotificationsTable } from "@workspace/db";
 import { eq, and, ilike, sql, gte, ne, desc, count, avg } from "drizzle-orm";
 import { sendPushToMerchant } from "../lib/push";
 import {
@@ -16,6 +16,8 @@ import {
   ValidateDiscountCodeParams,
   PlaceOrderParams,
   PlaceOrderBody,
+  CreateStockNotificationParams,
+  CreateStockNotificationBody,
 } from "@workspace/api-zod";
 
 const router = Router();
@@ -622,5 +624,80 @@ router.post("/:slug/orders", async (req, res): Promise<void> => {
     return;
   }
 });
+
+// POST /stores/:slug/products/:productId/variants/:variantId/stock-notifications
+// Register a phone number to be notified when an out-of-stock variant is restocked.
+router.post(
+  "/:slug/products/:productId/variants/:variantId/stock-notifications",
+  async (req, res): Promise<void> => {
+    const params = CreateStockNotificationParams.safeParse(req.params);
+    const body = CreateStockNotificationBody.safeParse(req.body);
+
+    if (!params.success || !body.success) {
+      res.status(400).json({ error: body.success ? "معرّف غير صالح" : body.error.message });
+      return;
+    }
+
+    const [merchant] = await db
+      .select()
+      .from(merchantsTable)
+      .where(eq(merchantsTable.slug, params.data.slug))
+      .limit(1);
+
+    if (!merchant) {
+      res.status(404).json({ error: "المتجر غير موجود" });
+      return;
+    }
+
+    const [product] = await db
+      .select()
+      .from(productsTable)
+      .where(
+        and(
+          eq(productsTable.id, params.data.productId),
+          eq(productsTable.merchantId, merchant.id),
+          eq(productsTable.isActive, true),
+        ),
+      )
+      .limit(1);
+
+    if (!product) {
+      res.status(404).json({ error: "المنتج غير موجود" });
+      return;
+    }
+
+    const [variant] = await db
+      .select()
+      .from(productVariantsTable)
+      .where(
+        and(
+          eq(productVariantsTable.id, params.data.variantId),
+          eq(productVariantsTable.productId, product.id),
+        ),
+      )
+      .limit(1);
+
+    if (!variant) {
+      res.status(404).json({ error: "الخيار غير موجود" });
+      return;
+    }
+
+    if (variant.stock > 0) {
+      res.status(409).json({ error: "الخيار متوفر حالياً" });
+      return;
+    }
+
+    const [notification] = await db
+      .insert(stockNotificationsTable)
+      .values({
+        variantId: variant.id,
+        customerPhone: body.data.customerPhone,
+        notified: false,
+      })
+      .returning();
+
+    res.status(201).json(notification);
+  },
+);
 
 export default router;

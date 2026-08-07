@@ -3,7 +3,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useLocation, useParams } from 'wouter';
-import { useGetProduct, useCreateProduct, useUpdateProduct } from '@workspace/api-client-react';
+import { useGetProduct, useCreateProduct, useUpdateProduct, useListStockNotifications, useUpdateStockNotification, getListStockNotificationsQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { CATEGORIES, getApiUrl } from '@/lib/utils';
-import { Trash2, Plus, Upload, X, Loader2 } from 'lucide-react';
+import { Trash2, Plus, Upload, X, Loader2, BellRing, Phone } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 
 // ─── Schema ────────────────────────────────────────────────────────────────────
@@ -148,6 +148,28 @@ export default function ProductForm() {
     query: { enabled: isEdit, queryKey: ['product', id] },
   });
 
+  const notificationsParams = isEdit && product ? { productId: product.id } : undefined;
+  const { data: notificationsData, refetch: refetchNotifications } = useListStockNotifications(
+    notificationsParams,
+    {
+      query: {
+        enabled: isEdit && !!product,
+        queryKey: getListStockNotificationsQueryKey(notificationsParams),
+      },
+    },
+  );
+  const updateNotification = useUpdateStockNotification();
+
+  const markContacted = (notificationId: number) => {
+    updateNotification.mutate(
+      { id: notificationId, data: { notified: true } },
+      {
+        onSuccess: () => refetchNotifications(),
+        onError: () => toast({ title: 'تعذر التحديث', variant: 'destructive' }),
+      },
+    );
+  };
+
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -158,6 +180,7 @@ export default function ProductForm() {
       variants: [{ variantLabel: 'الافتراضي', price: 0, stock: 100 }],
     },
   });
+  const formVariants = form.watch('variants');
 
   const { fields, append, remove } = useFieldArray({ control: form.control, name: 'variants' });
   const categoryWatch = form.watch('category');
@@ -339,7 +362,7 @@ export default function ProductForm() {
             {fields.map((field, index) => (
               <div
                 key={field.id}
-                className="flex flex-col md:flex-row gap-4 items-start md:items-end p-4 bg-gray-50 border border-gray-100 rounded-lg"
+                className="flex flex-col md:flex-row flex-wrap gap-4 items-start md:items-end p-4 bg-gray-50 border border-gray-100 rounded-lg"
               >
                 <div className="flex-1 w-full space-y-2">
                   <Label>الاسم (مثل: 50ml أو عبوة كبيرة)</Label>
@@ -361,6 +384,53 @@ export default function ProductForm() {
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
+
+                {(() => {
+                  if (!isEdit || !product) return null;
+                  const original = product.variants.find((v) => v.variantLabel === fields[index].variantLabel);
+                  if (!original || original.stock !== 0) return null;
+                  const currentStockInput = Number(formVariants?.[index]?.stock ?? 0);
+                  if (currentStockInput <= 0) return null;
+                  const variantNotifications = (notificationsData?.notifications ?? []).filter(
+                    (n) => n.variantId === original.id,
+                  );
+                  if (variantNotifications.length === 0) return null;
+                  const pendingCount = variantNotifications.filter((n) => !n.notified).length;
+                  return (
+                    <div className="w-full bg-amber-50 border border-amber-200 rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <BellRing className="w-4 h-4 text-amber-600 shrink-0" />
+                        <p className="text-sm font-bold text-amber-900">
+                          كنت هذا الخيار غير متوفر — {pendingCount} رقم في انتظار توفر «{original.variantLabel}»
+                        </p>
+                      </div>
+                      <div className="space-y-1.5">
+                        {variantNotifications.map((n) => (
+                          <div key={n.id} className="flex items-center justify-between gap-2 text-sm">
+                            <span className="flex items-center gap-2 text-gray-700" dir="ltr">
+                              <Phone className="w-3.5 h-3.5 text-gray-400" />
+                              {n.customerPhone}
+                            </span>
+                            {n.notified ? (
+                              <span className="text-xs text-emerald-600 font-medium">تم التواصل</span>
+                            ) : (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-7 px-2 text-xs text-amber-700 border-amber-300 hover:bg-amber-100"
+                                onClick={() => markContacted(n.id)}
+                                disabled={updateNotification.isPending}
+                              >
+                                تم التواصل
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             ))}
           </div>

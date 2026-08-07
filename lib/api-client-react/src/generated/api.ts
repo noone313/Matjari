@@ -34,6 +34,7 @@ import type {
   ListOrdersParams,
   ListProductsParams,
   ListReviewsParams,
+  ListStockNotificationsParams,
   Merchant,
   MerchantLogin,
   MerchantRegister,
@@ -52,6 +53,10 @@ import type {
   PushSubscriptionInput,
   Review,
   ReviewDecision,
+  StockNotification,
+  StockNotificationCreate,
+  StockNotificationListResponse,
+  StockNotificationUpdate,
   StorePublic,
   VapidPublicKey
 } from './api.schemas';
@@ -2032,6 +2037,162 @@ export const useDeleteReview = <TError = ErrorType<ErrorResponse>,
       return useMutation(getDeleteReviewMutationOptions(options));
     }
 
+export const getListStockNotificationsUrl = (params?: ListStockNotificationsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/dashboard/stock-notifications?${stringifiedParams}` : `/api/dashboard/stock-notifications`
+}
+
+/**
+ * @summary List stock notifications for the current merchant's product variants
+ */
+export const listStockNotifications = async (params?: ListStockNotificationsParams, options?: Parameters<typeof customFetch>[1]): Promise<StockNotificationListResponse> => {
+
+  return customFetch<StockNotificationListResponse>(getListStockNotificationsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListStockNotificationsQueryKey = (params?: ListStockNotificationsParams,) => {
+    return [
+    `/api/dashboard/stock-notifications`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListStockNotificationsQueryOptions = <TData = Awaited<ReturnType<typeof listStockNotifications>>, TError = ErrorType<unknown>>(params?: ListStockNotificationsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listStockNotifications>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListStockNotificationsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listStockNotifications>>> = ({ signal }) => listStockNotifications(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listStockNotifications>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListStockNotificationsQueryResult = NonNullable<Awaited<ReturnType<typeof listStockNotifications>>>
+export type ListStockNotificationsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List stock notifications for the current merchant's product variants
+ */
+
+export function useListStockNotifications<TData = Awaited<ReturnType<typeof listStockNotifications>>, TError = ErrorType<unknown>>(
+ params?: ListStockNotificationsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listStockNotifications>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListStockNotificationsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateStockNotificationUrl = (id: number,) => {
+
+
+
+
+  return `/api/dashboard/stock-notifications/${id}`
+}
+
+/**
+ * @summary Mark a stock notification as contacted
+ */
+export const updateStockNotification = async (id: number,
+    stockNotificationUpdate: StockNotificationUpdate, options?: Parameters<typeof customFetch>[1]): Promise<StockNotification> => {
+
+  return customFetch<StockNotification>(getUpdateStockNotificationUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(stockNotificationUpdate)
+  }
+);}
+
+
+
+
+
+export const getUpdateStockNotificationMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateStockNotification>>, TError,{id: number;data: BodyType<StockNotificationUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateStockNotification>>, TError,{id: number;data: BodyType<StockNotificationUpdate>}, TContext> => {
+
+const mutationKey = ['updateStockNotification'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateStockNotification>>, {id: number;data: BodyType<StockNotificationUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateStockNotification(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateStockNotificationMutationResult = NonNullable<Awaited<ReturnType<typeof updateStockNotification>>>
+    export type UpdateStockNotificationMutationBody = BodyType<StockNotificationUpdate>
+    export type UpdateStockNotificationMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Mark a stock notification as contacted
+ */
+export const useUpdateStockNotification = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateStockNotification>>, TError,{id: number;data: BodyType<StockNotificationUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateStockNotification>>,
+        TError,
+        {id: number;data: BodyType<StockNotificationUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateStockNotificationMutationOptions(options));
+    }
+
 export const getGetStoreUrl = (slug: string,) => {
 
 
@@ -2516,6 +2677,82 @@ export const useCreateProductReview = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getCreateProductReviewMutationOptions(options));
+    }
+
+export const getCreateStockNotificationUrl = (slug: string,
+    productId: number,
+    variantId: number,) => {
+
+
+
+
+  return `/api/stores/${slug}/products/${productId}/variants/${variantId}/stock-notifications`
+}
+
+/**
+ * @summary Register a phone number to be notified when an out-of-stock variant becomes available
+ */
+export const createStockNotification = async (slug: string,
+    productId: number,
+    variantId: number,
+    stockNotificationCreate: StockNotificationCreate, options?: Parameters<typeof customFetch>[1]): Promise<StockNotification> => {
+
+  return customFetch<StockNotification>(getCreateStockNotificationUrl(slug,productId,variantId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(stockNotificationCreate)
+  }
+);}
+
+
+
+
+
+export const getCreateStockNotificationMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createStockNotification>>, TError,{slug: string;productId: number;variantId: number;data: BodyType<StockNotificationCreate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createStockNotification>>, TError,{slug: string;productId: number;variantId: number;data: BodyType<StockNotificationCreate>}, TContext> => {
+
+const mutationKey = ['createStockNotification'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createStockNotification>>, {slug: string;productId: number;variantId: number;data: BodyType<StockNotificationCreate>}> = (props) => {
+          const {slug,productId,variantId,data} = props ?? {};
+
+          return  createStockNotification(slug,productId,variantId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateStockNotificationMutationResult = NonNullable<Awaited<ReturnType<typeof createStockNotification>>>
+    export type CreateStockNotificationMutationBody = BodyType<StockNotificationCreate>
+    export type CreateStockNotificationMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Register a phone number to be notified when an out-of-stock variant becomes available
+ */
+export const useCreateStockNotification = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createStockNotification>>, TError,{slug: string;productId: number;variantId: number;data: BodyType<StockNotificationCreate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createStockNotification>>,
+        TError,
+        {slug: string;productId: number;variantId: number;data: BodyType<StockNotificationCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateStockNotificationMutationOptions(options));
     }
 
 export const getValidateDiscountUrl = (slug: string,) => {

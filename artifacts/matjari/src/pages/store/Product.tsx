@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useGetStoreProduct, getGetStoreProductQueryKey, useGetRelatedProducts, getGetRelatedProductsQueryKey, useGetProductReviews, getGetProductReviewsQueryKey, useCreateProductReview } from '@workspace/api-client-react';
+import { useGetStoreProduct, getGetStoreProductQueryKey, useGetRelatedProducts, getGetRelatedProductsQueryKey, useGetProductReviews, getGetProductReviewsQueryKey, useCreateProductReview, useCreateStockNotification } from '@workspace/api-client-react';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice, getCategoryLabel } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { ChevronRight, Droplet, Leaf, Share2, Check, Star } from 'lucide-react';
+import { ChevronRight, Droplet, Leaf, Share2, Check, Star, BellRing } from 'lucide-react';
 import { Link } from 'wouter';
 import { FragrancePyramid } from '@/components/store/FragrancePyramid';
 
@@ -24,6 +24,32 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [notifyPhone, setNotifyPhone] = useState('');
+  const [notifyRegistered, setNotifyRegistered] = useState(false);
+
+  const createStockNotification = useCreateStockNotification();
+
+  const handleNotify = () => {
+    if (!currentVariant || !notifyPhone.trim()) return;
+    if (!/^[0-9+\s-]{7,20}$/.test(notifyPhone.trim())) {
+      toast({ title: 'الرجاء إدخال رقم هاتف صحيح' });
+      return;
+    }
+    createStockNotification.mutate({
+      slug,
+      productId: Number(productId),
+      variantId: currentVariant.id,
+      data: { customerPhone: notifyPhone.trim() },
+    }, {
+      onSuccess: () => {
+        setNotifyRegistered(true);
+        toast({ title: 'تم التسجيل! سنخبرك فور توفر المنتج' });
+      },
+      onError: (err: any) => {
+        toast({ title: err?.message ?? 'تعذر التسجيل، حاول مرة أخرى' });
+      },
+    });
+  };
 
   const handleShare = () => {
     const url = window.location.href;
@@ -238,36 +264,77 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
             </div>
           )}
 
-          <div className="flex flex-col sm:flex-row gap-4 mt-auto">
-            <div className="flex items-center border border-gray-300 rounded-lg h-14 w-full sm:w-32">
-              <button 
-                type="button"
-                className="w-10 h-full flex items-center justify-center text-gray-500 hover:text-gray-900"
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              >-</button>
-              <input 
-                type="text" 
-                readOnly 
-                value={quantity} 
-                className="w-full text-center font-bold bg-transparent outline-none"
-              />
-              <button 
-                type="button"
-                className="w-10 h-full flex items-center justify-center text-gray-500 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed"
-                onClick={() => setQuantity(Math.min(quantity + 1, Math.max(currentStock, 1)))}
-                disabled={isOutOfStock || quantity >= currentStock}
-              >+</button>
+          {isOutOfStock ? (
+            <div className="border border-gray-200 bg-gray-50 rounded-xl p-5">
+              {notifyRegistered ? (
+                <div className="flex items-center gap-3">
+                  <BellRing className="w-5 h-5 text-[hsl(var(--primary))] shrink-0" />
+                  <div>
+                    <p className="font-bold text-gray-900">تم التسجيل!</p>
+                    <p className="text-sm text-gray-500">سنخبرك فور توفر «{currentVariant?.variantLabel}»</p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 mb-1">
+                    <BellRing className="w-4 h-4 text-gray-500" />
+                    <Label className="font-bold text-gray-900">أعلمني عند التوفر</Label>
+                  </div>
+                  <p className="text-sm text-gray-500 mb-4">
+                    هذا الخيار غير متوفر حالياً — اترك رقم هاتفك وسنخبرك فور وصوله.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Input
+                      dir="ltr"
+                      placeholder="07XX XXX XXXX"
+                      value={notifyPhone}
+                      onChange={(e) => setNotifyPhone(e.target.value)}
+                      className="flex-1 h-12 text-left font-medium"
+                    />
+                    <Button
+                      onClick={handleNotify}
+                      disabled={!notifyPhone.trim() || createStockNotification.isPending}
+                      className="h-12 px-6 font-bold"
+                      style={{ backgroundColor: 'hsl(var(--primary))' }}
+                    >
+                      {createStockNotification.isPending ? 'جاري التسجيل...' : 'أعلمني عند التوفر'}
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
-            
-            <Button 
-              onClick={handleAddToCart} 
-              disabled={isOutOfStock}
-              className="h-14 flex-1 text-lg font-bold shadow-lg hover:shadow-xl transition-shadow bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900"
-              style={{ backgroundColor: 'hsl(var(--primary))' }}
-            >
-              {isOutOfStock ? 'غير متوفر' : 'إضافة للسلة'}
-            </Button>
-          </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row gap-4 mt-auto">
+              <div className="flex items-center border border-gray-300 rounded-lg h-14 w-full sm:w-32">
+                <button
+                  type="button"
+                  className="w-10 h-full flex items-center justify-center text-gray-500 hover:text-gray-900"
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                >-</button>
+                <input
+                  type="text"
+                  readOnly
+                  value={quantity}
+                  className="w-full text-center font-bold bg-transparent outline-none"
+                />
+                <button
+                  type="button"
+                  className="w-10 h-full flex items-center justify-center text-gray-500 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed"
+                  onClick={() => setQuantity(Math.min(quantity + 1, Math.max(currentStock, 1)))}
+                  disabled={isOutOfStock || quantity >= currentStock}
+                >+</button>
+              </div>
+
+              <Button
+                onClick={handleAddToCart}
+                disabled={isOutOfStock}
+                className="h-14 flex-1 text-lg font-bold shadow-lg hover:shadow-xl transition-shadow bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900"
+                style={{ backgroundColor: 'hsl(var(--primary))' }}
+              >
+                إضافة للسلة
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 

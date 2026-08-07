@@ -585,6 +585,57 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  # ─── Dashboard Stock Notifications ──────────────────
+  /dashboard/stock-notifications:
+    get:
+      operationId: listStockNotifications
+      tags: [dashboard]
+      summary: List stock notifications for the current merchant's product variants
+      parameters:
+        - name: productId
+          in: query
+          required: false
+          schema:
+            type: number
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockNotificationListResponse"
+
+  /dashboard/stock-notifications/{id}:
+    patch:
+      operationId: updateStockNotification
+      tags: [dashboard]
+      summary: Mark a stock notification as contacted
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StockNotificationUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockNotification"
+        "404":
+          description: Notification not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   # ─── Storefront (Public) ──────────────────────────────────
   /stores/{slug}:
     get:
@@ -777,6 +828,59 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Product or store not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /stores/{slug}/products/{productId}/variants/{variantId}/stock-notifications:
+    post:
+      operationId: createStockNotification
+      tags: [storefront]
+      summary: Register a phone number to be notified when an out-of-stock variant becomes available
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: number
+        - name: variantId
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StockNotificationCreate"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockNotification"
+        "400":
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Product, store or variant not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Variant is already in stock
           content:
             application/json:
               schema:
@@ -1525,3 +1629,64 @@ components:
       properties:
         isApproved:
           type: boolean
+
+    # ─── Stock Notifications ─────────────────────────────
+    StockNotification:
+      type: object
+      required: [id, variantId, customerPhone, notified, createdAt]
+      properties:
+        id:
+          type: number
+        variantId:
+          type: number
+        customerPhone:
+          type: string
+        notified:
+          type: boolean
+        createdAt:
+          type: string
+
+    StockNotificationCreate:
+      type: object
+      required: [customerPhone]
+      properties:
+        customerPhone:
+          type: string
+          maxLength: 20
+
+    StockNotificationUpdate:
+      type: object
+      required: [notified]
+      properties:
+        notified:
+          type: boolean
+
+    StockNotificationItem:
+      type: object
+      required: [id, variantId, productId, productName, variantLabel, customerPhone, notified, createdAt]
+      properties:
+        id:
+          type: number
+        variantId:
+          type: number
+        productId:
+          type: number
+        productName:
+          type: string
+        variantLabel:
+          type: string
+        customerPhone:
+          type: string
+        notified:
+          type: boolean
+        createdAt:
+          type: string
+
+    StockNotificationListResponse:
+      type: object
+      required: [notifications]
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/StockNotificationItem"
