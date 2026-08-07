@@ -6,8 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface OrderItemInput {
-  variantId?: number;
-  bundleId?: number;
+export interface BundleItem {
+  id: number;
+  variantId: number;
+  variantLabel: string;
+  productName: string;
   quantity: number;
 }

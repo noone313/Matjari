@@ -8,6 +8,12 @@
 
 export * from './authResponse';
 export * from './browseStoreProductsParams';
+export * from './bundle';
+export * from './bundleImageResponse';
+export * from './bundleInput';
+export * from './bundleItem';
+export * from './bundleItemInput';
+export * from './bundleListResponse';
 export * from './dashboardReview';
 export * from './dashboardReviewsResponse';
 export * from './dashboardStats';
@@ -56,4 +62,5 @@ export * from './stockNotificationListResponse';
 export * from './stockNotificationUpdate';
 export * from './storePublic';
 export * from './topProduct';
+export * from './uploadBundleImageBody';
 export * from './vapidPublicKey';

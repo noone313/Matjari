@@ -67,3 +67,15 @@ export type {
   StockNotificationListResponse,
   StockNotificationUpdate,
 } from "./generated/types";
+
+// Gift-bundle types: the zod consts for these names live in ./generated/api,
+// so re-export explicitly to avoid collisions.
+export type {
+  Bundle,
+  BundleImageResponse,
+  BundleInput,
+  BundleItem,
+  BundleItemInput,
+  BundleListResponse,
+  UploadBundleImageBody,
+} from "./generated/types";

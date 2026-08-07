@@ -1,6 +1,6 @@
 import { Router } from "express";
 import multer from "multer";
-import { db, merchantsTable, productsTable, productVariantsTable, productImagesTable, ordersTable, orderItemsTable, discountCodesTable, pushSubscriptionsTable, reviewsTable, stockNotificationsTable } from "@workspace/db";
+import { db, merchantsTable, productsTable, productVariantsTable, productImagesTable, ordersTable, orderItemsTable, discountCodesTable, pushSubscriptionsTable, reviewsTable, stockNotificationsTable, bundlesTable, bundleItemsTable } from "@workspace/db";
 import { eq, and, gte, sql, desc, count, inArray, notInArray } from "drizzle-orm";
 import { requireAuth, type AuthRequest } from "../middleware/auth";
 import { VAPID_PUBLIC_KEY, sendPushToMerchant } from "../lib/push";
@@ -44,6 +44,10 @@ import {
   ListStockNotificationsQueryParams,
   UpdateStockNotificationParams,
   UpdateStockNotificationBody,
+  CreateBundleBody,
+  UpdateBundleBody,
+  UpdateBundleParams,
+  DeleteBundleParams,
 } from "@workspace/api-zod";
 
 const router = Router();
@@ -679,6 +683,214 @@ router.patch("/stock-notifications/:id", async (req: AuthRequest, res): Promise<
     .returning();
 
   res.json(notification);
+});
+
+// ─── Bundles ─────────────────────────────────────────────────────────────────
+
+// Strip the binary image columns and expose a computed public URL instead.
+function publicBundle(b: {
+  id: number;
+  merchantId: number;
+  name: string;
+  description: string | null;
+  bundlePrice: number;
+  isActive: boolean;
+  createdAt: Date;
+  imageData: Buffer | null;
+  items: any[];
+}) {
+  return {
+    id: b.id,
+    merchantId: b.merchantId,
+    name: b.name,
+    description: b.description,
+    imageUrl: b.imageData ? `/api/bundles/${b.id}/image` : null,
+    bundlePrice: b.bundlePrice,
+    isActive: b.isActive,
+    createdAt: b.createdAt,
+    items: b.items,
+  };
+}
+
+async function getBundlesForMerchant(merchantId: number, ids?: number[]) {
+  const bundles = await db
+    .select({
+      id: bundlesTable.id,
+      merchantId: bundlesTable.merchantId,
+      name: bundlesTable.name,
+      description: bundlesTable.description,
+      bundlePrice: bundlesTable.bundlePrice,
+      isActive: bundlesTable.isActive,
+      createdAt: bundlesTable.createdAt,
+      imageData: bundlesTable.imageData,
+    })
+    .from(bundlesTable)
+    .where(
+      and(
+        eq(bundlesTable.merchantId, merchantId),
+        ids && ids.length > 0 ? inArray(bundlesTable.id, ids) : undefined,
+      ),
+    )
+    .orderBy(desc(bundlesTable.createdAt));
+
+  if (bundles.length === 0) return [];
+
+  const items = await db
+    .select({
+      id: bundleItemsTable.id,
+      bundleId: bundleItemsTable.bundleId,
+      variantId: bundleItemsTable.variantId,
+      variantLabel: productVariantsTable.variantLabel,
+      productName: productsTable.name,
+      quantity: bundleItemsTable.quantity,
+    })
+    .from(bundleItemsTable)
+    .innerJoin(productVariantsTable, eq(bundleItemsTable.variantId, productVariantsTable.id))
+    .innerJoin(productsTable, eq(productVariantsTable.productId, productsTable.id))
+    .where(inArray(bundleItemsTable.bundleId, bundles.map((b) => b.id)));
+
+  const itemsByBundle = new Map<number, typeof items>();
+  for (const it of items) {
+    const list = itemsByBundle.get(it.bundleId) ?? [];
+    list.push(it);
+    itemsByBundle.set(it.bundleId, list);
+  }
+
+  return bundles.map((b) => publicBundle({ ...b, items: itemsByBundle.get(b.id) ?? [] }));
+}
+
+router.get("/bundles", async (req: AuthRequest, res): Promise<void> => {
+  res.json({ bundles: await getBundlesForMerchant(req.merchantId!) });
+});
+
+router.post("/bundles", async (req: AuthRequest, res): Promise<void> => {
+  const body = CreateBundleBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ error: body.error.message });
+    return;
+  }
+
+  const items = body.data.items ?? [];
+  if (items.length === 0) {
+    res.status(400).json({ error: "يجب اختيار عنصر واحد على الأقل" });
+    return;
+  }
+
+  const variantIds = items.map((i) => i.variantId);
+  const ownVariants = await db
+    .select({ id: productVariantsTable.id })
+    .from(productVariantsTable)
+    .innerJoin(productsTable, eq(productVariantsTable.productId, productsTable.id))
+    .where(
+      and(
+        eq(productsTable.merchantId, req.merchantId!),
+        inArray(productVariantsTable.id, variantIds),
+      ),
+    );
+  if (ownVariants.length !== new Set(variantIds).size) {
+    res.status(400).json({ error: "أحد الخيارات المحددة غير صالح" });
+    return;
+  }
+
+  const bundle = await db.transaction(async (tx) => {
+    const [created] = await tx
+      .insert(bundlesTable)
+      .values({
+        merchantId: req.merchantId!,
+        name: body.data.name,
+        description: body.data.description ?? null,
+        bundlePrice: body.data.bundlePrice,
+        isActive: body.data.isActive ?? true,
+      })
+      .returning();
+    if (items.length > 0) {
+      await tx.insert(bundleItemsTable).values(
+        items.map((i) => ({ bundleId: created.id, variantId: i.variantId, quantity: i.quantity })),
+      );
+    }
+    return created;
+  });
+
+  const [full] = await getBundlesForMerchant(req.merchantId!, [bundle.id]);
+  res.status(201).json(full);
+});
+
+router.put("/bundles/:id", async (req: AuthRequest, res): Promise<void> => {
+  const params = UpdateBundleParams.safeParse(req.params);
+  const body = UpdateBundleBody.safeParse(req.body);
+  if (!params.success || !body.success) {
+    res.status(400).json({ error: "بيانات غير صالحة" });
+    return;
+  }
+
+  const [existing] = await db
+    .select()
+    .from(bundlesTable)
+    .where(and(eq(bundlesTable.id, params.data.id), eq(bundlesTable.merchantId, req.merchantId!)))
+    .limit(1);
+  if (!existing) {
+    res.status(404).json({ error: "الباقة غير موجودة" });
+    return;
+  }
+
+  const items = body.data.items ?? [];
+  const variantIds = items.map((i) => i.variantId);
+  if (variantIds.length > 0) {
+    const ownVariants = await db
+      .select({ id: productVariantsTable.id })
+      .from(productVariantsTable)
+      .innerJoin(productsTable, eq(productVariantsTable.productId, productsTable.id))
+      .where(
+        and(
+          eq(productsTable.merchantId, req.merchantId!),
+          inArray(productVariantsTable.id, variantIds),
+        ),
+      );
+    if (ownVariants.length !== new Set(variantIds).size) {
+      res.status(400).json({ error: "أحد الخيارات المحددة غير صالح" });
+      return;
+    }
+  }
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(bundlesTable)
+      .set({
+        name: body.data.name,
+        description: body.data.description ?? null,
+        bundlePrice: body.data.bundlePrice,
+        isActive: body.data.isActive ?? true,
+      })
+      .where(eq(bundlesTable.id, params.data.id));
+    await tx.delete(bundleItemsTable).where(eq(bundleItemsTable.bundleId, params.data.id));
+    if (items.length > 0) {
+      await tx.insert(bundleItemsTable).values(
+        items.map((i) => ({ bundleId: params.data.id, variantId: i.variantId, quantity: i.quantity })),
+      );
+    }
+  });
+
+  const [full] = await getBundlesForMerchant(req.merchantId!, [params.data.id]);
+  res.json(full);
+});
+
+router.delete("/bundles/:id", async (req: AuthRequest, res): Promise<void> => {
+  const params = DeleteBundleParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: "معرّف غير صالح" });
+    return;
+  }
+  const [owned] = await db
+    .select({ id: bundlesTable.id })
+    .from(bundlesTable)
+    .where(and(eq(bundlesTable.id, params.data.id), eq(bundlesTable.merchantId, req.merchantId!)))
+    .limit(1);
+  if (!owned) {
+    res.status(404).json({ error: "الباقة غير موجودة" });
+    return;
+  }
+  await db.delete(bundlesTable).where(eq(bundlesTable.id, params.data.id));
+  res.sendStatus(204);
 });
 
 // ─── Push Notifications ──────────────────────────────────────────────────────

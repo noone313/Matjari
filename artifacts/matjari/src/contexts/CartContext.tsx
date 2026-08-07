@@ -9,13 +9,17 @@ export interface CartItem {
   quantity: number;
   image?: string;
   category: string;
+  bundleId?: number;
 }
+
+export const cartItemKey = (item: CartItem) =>
+  item.bundleId !== undefined ? `b${item.bundleId}` : `v${item.variantId}`;
 
 interface CartContextType {
   items: CartItem[];
   addToCart: (item: CartItem) => void;
-  removeFromCart: (variantId: number) => void;
-  updateQuantity: (variantId: number, quantity: number) => void;
+  removeFromCart: (key: string) => void;
+  updateQuantity: (key: string, quantity: number) => void;
   clearCart: () => void;
   subtotal: number;
   itemCount: number;
@@ -44,10 +48,11 @@ export function CartProvider({ children, storeSlug }: { children: ReactNode; sto
 
   const addToCart = (newItem: CartItem) => {
     setItems(prev => {
-      const existing = prev.find(item => item.variantId === newItem.variantId);
+      const key = cartItemKey(newItem);
+      const existing = prev.find(item => cartItemKey(item) === key);
       if (existing) {
-        return prev.map(item => 
-          item.variantId === newItem.variantId 
+        return prev.map(item =>
+          cartItemKey(item) === key
             ? { ...item, quantity: item.quantity + newItem.quantity }
             : item
         );
@@ -56,17 +61,17 @@ export function CartProvider({ children, storeSlug }: { children: ReactNode; sto
     });
   };
 
-  const removeFromCart = (variantId: number) => {
-    setItems(prev => prev.filter(item => item.variantId !== variantId));
+  const removeFromCart = (key: string) => {
+    setItems(prev => prev.filter(item => cartItemKey(item) !== key));
   };
 
-  const updateQuantity = (variantId: number, quantity: number) => {
+  const updateQuantity = (key: string, quantity: number) => {
     if (quantity < 1) {
-      removeFromCart(variantId);
+      removeFromCart(key);
       return;
     }
-    setItems(prev => prev.map(item => 
-      item.variantId === variantId ? { ...item, quantity } : item
+    setItems(prev => prev.map(item =>
+      cartItemKey(item) === key ? { ...item, quantity } : item
     ));
   };
 

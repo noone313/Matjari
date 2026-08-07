@@ -1,6 +1,6 @@
 import { Router } from "express";
 import multer from "multer";
-import { db, productImagesTable, productsTable } from "@workspace/db";
+import { db, productImagesTable, productsTable, bundlesTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { requireAuth, type AuthRequest } from "../middleware/auth";
 
@@ -77,6 +77,84 @@ router.delete("/dashboard/images/:imageId", requireAuth, async (req: AuthRequest
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Delete failed" });
+  }
+});
+
+// ── Upload (or replace) the bundle image (auth required) ──────────────────────
+router.put(
+  "/dashboard/bundles/:id/image",
+  requireAuth,
+  upload.single("image"),
+  async (req: AuthRequest, res) => {
+    try {
+      const bundleId = parseInt(String(req.params.id), 10);
+      if (isNaN(bundleId)) return res.status(400).json({ error: "Invalid bundle id" });
+      if (!req.file) return res.status(400).json({ error: "No image provided" });
+
+      const [bundle] = await db
+        .select({ id: bundlesTable.id })
+        .from(bundlesTable)
+        .where(and(eq(bundlesTable.id, bundleId), eq(bundlesTable.merchantId, req.merchantId!)));
+
+      if (!bundle) return res.status(404).json({ error: "Bundle not found" });
+
+      await db
+        .update(bundlesTable)
+        .set({ imageData: req.file.buffer, imageMime: req.file.mimetype })
+        .where(eq(bundlesTable.id, bundleId));
+
+      return res.status(201).json({ url: `/api/bundles/${bundleId}/image` });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Upload failed" });
+    }
+  }
+);
+
+// ── Delete the bundle image (auth required) ───────────────────────────────────
+router.delete("/dashboard/bundles/:id/image", requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const bundleId = parseInt(String(req.params.id), 10);
+    if (isNaN(bundleId)) return res.status(400).json({ error: "Invalid bundle id" });
+
+    const [bundle] = await db
+      .select({ id: bundlesTable.id })
+      .from(bundlesTable)
+      .where(and(eq(bundlesTable.id, bundleId), eq(bundlesTable.merchantId, req.merchantId!)));
+
+    if (!bundle) return res.status(404).json({ error: "Bundle not found" });
+
+    await db
+      .update(bundlesTable)
+      .set({ imageData: null, imageMime: null })
+      .where(eq(bundlesTable.id, bundleId));
+
+    return res.status(204).send();
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Delete failed" });
+  }
+});
+
+// ── Serve bundle image (public, stored in the database) ───────────────────────
+router.get("/bundles/:id/image", async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(400).send("Invalid id");
+
+    const [bundle] = await db
+      .select({ data: bundlesTable.imageData, mime: bundlesTable.imageMime })
+      .from(bundlesTable)
+      .where(eq(bundlesTable.id, id));
+
+    if (!bundle?.data || !bundle.mime) return res.status(404).send("Not found");
+
+    res.set("Content-Type", bundle.mime);
+    res.set("Cache-Control", "public, max-age=31536000, immutable");
+    return res.send(bundle.data);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).send("Error");
   }
 });
 

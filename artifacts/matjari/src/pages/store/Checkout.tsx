@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useCart } from '@/contexts/CartContext';
+import { useCart, cartItemKey } from '@/contexts/CartContext';
 import { usePlaceOrder, useGetStore, validateDiscountCode, getGetStoreQueryKey } from '@workspace/api-client-react';
 import { formatPrice } from '@/lib/utils';
 import { Link, useLocation } from 'wouter';
@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { ChevronRight, CreditCard, Banknote, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
+import { ChevronRight, CreditCard, Banknote, AlertCircle, CheckCircle2, XCircle, Gift } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const schema = z.object({
@@ -110,10 +110,9 @@ export default function StoreCheckout({ slug }: { slug: string }) {
     const payload = {
       ...data,
       discountCode: validDiscount,
-      items: items.map(item => ({
-        variantId: item.variantId,
-        quantity: item.quantity
-      }))
+      items: items.map(item => item.bundleId !== undefined
+        ? { bundleId: item.bundleId, quantity: item.quantity }
+        : { variantId: item.variantId, quantity: item.quantity })
     };
 
     placeOrder.mutate({ slug, data: { ...payload, paymentMethod: payload.paymentMethod === 'bank' ? 'bank_transfer' : 'cod' } }, {
@@ -212,11 +211,18 @@ export default function StoreCheckout({ slug }: { slug: string }) {
             
             <div className="space-y-4 max-h-[40vh] overflow-y-auto scrollbar-hide pr-2">
               {items.map(item => (
-                <div key={item.variantId} className="flex justify-between text-sm">
+                <div key={cartItemKey(item)} className="flex justify-between text-sm">
                   <div className="flex gap-3">
                     <span className="text-gray-400">{item.quantity}×</span>
                     <div>
-                      <div className="font-medium text-gray-100">{item.productName}</div>
+                      <div className="font-medium text-gray-100 flex items-center gap-2">
+                        {item.productName}
+                        {item.bundleId !== undefined && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-800 text-gray-300">
+                            <Gift className="w-3 h-3" /> باقة
+                          </span>
+                        )}
+                      </div>
                       <div className="text-gray-500 text-xs">{item.variantLabel}</div>
                     </div>
                   </div>

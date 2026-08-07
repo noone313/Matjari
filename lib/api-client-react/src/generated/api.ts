@@ -22,6 +22,10 @@ import type {
 import type {
   AuthResponse,
   BrowseStoreProductsParams,
+  Bundle,
+  BundleImageResponse,
+  BundleInput,
+  BundleListResponse,
   DashboardReviewsResponse,
   DashboardStats,
   DiscountCode,
@@ -58,6 +62,7 @@ import type {
   StockNotificationListResponse,
   StockNotificationUpdate,
   StorePublic,
+  UploadBundleImageBody,
   VapidPublicKey
 } from './api.schemas';
 
@@ -2193,6 +2198,519 @@ export const useUpdateStockNotification = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateStockNotificationMutationOptions(options));
     }
 
+export const getListBundlesUrl = () => {
+
+
+
+
+  return `/api/dashboard/bundles`
+}
+
+/**
+ * @summary List gift bundles for the current merchant
+ */
+export const listBundles = async ( options?: Parameters<typeof customFetch>[1]): Promise<BundleListResponse> => {
+
+  return customFetch<BundleListResponse>(getListBundlesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListBundlesQueryKey = () => {
+    return [
+    `/api/dashboard/bundles`
+    ] as const;
+    }
+
+
+export const getListBundlesQueryOptions = <TData = Awaited<ReturnType<typeof listBundles>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listBundles>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListBundlesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listBundles>>> = ({ signal }) => listBundles({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listBundles>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListBundlesQueryResult = NonNullable<Awaited<ReturnType<typeof listBundles>>>
+export type ListBundlesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List gift bundles for the current merchant
+ */
+
+export function useListBundles<TData = Awaited<ReturnType<typeof listBundles>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listBundles>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListBundlesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateBundleUrl = () => {
+
+
+
+
+  return `/api/dashboard/bundles`
+}
+
+/**
+ * @summary Create a gift bundle
+ */
+export const createBundle = async (bundleInput: BundleInput, options?: Parameters<typeof customFetch>[1]): Promise<Bundle> => {
+
+  return customFetch<Bundle>(getCreateBundleUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(bundleInput)
+  }
+);}
+
+
+
+
+
+export const getCreateBundleMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createBundle>>, TError,{data: BodyType<BundleInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createBundle>>, TError,{data: BodyType<BundleInput>}, TContext> => {
+
+const mutationKey = ['createBundle'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createBundle>>, {data: BodyType<BundleInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createBundle(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateBundleMutationResult = NonNullable<Awaited<ReturnType<typeof createBundle>>>
+    export type CreateBundleMutationBody = BodyType<BundleInput>
+    export type CreateBundleMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create a gift bundle
+ */
+export const useCreateBundle = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createBundle>>, TError,{data: BodyType<BundleInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createBundle>>,
+        TError,
+        {data: BodyType<BundleInput>},
+        TContext
+      > => {
+      return useMutation(getCreateBundleMutationOptions(options));
+    }
+
+export const getUpdateBundleUrl = (id: number,) => {
+
+
+
+
+  return `/api/dashboard/bundles/${id}`
+}
+
+/**
+ * @summary Update a gift bundle (replaces its items)
+ */
+export const updateBundle = async (id: number,
+    bundleInput: BundleInput, options?: Parameters<typeof customFetch>[1]): Promise<Bundle> => {
+
+  return customFetch<Bundle>(getUpdateBundleUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(bundleInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateBundleMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateBundle>>, TError,{id: number;data: BodyType<BundleInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateBundle>>, TError,{id: number;data: BodyType<BundleInput>}, TContext> => {
+
+const mutationKey = ['updateBundle'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateBundle>>, {id: number;data: BodyType<BundleInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateBundle(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateBundleMutationResult = NonNullable<Awaited<ReturnType<typeof updateBundle>>>
+    export type UpdateBundleMutationBody = BodyType<BundleInput>
+    export type UpdateBundleMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update a gift bundle (replaces its items)
+ */
+export const useUpdateBundle = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateBundle>>, TError,{id: number;data: BodyType<BundleInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateBundle>>,
+        TError,
+        {id: number;data: BodyType<BundleInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateBundleMutationOptions(options));
+    }
+
+export const getDeleteBundleUrl = (id: number,) => {
+
+
+
+
+  return `/api/dashboard/bundles/${id}`
+}
+
+/**
+ * @summary Delete a gift bundle
+ */
+export const deleteBundle = async (id: number, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getDeleteBundleUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteBundleMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteBundle>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteBundle>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteBundle'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteBundle>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteBundle(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteBundleMutationResult = NonNullable<Awaited<ReturnType<typeof deleteBundle>>>
+
+    export type DeleteBundleMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete a gift bundle
+ */
+export const useDeleteBundle = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteBundle>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteBundle>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteBundleMutationOptions(options));
+    }
+
+export const getUploadBundleImageUrl = (id: number,) => {
+
+
+
+
+  return `/api/dashboard/bundles/${id}/image`
+}
+
+/**
+ * @summary Upload (or replace) the bundle image — stored in the database
+ */
+export const uploadBundleImage = async (id: number,
+    uploadBundleImageBody: UploadBundleImageBody, options?: Parameters<typeof customFetch>[1]): Promise<BundleImageResponse> => {
+    const formData = new FormData();
+formData.append(`image`, uploadBundleImageBody.image);
+
+  return customFetch<BundleImageResponse>(getUploadBundleImageUrl(id),
+  {
+    ...options,
+    method: 'PUT'
+    ,
+    body: formData
+  }
+);}
+
+
+
+
+
+export const getUploadBundleImageMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadBundleImage>>, TError,{id: number;data: BodyType<UploadBundleImageBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadBundleImage>>, TError,{id: number;data: BodyType<UploadBundleImageBody>}, TContext> => {
+
+const mutationKey = ['uploadBundleImage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadBundleImage>>, {id: number;data: BodyType<UploadBundleImageBody>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  uploadBundleImage(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadBundleImageMutationResult = NonNullable<Awaited<ReturnType<typeof uploadBundleImage>>>
+    export type UploadBundleImageMutationBody = BodyType<UploadBundleImageBody>
+    export type UploadBundleImageMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Upload (or replace) the bundle image — stored in the database
+ */
+export const useUploadBundleImage = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadBundleImage>>, TError,{id: number;data: BodyType<UploadBundleImageBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof uploadBundleImage>>,
+        TError,
+        {id: number;data: BodyType<UploadBundleImageBody>},
+        TContext
+      > => {
+      return useMutation(getUploadBundleImageMutationOptions(options));
+    }
+
+export const getDeleteBundleImageUrl = (id: number,) => {
+
+
+
+
+  return `/api/dashboard/bundles/${id}/image`
+}
+
+/**
+ * @summary Remove the bundle image
+ */
+export const deleteBundleImage = async (id: number, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getDeleteBundleImageUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteBundleImageMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteBundleImage>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteBundleImage>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteBundleImage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteBundleImage>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteBundleImage(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteBundleImageMutationResult = NonNullable<Awaited<ReturnType<typeof deleteBundleImage>>>
+
+    export type DeleteBundleImageMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Remove the bundle image
+ */
+export const useDeleteBundleImage = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteBundleImage>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteBundleImage>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteBundleImageMutationOptions(options));
+    }
+
+export const getGetBundleImageUrl = (id: number,) => {
+
+
+
+
+  return `/api/bundles/${id}/image`
+}
+
+/**
+ * @summary Serve the bundle image bytes (public)
+ */
+export const getBundleImage = async (id: number, options?: Parameters<typeof customFetch>[1]): Promise<Blob> => {
+
+  return customFetch<Blob>(getGetBundleImageUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetBundleImageQueryKey = (id: number,) => {
+    return [
+    `/api/bundles/${id}/image`
+    ] as const;
+    }
+
+
+export const getGetBundleImageQueryOptions = <TData = Awaited<ReturnType<typeof getBundleImage>>, TError = ErrorType<ErrorResponse>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getBundleImage>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetBundleImageQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getBundleImage>>> = ({ signal }) => getBundleImage(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getBundleImage>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetBundleImageQueryResult = NonNullable<Awaited<ReturnType<typeof getBundleImage>>>
+export type GetBundleImageQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Serve the bundle image bytes (public)
+ */
+
+export function useGetBundleImage<TData = Awaited<ReturnType<typeof getBundleImage>>, TError = ErrorType<ErrorResponse>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getBundleImage>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetBundleImageQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export const getGetStoreUrl = (slug: string,) => {
 
 
@@ -2754,6 +3272,83 @@ export const useCreateStockNotification = <TError = ErrorType<ErrorResponse>,
       > => {
       return useMutation(getCreateStockNotificationMutationOptions(options));
     }
+
+export const getBrowseStoreBundlesUrl = (slug: string,) => {
+
+
+
+
+  return `/api/stores/${slug}/bundles`
+}
+
+/**
+ * @summary List active gift bundles for a public store
+ */
+export const browseStoreBundles = async (slug: string, options?: Parameters<typeof customFetch>[1]): Promise<BundleListResponse> => {
+
+  return customFetch<BundleListResponse>(getBrowseStoreBundlesUrl(slug),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getBrowseStoreBundlesQueryKey = (slug: string,) => {
+    return [
+    `/api/stores/${slug}/bundles`
+    ] as const;
+    }
+
+
+export const getBrowseStoreBundlesQueryOptions = <TData = Awaited<ReturnType<typeof browseStoreBundles>>, TError = ErrorType<ErrorResponse>>(slug: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof browseStoreBundles>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getBrowseStoreBundlesQueryKey(slug);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof browseStoreBundles>>> = ({ signal }) => browseStoreBundles(slug, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: slug !== null && slug !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof browseStoreBundles>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type BrowseStoreBundlesQueryResult = NonNullable<Awaited<ReturnType<typeof browseStoreBundles>>>
+export type BrowseStoreBundlesQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary List active gift bundles for a public store
+ */
+
+export function useBrowseStoreBundles<TData = Awaited<ReturnType<typeof browseStoreBundles>>, TError = ErrorType<ErrorResponse>>(
+ slug: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof browseStoreBundles>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getBrowseStoreBundlesQueryOptions(slug,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getValidateDiscountUrl = (slug: string,) => {
 

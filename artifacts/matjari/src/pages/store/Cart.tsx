@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { useCart } from '@/contexts/CartContext';
+import { useCart, cartItemKey } from '@/contexts/CartContext';
 import { formatPrice } from '@/lib/utils';
 import { useValidateDiscount } from '@workspace/api-client-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link } from 'wouter';
-import { Trash2, ChevronRight } from 'lucide-react';
+import { Trash2, ChevronRight, Gift } from 'lucide-react';
 
 export default function StoreCart({ slug }: { slug: string }) {
   const { items, updateQuantity, removeFromCart, subtotal } = useCart();
@@ -67,8 +67,11 @@ export default function StoreCart({ slug }: { slug: string }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-4">
-          {items.map(item => (
-            <div key={item.variantId} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex gap-4 items-center">
+          {items.map(item => {
+            const isBundle = item.bundleId !== undefined;
+            const key = cartItemKey(item);
+            return (
+            <div key={key} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex gap-4 items-center">
               <div className="w-20 h-20 bg-gray-50 rounded-lg border border-gray-100 overflow-hidden shrink-0">
                 {item.image ? (
                   <img src={item.image} alt={item.productName} className="w-full h-full object-cover" />
@@ -78,9 +81,20 @@ export default function StoreCart({ slug }: { slug: string }) {
               </div>
               
               <div className="flex-1 min-w-0">
-                <Link href={`/store/${slug}/product/${item.productId}`} className="font-bold text-gray-900 font-serif truncate hover:text-[hsl(var(--primary))] transition-colors">
-                  {item.productName}
-                </Link>
+                {isBundle ? (
+                  <div className="flex items-center gap-2">
+                    <Link href={`/store/${slug}`} className="font-bold text-gray-900 font-serif truncate hover:text-[hsl(var(--primary))] transition-colors">
+                      {item.productName}
+                    </Link>
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))]">
+                      <Gift className="w-3 h-3" /> باقة هدايا
+                    </span>
+                  </div>
+                ) : (
+                  <Link href={`/store/${slug}/product/${item.productId}`} className="font-bold text-gray-900 font-serif truncate hover:text-[hsl(var(--primary))] transition-colors">
+                    {item.productName}
+                  </Link>
+                )}
                 <div className="text-sm text-gray-500 mt-1">{item.variantLabel}</div>
                 <div className="font-bold text-gray-900 mt-2">{formatPrice(item.price)}</div>
               </div>
@@ -90,7 +104,7 @@ export default function StoreCart({ slug }: { slug: string }) {
                   variant="ghost" 
                   size="icon" 
                   className="text-gray-400 hover:text-red-500 h-8 w-8"
-                  onClick={() => removeFromCart(item.variantId)}
+                  onClick={() => removeFromCart(key)}
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -98,17 +112,18 @@ export default function StoreCart({ slug }: { slug: string }) {
                 <div className="flex items-center border border-gray-200 rounded-md h-9">
                   <button 
                     className="w-8 h-full flex items-center justify-center text-gray-500 hover:bg-gray-50"
-                    onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
+                    onClick={() => updateQuantity(key, item.quantity - 1)}
                   >-</button>
                   <span className="w-8 text-center text-sm font-bold">{item.quantity}</span>
                   <button 
                     className="w-8 h-full flex items-center justify-center text-gray-500 hover:bg-gray-50"
-                    onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
+                    onClick={() => updateQuantity(key, item.quantity + 1)}
                   >+</button>
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="lg:col-span-1">

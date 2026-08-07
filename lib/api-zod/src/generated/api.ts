@@ -672,6 +672,156 @@ export const UpdateStockNotificationResponse = zod.object({
 
 
 /**
+ * @summary List gift bundles for the current merchant
+ */
+export const ListBundlesResponse = zod.object({
+  "bundles": zod.array(zod.object({
+  "id": zod.number(),
+  "merchantId": zod.number(),
+  "name": zod.string(),
+  "description": zod.string().nullish(),
+  "imageUrl": zod.string().nullish().describe('Public URL served from the database image (or null)'),
+  "bundlePrice": zod.number(),
+  "isActive": zod.boolean(),
+  "createdAt": zod.string(),
+  "items": zod.array(zod.object({
+  "id": zod.number(),
+  "variantId": zod.number(),
+  "variantLabel": zod.string(),
+  "productName": zod.string(),
+  "quantity": zod.number()
+}))
+}))
+})
+
+
+/**
+ * @summary Create a gift bundle
+ */
+export const createBundleBodyNameMax = 200;
+
+
+
+export const CreateBundleBody = zod.object({
+  "name": zod.string().max(createBundleBodyNameMax),
+  "description": zod.string().nullish(),
+  "imageUrl": zod.string().nullish(),
+  "bundlePrice": zod.number(),
+  "isActive": zod.boolean().optional(),
+  "items": zod.array(zod.object({
+  "variantId": zod.number(),
+  "quantity": zod.number()
+}))
+})
+
+export const CreateBundleResponse = zod.object({
+  "id": zod.number(),
+  "merchantId": zod.number(),
+  "name": zod.string(),
+  "description": zod.string().nullish(),
+  "imageUrl": zod.string().nullish().describe('Public URL served from the database image (or null)'),
+  "bundlePrice": zod.number(),
+  "isActive": zod.boolean(),
+  "createdAt": zod.string(),
+  "items": zod.array(zod.object({
+  "id": zod.number(),
+  "variantId": zod.number(),
+  "variantLabel": zod.string(),
+  "productName": zod.string(),
+  "quantity": zod.number()
+}))
+})
+
+
+/**
+ * @summary Update a gift bundle (replaces its items)
+ */
+export const UpdateBundleParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const updateBundleBodyNameMax = 200;
+
+
+
+export const UpdateBundleBody = zod.object({
+  "name": zod.string().max(updateBundleBodyNameMax),
+  "description": zod.string().nullish(),
+  "imageUrl": zod.string().nullish(),
+  "bundlePrice": zod.number(),
+  "isActive": zod.boolean().optional(),
+  "items": zod.array(zod.object({
+  "variantId": zod.number(),
+  "quantity": zod.number()
+}))
+})
+
+export const UpdateBundleResponse = zod.object({
+  "id": zod.number(),
+  "merchantId": zod.number(),
+  "name": zod.string(),
+  "description": zod.string().nullish(),
+  "imageUrl": zod.string().nullish().describe('Public URL served from the database image (or null)'),
+  "bundlePrice": zod.number(),
+  "isActive": zod.boolean(),
+  "createdAt": zod.string(),
+  "items": zod.array(zod.object({
+  "id": zod.number(),
+  "variantId": zod.number(),
+  "variantLabel": zod.string(),
+  "productName": zod.string(),
+  "quantity": zod.number()
+}))
+})
+
+
+/**
+ * @summary Delete a gift bundle
+ */
+export const DeleteBundleParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteBundleResponse = zod.void()
+
+
+/**
+ * @summary Upload (or replace) the bundle image — stored in the database
+ */
+export const UploadBundleImageParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UploadBundleImageBody = zod.object({
+  "image": zod.instanceof(File)
+})
+
+export const UploadBundleImageResponse = zod.object({
+  "url": zod.string()
+})
+
+
+/**
+ * @summary Remove the bundle image
+ */
+export const DeleteBundleImageParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteBundleImageResponse = zod.void()
+
+
+/**
+ * @summary Serve the bundle image bytes (public)
+ */
+export const GetBundleImageParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetBundleImageResponse = zod.unknown()
+
+
+/**
  * @summary Get a public store
  */
 export const GetStoreParams = zod.object({
@@ -883,6 +1033,34 @@ export const CreateStockNotificationResponse = zod.object({
 
 
 /**
+ * @summary List active gift bundles for a public store
+ */
+export const BrowseStoreBundlesParams = zod.object({
+  "slug": zod.coerce.string()
+})
+
+export const BrowseStoreBundlesResponse = zod.object({
+  "bundles": zod.array(zod.object({
+  "id": zod.number(),
+  "merchantId": zod.number(),
+  "name": zod.string(),
+  "description": zod.string().nullish(),
+  "imageUrl": zod.string().nullish().describe('Public URL served from the database image (or null)'),
+  "bundlePrice": zod.number(),
+  "isActive": zod.boolean(),
+  "createdAt": zod.string(),
+  "items": zod.array(zod.object({
+  "id": zod.number(),
+  "variantId": zod.number(),
+  "variantLabel": zod.string(),
+  "productName": zod.string(),
+  "quantity": zod.number()
+}))
+}))
+})
+
+
+/**
  * @summary Validate a discount code for a store
  */
 export const ValidateDiscountParams = zod.object({
@@ -930,7 +1108,8 @@ export const PlaceOrderBody = zod.object({
   "giftMessage": zod.string().nullish(),
   "discountCode": zod.string().nullish(),
   "items": zod.array(zod.object({
-  "variantId": zod.number(),
+  "variantId": zod.number().optional(),
+  "bundleId": zod.number().optional(),
   "quantity": zod.number()
 }))
 })

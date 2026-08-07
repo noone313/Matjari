@@ -5,9 +5,8 @@
  * متجري — SaaS perfume & cosmetics storefront platform API
  * OpenAPI spec version: 0.1.0
  */
+import type { Bundle } from './bundle';
 
-export interface OrderItemInput {
-  variantId?: number;
-  bundleId?: number;
-  quantity: number;
+export interface BundleListResponse {
+  bundles: Bundle[];
 }

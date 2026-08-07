@@ -636,6 +636,180 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  # ─── Dashboard Bundles ─────────────────────────────
+  /dashboard/bundles:
+    get:
+      operationId: listBundles
+      tags: [dashboard]
+      summary: List gift bundles for the current merchant
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BundleListResponse"
+    post:
+      operationId: createBundle
+      tags: [dashboard]
+      summary: Create a gift bundle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BundleInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bundle"
+        "400":
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /dashboard/bundles/{id}:
+    put:
+      operationId: updateBundle
+      tags: [dashboard]
+      summary: Update a gift bundle (replaces its items)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BundleInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bundle"
+        "404":
+          description: Bundle not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteBundle
+      tags: [dashboard]
+      summary: Delete a gift bundle
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Bundle not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /dashboard/bundles/{id}/image:
+    put:
+      operationId: uploadBundleImage
+      tags: [dashboard]
+      summary: Upload (or replace) the bundle image — stored in the database
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [image]
+              properties:
+                image:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Image stored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BundleImageResponse"
+        "400":
+          description: No image provided
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Bundle not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteBundleImage
+      tags: [dashboard]
+      summary: Remove the bundle image
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Image removed
+        "404":
+          description: Bundle not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /bundles/{id}/image:
+    get:
+      operationId: getBundleImage
+      tags: [storefront]
+      summary: Serve the bundle image bytes (public)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Image bytes
+          content:
+            image/*:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   # ─── Storefront (Public) ──────────────────────────────────
   /stores/{slug}:
     get:
@@ -881,6 +1055,31 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "409":
           description: Variant is already in stock
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /stores/{slug}/bundles:
+    get:
+      operationId: browseStoreBundles
+      tags: [storefront]
+      summary: List active gift bundles for a public store
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BundleListResponse"
+        "404":
+          description: Store not found
           content:
             application/json:
               schema:
@@ -1419,9 +1618,11 @@ components:
 
     OrderItemInput:
       type: object
-      required: [variantId, quantity]
+      required: [quantity]
       properties:
         variantId:
+          type: number
+        bundleId:
           type: number
         quantity:
           type: number
@@ -1690,3 +1891,90 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/StockNotificationItem"
+
+    # ─── Gift Bundles ───────────────────────────────────
+    BundleItem:
+      type: object
+      required: [id, variantId, variantLabel, productName, quantity]
+      properties:
+        id:
+          type: number
+        variantId:
+          type: number
+        variantLabel:
+          type: string
+        productName:
+          type: string
+        quantity:
+          type: number
+
+    BundleItemInput:
+      type: object
+      required: [variantId, quantity]
+      properties:
+        variantId:
+          type: number
+        quantity:
+          type: number
+
+    Bundle:
+      type: object
+      required: [id, merchantId, name, bundlePrice, isActive, createdAt, items]
+      properties:
+        id:
+          type: number
+        merchantId:
+          type: number
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        imageUrl:
+          type: ["string", "null"]
+          description: Public URL served from the database image (or null)
+        bundlePrice:
+          type: number
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/BundleItem"
+
+    BundleImageResponse:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+
+    BundleInput:
+      type: object
+      required: [name, bundlePrice, items]
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        description:
+          type: ["string", "null"]
+        imageUrl:
+          type: ["string", "null"]
+        bundlePrice:
+          type: number
+        isActive:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/BundleItemInput"
+
+    BundleListResponse:
+      type: object
+      required: [bundles]
+      properties:
+        bundles:
+          type: array
+          items:
+            $ref: "#/components/schemas/Bundle"

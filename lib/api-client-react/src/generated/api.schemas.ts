@@ -263,7 +263,8 @@ export interface OrderStatusUpdate {
 }
 
 export interface OrderItemInput {
-  variantId: number;
+  variantId?: number;
+  bundleId?: number;
   quantity: number;
 }
 
@@ -422,6 +423,56 @@ export interface StockNotificationListResponse {
   notifications: StockNotificationItem[];
 }
 
+export interface BundleItem {
+  id: number;
+  variantId: number;
+  variantLabel: string;
+  productName: string;
+  quantity: number;
+}
+
+export interface BundleItemInput {
+  variantId: number;
+  quantity: number;
+}
+
+export interface Bundle {
+  id: number;
+  merchantId: number;
+  name: string;
+  /** @nullable */
+  description?: string | null;
+  /**
+     * Public URL served from the database image (or null)
+     * @nullable
+     */
+  imageUrl?: string | null;
+  bundlePrice: number;
+  isActive: boolean;
+  createdAt: string;
+  items: BundleItem[];
+}
+
+export interface BundleImageResponse {
+  url: string;
+}
+
+export interface BundleInput {
+  /** @maxLength 200 */
+  name: string;
+  /** @nullable */
+  description?: string | null;
+  /** @nullable */
+  imageUrl?: string | null;
+  bundlePrice: number;
+  isActive?: boolean;
+  items: BundleItemInput[];
+}
+
+export interface BundleListResponse {
+  bundles: Bundle[];
+}
+
 export type ListProductsParams = {
 category?: string;
 q?: string;
@@ -447,6 +498,10 @@ export const ListReviewsStatus = {
 
 export type ListStockNotificationsParams = {
 productId?: number;
+};
+
+export type UploadBundleImageBody = {
+  image: Blob;
 };
 
 export type BrowseStoreProductsParams = {

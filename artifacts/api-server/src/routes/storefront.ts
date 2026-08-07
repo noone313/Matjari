@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, merchantsTable, productsTable, productVariantsTable, ordersTable, orderItemsTable, discountCodesTable, reviewsTable, stockNotificationsTable } from "@workspace/db";
-import { eq, and, ilike, sql, gte, ne, desc, count, avg } from "drizzle-orm";
+import { db, merchantsTable, productsTable, productVariantsTable, ordersTable, orderItemsTable, discountCodesTable, reviewsTable, stockNotificationsTable, bundlesTable, bundleItemsTable } from "@workspace/db";
+import { eq, and, ilike, sql, gte, ne, desc, count, avg, inArray } from "drizzle-orm";
 import { sendPushToMerchant } from "../lib/push";
 import {
   GetStoreParams,
@@ -18,6 +18,7 @@ import {
   PlaceOrderBody,
   CreateStockNotificationParams,
   CreateStockNotificationBody,
+  BrowseStoreBundlesParams,
 } from "@workspace/api-zod";
 
 const router = Router();
@@ -490,30 +491,63 @@ router.post("/:slug/orders", async (req, res): Promise<void> => {
     items,
   } = body.data;
 
-  // Fetch variant prices and names
-  const variantIds = items.map((i) => i.variantId);
-
-  if (variantIds.length === 0) {
+  if (items.length === 0) {
     res.status(400).json({ error: "السلة فارغة" });
     return;
   }
 
-  const variants = await db.execute(
-    `SELECT pv.id, pv.price, pv.product_id, p.name AS product_name, pv.variant_label
-     FROM product_variants pv
-     JOIN products p ON p.id = pv.product_id
-     WHERE pv.id = ANY(ARRAY[${variantIds.join(",")}])
-       AND p.merchant_id = ${merchant.id}`,
-  ) as any;
+  // Split checkout lines into plain products and gift bundles.
+  const productItems = items.filter((i) => i.variantId !== undefined);
+  const bundleItems = items.filter((i) => i.bundleId !== undefined);
+
+  if (productItems.length + bundleItems.length !== items.length) {
+    res.status(400).json({ error: "عنصر غير صالح في السلة" });
+    return;
+  }
+
+  // Fetch variant prices/names for plain product lines
+  const variantIds = productItems.map((i) => i.variantId!);
+  const variants = variantIds.length > 0
+    ? await db.execute(
+        `SELECT pv.id, pv.price, pv.product_id, p.name AS product_name, pv.variant_label
+         FROM product_variants pv
+         JOIN products p ON p.id = pv.product_id
+         WHERE pv.id = ANY(ARRAY[${variantIds.join(",")}])
+           AND p.merchant_id = ${merchant.id}`,
+      ) as any
+    : { rows: [] };
 
   const variantRows = variants.rows ?? variants;
   const variantMap = new Map(variantRows.map((r: any) => [r.id, r]));
 
-  let subtotal = 0;
-  const orderItemsData: { variantId: number; productName: string; variantLabel: string; quantity: number; priceAtOrder: number }[] = [];
+  // Fetch bundle definitions (single SQL row per bundle_item, grouped in JS)
+  const bundleIds = bundleItems.map((i) => i.bundleId!);
+  const bundleRows = bundleIds.length > 0
+    ? await db.execute(
+        `SELECT b.id AS bundle_id, b.name AS bundle_name, b.bundle_price,
+                bi.variant_id, bi.quantity AS item_qty
+         FROM bundles b
+         JOIN bundle_items bi ON bi.bundle_id = b.id
+         WHERE b.id = ANY(ARRAY[${bundleIds.join(",")}])
+           AND b.merchant_id = ${merchant.id}
+           AND b.is_active = true`,
+      ) as any
+    : { rows: [] };
 
-  for (const item of items) {
-    const variant = variantMap.get(item.variantId) as any;
+  const bundleRowsArr = bundleRows.rows ?? bundleRows;
+  const bundleMap = new Map<number, any[]>();
+  for (const r of bundleRowsArr) {
+    const list = bundleMap.get(r.bundle_id) ?? [];
+    list.push(r);
+    bundleMap.set(r.bundle_id, list);
+  }
+
+  let subtotal = 0;
+  const orderItemsData: { variantId: number | null; productName: string; variantLabel: string; quantity: number; priceAtOrder: number }[] = [];
+  const stockOps: { variantId: number; quantity: number }[] = [];
+
+  for (const item of productItems) {
+    const variant = variantMap.get(item.variantId!) as any;
     if (!variant) {
       res.status(400).json({ error: `متغير المنتج ${item.variantId} غير موجود` });
       return;
@@ -521,12 +555,34 @@ router.post("/:slug/orders", async (req, res): Promise<void> => {
     const lineTotal = variant.price * item.quantity;
     subtotal += lineTotal;
     orderItemsData.push({
-      variantId: item.variantId,
+      variantId: item.variantId!,
       productName: variant.product_name,
       variantLabel: variant.variant_label,
       quantity: item.quantity,
       priceAtOrder: variant.price,
     });
+    stockOps.push({ variantId: item.variantId!, quantity: item.quantity });
+  }
+
+  for (const item of bundleItems) {
+    const bundleParts = bundleMap.get(item.bundleId!) as any[] | undefined;
+    if (!bundleParts || bundleParts.length === 0) {
+      res.status(400).json({ error: `الباقة ${item.bundleId} غير موجودة أو غير نشطة` });
+      return;
+    }
+    // One order line per bundle unit at the unified bundle price.
+    subtotal += bundleParts[0].bundle_price * item.quantity;
+    orderItemsData.push({
+      variantId: null,
+      productName: bundleParts[0].bundle_name,
+      variantLabel: "باقة هدايا",
+      quantity: item.quantity,
+      priceAtOrder: bundleParts[0].bundle_price,
+    });
+    // Reserve stock of the underlying variants.
+    for (const part of bundleParts) {
+      stockOps.push({ variantId: part.variant_id, quantity: part.item_qty * item.quantity });
+    }
   }
 
   // Apply discount
@@ -571,23 +627,23 @@ router.post("/:slug/orders", async (req, res): Promise<void> => {
         })
         .returning();
 
-      // Atomically decrement stock for every line item, then arm order items.
-      // Stock check + decrement happen in ONE SQL statement to avoid race conditions.
-      for (const row of orderItemsData) {
+      // Atomically decrement stock for every line item (products and bundle
+      // contents), then store order items. Stock check + decrement happen in
+      // ONE SQL statement to avoid race conditions.
+      for (const op of stockOps) {
         const updated = await tx
           .update(productVariantsTable)
-          .set({ stock: sql`${productVariantsTable.stock} - ${row.quantity}` })
+          .set({ stock: sql`${productVariantsTable.stock} - ${op.quantity}` })
           .where(
             and(
-              eq(productVariantsTable.id, row.variantId),
-              gte(productVariantsTable.stock, row.quantity),
+              eq(productVariantsTable.id, op.variantId),
+              gte(productVariantsTable.stock, op.quantity),
             ),
           )
           .returning({ id: productVariantsTable.id });
 
         if (updated.length === 0) {
-          // Variant missing or insufficient stock → abort the whole order (rollback).
-          throw new Error(`غير متوفر: ${row.productName} (${row.variantLabel})`);
+          throw new Error("غير متوفر: أحد عناصر السلة");
         }
       }
 
@@ -623,6 +679,82 @@ router.post("/:slug/orders", async (req, res): Promise<void> => {
     res.status(500).json({ error: "حدث خطأ أثناء إنشاء الطلب" });
     return;
   }
+});
+
+// GET /stores/:slug/bundles
+// Active gift bundles with their items.
+router.get("/:slug/bundles", async (req, res): Promise<void> => {
+  const params = BrowseStoreBundlesParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: "معرّف غير صالح" });
+    return;
+  }
+
+  const [merchant] = await db
+    .select()
+    .from(merchantsTable)
+    .where(eq(merchantsTable.slug, params.data.slug))
+    .limit(1);
+
+  if (!merchant) {
+    res.status(404).json({ error: "المتجر غير موجود" });
+    return;
+  }
+
+  const bundles = await db
+    .select({
+      id: bundlesTable.id,
+      merchantId: bundlesTable.merchantId,
+      name: bundlesTable.name,
+      description: bundlesTable.description,
+      bundlePrice: bundlesTable.bundlePrice,
+      isActive: bundlesTable.isActive,
+      createdAt: bundlesTable.createdAt,
+      imageData: bundlesTable.imageData,
+    })
+    .from(bundlesTable)
+    .where(and(eq(bundlesTable.merchantId, merchant.id), eq(bundlesTable.isActive, true)))
+    .orderBy(desc(bundlesTable.createdAt));
+
+  if (bundles.length === 0) {
+    res.json({ bundles: [] });
+    return;
+  }
+
+  const items = await db
+    .select({
+      id: bundleItemsTable.id,
+      bundleId: bundleItemsTable.bundleId,
+      variantId: bundleItemsTable.variantId,
+      variantLabel: productVariantsTable.variantLabel,
+      productName: productsTable.name,
+      quantity: bundleItemsTable.quantity,
+    })
+    .from(bundleItemsTable)
+    .innerJoin(productVariantsTable, eq(bundleItemsTable.variantId, productVariantsTable.id))
+    .innerJoin(productsTable, eq(productVariantsTable.productId, productsTable.id))
+    .where(inArray(bundleItemsTable.bundleId, bundles.map((b) => b.id)));
+
+  const itemsByBundle = new Map<number, typeof items>();
+  for (const it of items) {
+    const list = itemsByBundle.get(it.bundleId) ?? [];
+    list.push(it);
+    itemsByBundle.set(it.bundleId, list);
+  }
+
+  res.json({
+    bundles: bundles.map((b) => ({
+      id: b.id,
+      merchantId: b.merchantId,
+      name: b.name,
+      description: b.description,
+      imageUrl: b.imageData ? `/api/bundles/${b.id}/image` : null,
+      bundlePrice: b.bundlePrice,
+      isActive: b.isActive,
+      createdAt: b.createdAt,
+      items: itemsByBundle.get(b.id) ?? [],
+    })),
+  });
 });
 
 // POST /stores/:slug/products/:productId/variants/:variantId/stock-notifications

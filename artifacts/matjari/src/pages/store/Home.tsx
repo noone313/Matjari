@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useBrowseStoreProducts, getBrowseStoreProductsQueryKey } from '@workspace/api-client-react';
+import { useBrowseStoreProducts, getBrowseStoreProductsQueryKey, useBrowseStoreBundles, getBrowseStoreBundlesQueryKey } from '@workspace/api-client-react';
 import type { Product } from '@workspace/api-client-react';
 import { formatPrice, getCategoryLabel } from '@/lib/utils';
 import { Link, useLocation } from 'wouter';
-import { SlidersHorizontal, X, Scale, Check } from 'lucide-react';
+import { SlidersHorizontal, X, Scale, Check, Gift } from 'lucide-react';
 import { useComparison } from '@/contexts/ComparisonContext';
+import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
 
 const CATEGORIES = [
@@ -34,6 +35,7 @@ export default function StoreHome({ slug }: { slug: string }) {
   const [brokenImages, setBrokenImages] = useState<Set<number>>(new Set());
   const [location, setLocation] = useLocation();
   const { addToCompare, isInCompare } = useComparison();
+  const { addToCart } = useCart();
   const { toast } = useToast();
 
   const debouncedSearch = useDebounced(search, 300);
@@ -79,6 +81,29 @@ export default function StoreHome({ slug }: { slug: string }) {
       queryKey: getBrowseStoreProductsQueryKey(slug, browseParams),
     },
   });
+
+  const { data: bundlesData } = useBrowseStoreBundles(slug, {
+    query: {
+      enabled: !!slug,
+      queryKey: getBrowseStoreBundlesQueryKey(slug),
+    },
+  });
+  const bundles = bundlesData?.bundles ?? [];
+
+  const handleAddBundle = (bundle: { id: number; name: string; imageUrl?: string | null; bundlePrice: number }) => {
+    addToCart({
+      bundleId: bundle.id,
+      productId: 0,
+      variantId: 0,
+      productName: bundle.name,
+      variantLabel: 'باقة هدايا',
+      price: bundle.bundlePrice,
+      quantity: 1,
+      image: bundle.imageUrl ?? undefined,
+      category: 'bundle',
+    });
+    toast({ title: 'تمت إضافة الباقة للسلة' });
+  };
 
   let products = allProducts?.filter((p) => {
     if (!p.imageUrls?.length || !p.imageUrls.some((u) => u?.trim())) return false;
@@ -216,9 +241,55 @@ export default function StoreHome({ slug }: { slug: string }) {
           </div>
         )}
 
+        {/* Gift bundles */}
+        {bundles.length > 0 && (
+          <section className="mb-10">
+            <div className="flex items-center gap-2 mb-5">
+              <Gift className="w-5 h-5 text-[hsl(var(--primary))]" />
+              <h2 className="text-2xl font-bold font-serif text-gray-900">باقات هدايا جاهزة</h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
+              {bundles.map((bundle) => (
+                <div key={bundle.id} data-testid={`card-bundle-${bundle.id}`} className="bg-white border border-zinc-100 rounded-lg overflow-hidden shadow-sm flex flex-col">
+                  <div className="aspect-[4/3] overflow-hidden bg-zinc-50 relative">
+                    {bundle.imageUrl ? (
+                      <img src={bundle.imageUrl} alt={bundle.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Gift className="w-10 h-10 text-zinc-200" />
+                      </div>
+                    )}
+                    <span className="absolute top-3 right-3 text-[10px] font-bold px-2 py-1 rounded-full bg-[hsl(var(--primary))] text-white flex items-center gap-1">
+                      <Gift className="w-3 h-3" /> باقة
+                    </span>
+                  </div>
+                  <div className="p-4 flex flex-col flex-1">
+                    <h3 className="font-bold text-gray-900 font-serif line-clamp-1">{bundle.name}</h3>
+                    {bundle.description && (
+                      <p className="text-xs text-gray-500 mt-1 line-clamp-2">{bundle.description}</p>
+                    )}
+                    <p className="text-xs text-gray-400 mt-2">
+                      {bundle.items.map((it) => `${it.productName} (${it.variantLabel})`).join('، ')}
+                    </p>
+                    <div className="mt-3 flex items-center justify-between mt-auto">
+                      <span className="font-bold text-[hsl(var(--primary))]">{formatPrice(bundle.bundlePrice)}</span>
+                      <button
+                        onClick={() => handleAddBundle(bundle)}
+                        className="text-xs font-bold px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition-colors"
+                      >
+                        أضف الباقة
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-px bg-zinc-100">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-px bg-white">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="bg-white">
                 <div className="aspect-[3/4] bg-zinc-50 animate-pulse" />
@@ -234,7 +305,7 @@ export default function StoreHome({ slug }: { slug: string }) {
             <p className="text-sm tracking-widest uppercase text-zinc-300">لا توجد منتجات</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-px bg-zinc-100">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-px bg-white">
             {products.map((product) => {
               const minPrice =
                 product.variants?.length
