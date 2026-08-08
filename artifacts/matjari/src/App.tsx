@@ -25,6 +25,9 @@ import BundleForm from '@/pages/dashboard/BundleForm';
 import Settings from '@/pages/dashboard/Settings';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 
+// --- Public Pages ---
+import Landing from '@/pages/Landing';
+
 // --- Storefront Pages ---
 import StoreLayout from '@/components/layout/StoreLayout';
 import StoreHome from '@/pages/store/Home';
@@ -121,13 +124,19 @@ function MainRouter() {
     <Switch>
       <Route path="/store/:slug/*?" component={StoreRouter} />
       <Route path="/store/:slug" component={StoreRouter} />
-      
-      {/* Fallback all other routes to Dashboard (which handles /login and /register if unauthenticated) */}
+
+      {/* Public landing page at root for unauthenticated visitors */}
+      <Route path="/">
+        <Landing />
+      </Route>
+
+      {/* Auth pages - handled by DashboardRouter which checks authentication */}
       <Route path="/register" component={DashboardRouter} />
       <Route path="/login" component={DashboardRouter} />
+
+      {/* Protected dashboard routes */}
       <Route path="/dashboard/*?" component={DashboardRouter} />
-      <Route path="/" component={DashboardRouter} />
-      
+
       <Route component={NotFound} />
     </Switch>
   );

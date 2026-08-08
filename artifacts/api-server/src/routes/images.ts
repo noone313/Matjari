@@ -6,10 +6,10 @@ import { requireAuth, type AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
-// Store files in memory (max 5 MB per image)
+// Store files in memory (max 10 MB per image)
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (file.mimetype.startsWith("image/")) cb(null, true);
     else cb(new Error("Only image files are allowed"));
