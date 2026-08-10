@@ -5,6 +5,7 @@ import { eq, and, gte, sql, desc, count, inArray, notInArray } from "drizzle-orm
 import { requireAuth, type AuthRequest } from "../middleware/auth";
 import { VAPID_PUBLIC_KEY, sendPushToMerchant } from "../lib/push";
 import * as statsController from "../controllers/dashboard/stats.controller";
+import * as discountsController from "../controllers/dashboard/discounts.controller";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -372,76 +373,11 @@ router.patch("/orders/:id/status", async (req: AuthRequest, res): Promise<void> 
 
 // ─── Discounts ───────────────────────────────────────────────────────────────
 
-router.get("/discounts", async (req: AuthRequest, res): Promise<void> => {
-  const codes = await db
-    .select()
-    .from(discountCodesTable)
-    .where(eq(discountCodesTable.merchantId, req.merchantId!))
-    .orderBy(desc(discountCodesTable.createdAt));
-
-  res.json(codes);
-});
-
-router.post("/discounts", async (req: AuthRequest, res): Promise<void> => {
-  const parsed = CreateDiscountBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
-
-  const [code] = await db
-    .insert(discountCodesTable)
-    .values({
-      merchantId: req.merchantId!,
-      code: parsed.data.code.toUpperCase(),
-      percentOff: parsed.data.percentOff,
-      isActive: parsed.data.isActive ?? true,
-    })
-    .returning();
-
-  res.status(201).json(code);
-});
-
-router.delete("/discounts/:id", async (req: AuthRequest, res): Promise<void> => {
-  const params = DeleteDiscountParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: "معرّف غير صالح" });
-    return;
-  }
-
-  await db
-    .delete(discountCodesTable)
-    .where(and(eq(discountCodesTable.id, params.data.id), eq(discountCodesTable.merchantId, req.merchantId!)));
-
-  res.sendStatus(204);
-});
-
-router.patch("/discounts/:id/toggle", async (req: AuthRequest, res): Promise<void> => {
-  const params = ToggleDiscountParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: "معرّف غير صالح" });
-    return;
-  }
-
-  const [current] = await db
-    .select()
-    .from(discountCodesTable)
-    .where(and(eq(discountCodesTable.id, params.data.id), eq(discountCodesTable.merchantId, req.merchantId!)))
-    .limit(1);
-
-  if (!current) {
-    res.status(404).json({ error: "كود الخصم غير موجود" });
-    return;
-  }
-
-  const [updated] = await db
-    .update(discountCodesTable)
-    .set({ isActive: !current.isActive })
-    .where(eq(discountCodesTable.id, current.id))
-    .returning();
-
-  res.json(updated);
-});
+router.get("/discounts", discountsController.listDiscounts);
+router.post("/discounts", discountsController.createDiscount);
+router.delete("/discounts/:id", discountsController.deleteDiscount);
+router.patch("/discounts/:id/toggle", discountsController.toggleDiscount);
+router.get("/stores/:slug/discounts/validate", discountsController.validateDiscountCode);
 
 // ─── Reviews ────────────────────────────────────────────────────────────────
 
