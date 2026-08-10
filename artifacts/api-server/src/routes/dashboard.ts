@@ -1,6 +1,5 @@
 import { Router } from "express";
-import multer from "multer";
-import { db, merchantsTable, productsTable, productVariantsTable, productImagesTable, ordersTable, orderItemsTable, discountCodesTable, pushSubscriptionsTable, reviewsTable, stockNotificationsTable, bundlesTable, bundleItemsTable } from "@workspace/db";
+import { db, merchantsTable, productsTable, productVariantsTable, ordersTable, orderItemsTable, discountCodesTable, pushSubscriptionsTable, reviewsTable, stockNotificationsTable, bundlesTable, bundleItemsTable } from "@workspace/db";
 import { eq, and, gte, sql, desc, count, inArray, notInArray } from "drizzle-orm";
 import { requireAuth, type AuthRequest } from "../middleware/auth";
 import { VAPID_PUBLIC_KEY, sendPushToMerchant } from "../lib/push";
@@ -11,24 +10,6 @@ import * as stockNotificationsController from "../controllers/dashboard/stock-no
 import * as bundlesController from "../controllers/dashboard/bundles.controller";
 import * as productsController from "../controllers/dashboard/products.controller";
 
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) cb(null, true);
-    else cb(new Error("Only image files are allowed"));
-  },
-});
-
-/** Insert uploaded files into product_images, return their /api/images/:id URLs */
-async function saveImages(productId: number, files: Express.Multer.File[]): Promise<string[]> {
-  if (!files.length) return [];
-  const rows = await db
-    .insert(productImagesTable)
-    .values(files.map((f) => ({ productId, data: f.buffer, mimeType: f.mimetype })))
-    .returning({ id: productImagesTable.id });
-  return rows.map((r) => `/api/images/${r.id}`);
-}
 import {
   UpdateDashboardSettingsBody,
   CreateProductBody,
