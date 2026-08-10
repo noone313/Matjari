@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, merchantsTable, productsTable, productVariantsTable, ordersTable, orderItemsTable, discountCodesTable, reviewsTable, stockNotificationsTable, bundlesTable, bundleItemsTable } from "@workspace/db";
+import { merchantsTable, productsTable, productVariantsTable, ordersTable, orderItemsTable, discountCodesTable, reviewsTable, stockNotificationsTable, bundlesTable, bundleItemsTable } from "@workspace/db";
 import { eq, and, gte, sql, desc, count, inArray, notInArray } from "drizzle-orm";
 import { requireAuth, type AuthRequest } from "../middleware/auth";
 import { VAPID_PUBLIC_KEY } from "../lib/push";
@@ -10,6 +10,8 @@ import * as stockNotificationsController from "../controllers/dashboard/stock-no
 import * as bundlesController from "../controllers/dashboard/bundles.controller";
 import * as productsController from "../controllers/dashboard/products.controller";
 import * as pushController from "../controllers/dashboard/push.controller";
+import * as ordersController from "../controllers/dashboard/orders.controller";
+import * as settingsController from "../controllers/dashboard/settings.controller";
 
 import {
   UpdateDashboardSettingsBody,
@@ -46,51 +48,8 @@ router.use(requireAuth);
 router.get("/stats", statsController.getDashboardStats);
 
 // ─── Settings ────────────────────────────────────────────────────────────────
-
-router.get("/settings", async (req: AuthRequest, res): Promise<void> => {
-  const [merchant] = await db
-    .select()
-    .from(merchantsTable)
-    .where(eq(merchantsTable.id, req.merchantId!))
-    .limit(1);
-
-  if (!merchant) {
-    res.status(404).json({ error: "التاجر غير موجود" });
-    return;
-  }
-
-  const [productCountRow] = await db
-    .select({ c: count() })
-    .from(productsTable)
-    .where(eq(productsTable.merchantId, merchant.id));
-
-  const [orderCountRow] = await db
-    .select({ c: count() })
-    .from(ordersTable)
-    .where(eq(ordersTable.merchantId, merchant.id));
-
-  res.json({
-    ...merchant,
-    productCount: Number(productCountRow?.c ?? 0),
-    orderCount: Number(orderCountRow?.c ?? 0),
-  });
-});
-
-router.put("/settings", async (req: AuthRequest, res): Promise<void> => {
-  const parsed = UpdateDashboardSettingsBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
-
-  const [updated] = await db
-    .update(merchantsTable)
-    .set(parsed.data)
-    .where(eq(merchantsTable.id, req.merchantId!))
-    .returning();
-
-  res.json({ ...updated, productCount: null, orderCount: null });
-});
+router.get("/settings", settingsController.getSettings);
+router.put("/settings", settingsController.updateSettings);
 
 // ─── Products ────────────────────────────────────────────────────────────────
 router.get("/products", productsController.getProducts);
@@ -100,90 +59,10 @@ router.put("/products/:id", productsController.upload.array("images", 10), produ
 router.delete("/products/:id", productsController.deleteProduct);
 
 // ─── Orders ──────────────────────────────────────────────────────────────────
-
-router.get("/orders", async (req: AuthRequest, res): Promise<void> => {
-  const status = req.query.status as string | undefined;
-  const page = Math.max(1, Number(req.query.page) || 1);
-  const pageSize = 20;
-
-  const conditions = [eq(ordersTable.merchantId, req.merchantId!)];
-  if (status) {
-    conditions.push(sql`${ordersTable.status} = ${status}`);
-  }
-
-  const [totalRow] = await db
-    .select({ c: count() })
-    .from(ordersTable)
-    .where(and(...conditions));
-
-  const orders = await db
-    .select()
-    .from(ordersTable)
-    .where(and(...conditions))
-    .orderBy(desc(ordersTable.createdAt))
-    .limit(pageSize)
-    .offset((page - 1) * pageSize);
-
-  res.json({
-    orders,
-    total: Number(totalRow?.c ?? 0),
-    page,
-    pageSize,
-  });
-});
-
-router.get("/orders/:id", async (req: AuthRequest, res): Promise<void> => {
-  const params = GetOrderParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: "معرّف غير صالح" });
-    return;
-  }
-
-  const [order] = await db
-    .select()
-    .from(ordersTable)
-    .where(and(eq(ordersTable.id, params.data.id), eq(ordersTable.merchantId, req.merchantId!)))
-    .limit(1);
-
-  if (!order) {
-    res.status(404).json({ error: "الطلب غير موجود" });
-    return;
-  }
-
-  const items = await db
-    .select()
-    .from(orderItemsTable)
-    .where(eq(orderItemsTable.orderId, order.id));
-
-  res.json({ ...order, items });
-});
-
-router.patch("/orders/:id/status", async (req: AuthRequest, res): Promise<void> => {
-  const params = UpdateOrderStatusParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: "معرّف غير صالح" });
-    return;
-  }
-
-  const parsed = UpdateOrderStatusBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
-
-  const [updated] = await db
-    .update(ordersTable)
-    .set({ status: parsed.data.status as any })
-    .where(and(eq(ordersTable.id, params.data.id), eq(ordersTable.merchantId, req.merchantId!)))
-    .returning();
-
-  if (!updated) {
-    res.status(404).json({ error: "الطلب غير موجود" });
-    return;
-  }
-
-  res.json(updated);
-});
+router.get("/orders", ordersController.getOrders);
+router.get("/orders/stats", ordersController.getOrderStats);
+router.get("/orders/:id", ordersController.getOrder);
+router.patch("/orders/:id/status", ordersController.updateOrderStatus);
 
 // ─── Discounts ───────────────────────────────────────────────────────────────
 
