@@ -205,6 +205,8 @@ export function exportOrders(req: AuthRequest, res: Response) {
         });
         // Format total as currency
         row.getCell("total").numFmt = "#,##0";
+        // Force phone column as text to preserve leading zeros
+        row.getCell("customerPhone").numFmt = "@";
         row.alignment = { horizontal: "center", vertical: "middle" };
       }
 
