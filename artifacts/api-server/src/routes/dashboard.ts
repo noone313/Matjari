@@ -1,14 +1,15 @@
 import { Router } from "express";
-import { db, merchantsTable, productsTable, productVariantsTable, ordersTable, orderItemsTable, discountCodesTable, pushSubscriptionsTable, reviewsTable, stockNotificationsTable, bundlesTable, bundleItemsTable } from "@workspace/db";
+import { db, merchantsTable, productsTable, productVariantsTable, ordersTable, orderItemsTable, discountCodesTable, reviewsTable, stockNotificationsTable, bundlesTable, bundleItemsTable } from "@workspace/db";
 import { eq, and, gte, sql, desc, count, inArray, notInArray } from "drizzle-orm";
 import { requireAuth, type AuthRequest } from "../middleware/auth";
-import { VAPID_PUBLIC_KEY, sendPushToMerchant } from "../lib/push";
+import { VAPID_PUBLIC_KEY } from "../lib/push";
 import * as statsController from "../controllers/dashboard/stats.controller";
 import * as discountsController from "../controllers/dashboard/discounts.controller";
 import * as reviewsController from "../controllers/dashboard/reviews.controller";
 import * as stockNotificationsController from "../controllers/dashboard/stock-notifications.controller";
 import * as bundlesController from "../controllers/dashboard/bundles.controller";
 import * as productsController from "../controllers/dashboard/products.controller";
+import * as pushController from "../controllers/dashboard/push.controller";
 
 import {
   UpdateDashboardSettingsBody,
@@ -213,9 +214,7 @@ router.delete("/bundles/:id", bundlesController.deleteBundle);
 
 // ─── Push Notifications ──────────────────────────────────────────────────────
 
-/** GET /dashboard/push/vapid-public-key — return the public VAPID key so the
- *  client can subscribe without exposing the private key. */
-router.get("/push/vapid-public-key", (_req, res): void => {
+router.get("/push/vapid-public-key", (_req, res) => {
   if (!VAPID_PUBLIC_KEY) {
     res.status(503).json({ error: "Push notifications not configured" });
     return;
@@ -223,49 +222,7 @@ router.get("/push/vapid-public-key", (_req, res): void => {
   res.json({ publicKey: VAPID_PUBLIC_KEY });
 });
 
-/** POST /dashboard/push/subscribe — save a PushSubscription for this merchant. */
-router.post("/push/subscribe", async (req: AuthRequest, res): Promise<void> => {
-  const { endpoint, keys } = req.body ?? {};
-  if (
-    typeof endpoint !== "string" ||
-    typeof keys?.p256dh !== "string" ||
-    typeof keys?.auth !== "string"
-  ) {
-    res.status(400).json({ error: "بيانات الاشتراك غير صالحة" });
-    return;
-  }
-
-  // Upsert: if the endpoint already exists for this merchant, update keys;
-  // if it exists for a different merchant (device transfer), replace it.
-  await db
-    .delete(pushSubscriptionsTable)
-    .where(eq(pushSubscriptionsTable.endpoint, endpoint));
-
-  await db.insert(pushSubscriptionsTable).values({
-    merchantId: req.merchantId!,
-    endpoint,
-    p256dh: keys.p256dh,
-    auth: keys.auth,
-  });
-
-  res.sendStatus(201);
-});
-
-/** DELETE /dashboard/push/unsubscribe — remove all push subscriptions for
- *  this merchant on the given endpoint. */
-router.delete("/push/unsubscribe", async (req: AuthRequest, res): Promise<void> => {
-  const { endpoint } = req.body ?? {};
-  if (typeof endpoint === "string") {
-    await db
-      .delete(pushSubscriptionsTable)
-      .where(
-        and(
-          eq(pushSubscriptionsTable.merchantId, req.merchantId!),
-          eq(pushSubscriptionsTable.endpoint, endpoint),
-        ),
-      );
-  }
-  res.sendStatus(204);
-});
+router.post("/push/subscribe", pushController.subscribeToPush);
+router.delete("/push/unsubscribe", pushController.unsubscribeFromPush);
 
 export default router;
