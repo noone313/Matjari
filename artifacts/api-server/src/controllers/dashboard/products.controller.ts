@@ -14,13 +14,13 @@ const upload = multer({
   },
 });
 
-async function saveImages(productId: number, files: Express.Multer.File[]): Promise<string[]> {
+async function saveImages(tx: any, productId: number, files: Express.Multer.File[]): Promise<string[]> {
   if (!files.length) return [];
-  const rows = await db
+  const rows = await tx
     .insert(productImagesTable)
     .values(files.map((f) => ({ productId, data: f.buffer, mimeType: f.mimetype })))
     .returning({ id: productImagesTable.id });
-  return rows.map((r) => `/api/images/${r.id}`);
+  return rows.map((r: { id: number }) => `/api/images/${r.id}`);
 }
 
 export function getProducts(req: AuthRequest, res: Response) {
@@ -130,7 +130,7 @@ export function createProduct(req: AuthRequest, res: Response) {
     }).returning();
 
     const files = (req.files as Express.Multer.File[]) ?? [];
-    const imageUrls = await saveImages(product.id, files);
+    const imageUrls = await saveImages(tx, product.id, files);
     if (imageUrls.length) {
       await tx.update(productsTable).set({ imageUrls }).where(eq(productsTable.id, product.id));
     }
@@ -185,7 +185,7 @@ export function updateProduct(req: AuthRequest, res: Response) {
       }
     }
 
-    const newImageUrls = await saveImages(productId, files);
+    const newImageUrls = await saveImages(tx, productId, files);
     const allImageUrls = [...keepUrls.filter((u: string) => u.startsWith("/api/images/")), ...newImageUrls];
 
     if (allImageUrls.length) {
