@@ -7,6 +7,7 @@ import { VAPID_PUBLIC_KEY, sendPushToMerchant } from "../lib/push";
 import * as statsController from "../controllers/dashboard/stats.controller";
 import * as discountsController from "../controllers/dashboard/discounts.controller";
 import * as reviewsController from "../controllers/dashboard/reviews.controller";
+import * as stockNotificationsController from "../controllers/dashboard/stock-notifications.controller";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -387,78 +388,10 @@ router.delete("/reviews/:id", reviewsController.deleteReview);
 
 // ─── Stock Notifications ─────────────────────────────────────────────────────
 
-router.get("/stock-notifications", async (req: AuthRequest, res): Promise<void> => {
-  const query = ListStockNotificationsQueryParams.safeParse(req.query);
-  const productId = query.success ? query.data.productId : undefined;
+// ─── Stock Notifications ─────────────────────────────────────────────────────
 
-  const notifications = await db
-    .select({
-      id: stockNotificationsTable.id,
-      variantId: stockNotificationsTable.variantId,
-      productId: productsTable.id,
-      productName: productsTable.name,
-      variantLabel: productVariantsTable.variantLabel,
-      customerPhone: stockNotificationsTable.customerPhone,
-      notified: stockNotificationsTable.notified,
-      createdAt: stockNotificationsTable.createdAt,
-    })
-    .from(stockNotificationsTable)
-    .innerJoin(
-      productVariantsTable,
-      eq(stockNotificationsTable.variantId, productVariantsTable.id),
-    )
-    .innerJoin(productsTable, eq(productVariantsTable.productId, productsTable.id))
-    .where(
-      and(
-        eq(productsTable.merchantId, req.merchantId!),
-        productId !== undefined
-          ? eq(productsTable.id, productId)
-          : undefined,
-      ),
-    )
-    .orderBy(desc(stockNotificationsTable.createdAt));
-
-  res.json({ notifications });
-});
-
-router.patch("/stock-notifications/:id", async (req: AuthRequest, res): Promise<void> => {
-  const params = UpdateStockNotificationParams.safeParse(req.params);
-  const body = UpdateStockNotificationBody.safeParse(req.body);
-
-  if (!params.success || !body.success) {
-    res.status(400).json({ error: "بيانات غير صالحة" });
-    return;
-  }
-
-  const [owned] = await db
-    .select({ notificationId: stockNotificationsTable.id })
-    .from(stockNotificationsTable)
-    .innerJoin(
-      productVariantsTable,
-      eq(stockNotificationsTable.variantId, productVariantsTable.id),
-    )
-    .innerJoin(productsTable, eq(productVariantsTable.productId, productsTable.id))
-    .where(
-      and(
-        eq(stockNotificationsTable.id, params.data.id),
-        eq(productsTable.merchantId, req.merchantId!),
-      ),
-    )
-    .limit(1);
-
-  if (!owned) {
-    res.status(404).json({ error: "الإشعار غير موجود" });
-    return;
-  }
-
-  const [notification] = await db
-    .update(stockNotificationsTable)
-    .set({ notified: body.data.notified })
-    .where(eq(stockNotificationsTable.id, params.data.id))
-    .returning();
-
-  res.json(notification);
-});
+router.get("/stock-notifications", stockNotificationsController.listStockNotifications);
+router.patch("/stock-notifications/:id", stockNotificationsController.updateStockNotification);
 
 // ─── Bundles ─────────────────────────────────────────────────────────────────
 
