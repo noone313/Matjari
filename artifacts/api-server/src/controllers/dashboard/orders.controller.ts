@@ -3,6 +3,7 @@ import { eq, and, desc, sql, count, inArray, gte } from "drizzle-orm";
 import { type AuthRequest } from "../../middleware/auth";
 import { ListOrdersQueryParams, GetOrderParams, UpdateOrderStatusParams, UpdateOrderStatusBody } from "@workspace/api-zod";
 import { type Response } from "express";
+import ExcelJS from "exceljs";
 
 export function getOrders(req: AuthRequest, res: Response) {
   const merchantId = req.merchantId!;
@@ -122,4 +123,112 @@ export function getOrderStats(req: AuthRequest, res: Response) {
     console.error(err);
     res.status(500).json({ error: "فشل جلب إحصائيات الطلبات" });
   });
+}
+
+export function exportOrders(req: AuthRequest, res: Response) {
+  const merchantId = req.merchantId!;
+  const { status, q } = req.query;
+
+  const conditions = [eq(ordersTable.merchantId, merchantId)];
+  if (status) conditions.push(eq(ordersTable.status, status as any));
+  if (q) conditions.push(sql`${ordersTable.customerName} ILIKE ${'%' + q + '%'}`);
+
+  const whereClause = and(...conditions);
+
+  // Helper to map status to Arabic label (handles both string enum and numeric DB values)
+  const mapStatusToArabic = (status: string | number): string => {
+    const statusStr = String(status);
+    const statusMap: Record<string, string> = {
+      new: "جديد",
+      processing: "قيد المعالجة",
+      shipped: "تم الشحن",
+      delivered: "تم التسليم",
+      cancelled: "ملغي",
+      // Handle numeric enum values that might be stored in DB
+      "0": "جديد",
+      "1": "قيد المعالجة",
+      "2": "تم الشحن",
+      "3": "تم التسليم",
+      "4": "ملغي",
+      "300": "جديد",
+      "450": "قيد المعالجة",
+    };
+    return statusMap[statusStr] || statusMap[String(status)] || String(status);
+  };
+
+  db.select()
+    .from(ordersTable)
+    .where(whereClause)
+    .orderBy(desc(ordersTable.createdAt))
+    .then(async (orders) => {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("الطلبات");
+
+      // Define columns with Arabic headers
+      worksheet.columns = [
+        { header: "رقم الطلب", key: "id", width: 12 },
+        { header: "اسم الزبون", key: "customerName", width: 25 },
+        { header: "رقم الهاتف", key: "customerPhone", width: 20 },
+        { header: "العنوان", key: "customerAddress", width: 40 },
+        { header: "طريقة الدفع", key: "paymentMethod", width: 20 },
+        { header: "الإجمالي", key: "total", width: 18 },
+        { header: "الحالة", key: "status", width: 15 },
+        { header: "التاريخ", key: "createdAt", width: 22 },
+      ];
+
+      // Style header row
+      worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+      worksheet.getRow(1).fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFB8860B" },
+      };
+      worksheet.getRow(1).alignment = { horizontal: "center", vertical: "middle" };
+
+      // Add data rows
+      for (const order of orders) {
+        const row = worksheet.addRow({
+          id: order.id,
+          customerName: order.customerName,
+          customerPhone: order.customerPhone,
+          customerAddress: order.customerAddress,
+          paymentMethod: order.paymentMethod === "cod" ? "الدفع عند الاستلام" : "تحويل بنكي",
+          total: order.total,
+          status: mapStatusToArabic(order.status),
+          createdAt: new Date(order.createdAt).toLocaleDateString("ar-IQ", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        });
+        // Format total as currency
+        row.getCell("total").numFmt = "#,##0";
+        row.alignment = { horizontal: "center", vertical: "middle" };
+      }
+
+      // Auto-fit columns
+      worksheet.columns.forEach((column) => {
+        if (column.key !== "customerAddress") {
+          column.width = Math.max(column.width || 10, 15);
+        }
+      });
+
+      // Set response headers for download
+      res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      );
+      res.setHeader(
+        "Content-Disposition",
+        'attachment; filename="orders-' + new Date().toISOString().split("T")[0] + '.xlsx"'
+      );
+
+      await workbook.xlsx.write(res);
+      res.end();
+    }).catch((err) => {
+      console.error(err);
+      res.status(500).json({ error: "فشل تصدير الطلبات" });
+    });
 }

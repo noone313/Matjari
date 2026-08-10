@@ -61,6 +61,7 @@ router.delete("/products/:id", productsController.deleteProduct);
 // ─── Orders ──────────────────────────────────────────────────────────────────
 router.get("/orders", ordersController.getOrders);
 router.get("/orders/stats", ordersController.getOrderStats);
+router.get("/orders/export", ordersController.exportOrders);
 router.get("/orders/:id", ordersController.getOrder);
 router.patch("/orders/:id/status", ordersController.updateOrderStatus);
 
