@@ -9,6 +9,7 @@ import * as discountsController from "../controllers/dashboard/discounts.control
 import * as reviewsController from "../controllers/dashboard/reviews.controller";
 import * as stockNotificationsController from "../controllers/dashboard/stock-notifications.controller";
 import * as bundlesController from "../controllers/dashboard/bundles.controller";
+import * as productsController from "../controllers/dashboard/products.controller";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -110,183 +111,11 @@ router.put("/settings", async (req: AuthRequest, res): Promise<void> => {
 });
 
 // ─── Products ────────────────────────────────────────────────────────────────
-
-router.get("/products", async (req: AuthRequest, res): Promise<void> => {
-  const params = ListOrdersQueryParams.safeParse(req.query);
-  const category = req.query.category as string | undefined;
-  const q = req.query.q as string | undefined;
-
-  const products = await db
-    .select()
-    .from(productsTable)
-    .where(eq(productsTable.merchantId, req.merchantId!))
-    .orderBy(desc(productsTable.createdAt));
-
-  const variants = products.length > 0
-    ? await db
-        .select()
-        .from(productVariantsTable)
-        .where(inArray(productVariantsTable.productId, products.map((p) => p.id)))
-    : [];
-
-  let result = products.map((p) => ({
-    ...p,
-    variants: variants.filter((v) => v.productId === p.id),
-  }));
-
-  if (category && category !== "all") {
-    result = result.filter((p) => p.category === category);
-  }
-  if (q) {
-    const lower = q.toLowerCase();
-    result = result.filter((p) => p.name.toLowerCase().includes(lower));
-  }
-
-  res.json(result);
-});
-
-router.post("/products", upload.array("images", 10), async (req: AuthRequest, res): Promise<void> => {
-  let body: unknown;
-  try { body = JSON.parse(req.body.data ?? "{}"); } catch { res.status(400).json({ error: "Invalid JSON in data field" }); return; }
-
-  const parsed = CreateProductBody.shape.data.safeParse(body);
-  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-
-  const { variants: variantInputs, ...productData } = parsed.data;
-
-  const [product] = await db
-    .insert(productsTable)
-    .values({
-      ...productData,
-      category: productData.category as any,
-      merchantId: req.merchantId!,
-      imageUrls: [],
-    })
-    .returning();
-
-  const files = (req.files as Express.Multer.File[]) ?? [];
-  const imageUrls = await saveImages(product.id, files);
-  if (imageUrls.length) {
-    await db.update(productsTable).set({ imageUrls }).where(eq(productsTable.id, product.id));
-  }
-
-  const insertedVariants =
-    variantInputs && variantInputs.length > 0
-      ? await db
-          .insert(productVariantsTable)
-          .values(variantInputs.map((v) => ({ ...v, productId: product.id, stock: v.stock ?? 0 })))
-          .returning()
-      : [];
-
-  res.status(201).json({ ...product, imageUrls, variants: insertedVariants });
-});
-
-router.get("/products/:id", async (req: AuthRequest, res): Promise<void> => {
-  const params = GetProductParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: "معرّف غير صالح" });
-    return;
-  }
-
-  const [product] = await db
-    .select()
-    .from(productsTable)
-    .where(and(eq(productsTable.id, params.data.id), eq(productsTable.merchantId, req.merchantId!)))
-    .limit(1);
-
-  if (!product) {
-    res.status(404).json({ error: "المنتج غير موجود" });
-    return;
-  }
-
-  const variants = await db
-    .select()
-    .from(productVariantsTable)
-    .where(eq(productVariantsTable.productId, product.id));
-
-  res.json({ ...product, variants });
-});
-
-router.put("/products/:id", upload.array("images", 10), async (req: AuthRequest, res): Promise<void> => {
-  const params = UpdateProductParams.safeParse(req.params);
-  if (!params.success) { res.status(400).json({ error: "معرّف غير صالح" }); return; }
-
-  let body: unknown;
-  try { body = JSON.parse(req.body.data ?? "{}"); } catch { res.status(400).json({ error: "Invalid JSON in data field" }); return; }
-
-  const parsed = UpdateProductBody.shape.data.safeParse(body);
-  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-
-  const { variants: variantInputs, ...productData } = parsed.data;
-
-  // keepUrls = existing image URLs the client wants to keep (JSON array in form field)
-  let keepUrls: string[] = [];
-  try { keepUrls = JSON.parse(req.body.keepUrls ?? "[]"); } catch { keepUrls = []; }
-
-  // Remove images not in keepUrls (they were deleted by the user)
-  const existingImages = await db
-    .select({ id: productImagesTable.id, url: sql<string>`'/api/images/' || ${productImagesTable.id}` })
-    .from(productImagesTable)
-    .where(eq(productImagesTable.productId, params.data.id));
-
-  const idsToDelete = existingImages
-    .filter((img) => !keepUrls.includes(img.url))
-    .map((img) => img.id);
-  if (idsToDelete.length) {
-    await db.delete(productImagesTable).where(inArray(productImagesTable.id, idsToDelete));
-  }
-
-  // Upload new images
-  const files = (req.files as Express.Multer.File[]) ?? [];
-  const newUrls = await saveImages(params.data.id, files);
-
-  // Final imageUrls = kept + new
-  const imageUrls = [...keepUrls.filter((u) => u.startsWith("/api/images/")), ...newUrls];
-
-  const [product] = await db
-    .update(productsTable)
-    .set({ ...productData, category: productData.category as any, imageUrls })
-    .where(and(eq(productsTable.id, params.data.id), eq(productsTable.merchantId, req.merchantId!)))
-    .returning();
-
-  if (!product) { res.status(404).json({ error: "المنتج غير موجود" }); return; }
-
-  // Replace variants
-  let updatedVariants: typeof productVariantsTable.$inferSelect[] = [];
-  if (variantInputs !== undefined) {
-    await db.delete(productVariantsTable).where(eq(productVariantsTable.productId, product.id));
-    if (variantInputs.length > 0) {
-      updatedVariants = await db
-        .insert(productVariantsTable)
-        .values(variantInputs.map((v) => ({ ...v, productId: product.id, stock: v.stock ?? 0 })))
-        .returning();
-    }
-  } else {
-    updatedVariants = await db.select().from(productVariantsTable).where(eq(productVariantsTable.productId, product.id));
-  }
-
-  res.json({ ...product, variants: updatedVariants });
-});
-
-router.delete("/products/:id", async (req: AuthRequest, res): Promise<void> => {
-  const params = DeleteProductParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: "معرّف غير صالح" });
-    return;
-  }
-
-  const [deleted] = await db
-    .delete(productsTable)
-    .where(and(eq(productsTable.id, params.data.id), eq(productsTable.merchantId, req.merchantId!)))
-    .returning();
-
-  if (!deleted) {
-    res.status(404).json({ error: "المنتج غير موجود" });
-    return;
-  }
-
-  res.sendStatus(204);
-});
+router.get("/products", productsController.getProducts);
+router.post("/products", productsController.upload.array("images", 10), productsController.createProduct);
+router.get("/products/:id", productsController.getProduct);
+router.put("/products/:id", productsController.upload.array("images", 10), productsController.updateProduct);
+router.delete("/products/:id", productsController.deleteProduct);
 
 // ─── Orders ──────────────────────────────────────────────────────────────────
 
