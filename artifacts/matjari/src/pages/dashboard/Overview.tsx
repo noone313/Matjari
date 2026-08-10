@@ -94,27 +94,23 @@ export default function Overview() {
                 <tr>
                   <th className="px-6 py-3">رقم الطلب</th>
                   <th className="px-6 py-3">العميل</th>
-                  <th className="px-6 py-3">التاريخ</th>
                   <th className="px-6 py-3">الحالة</th>
-                  <th className="px-6 py-3">الإجمالي</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {stats.recentOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">لا توجد طلبات حديثة</td>
+                    <td colSpan={3} className="px-6 py-8 text-center text-gray-500">لا توجد طلبات حديثة</td>
                   </tr>
                 ) : stats.recentOrders.map(order => (
                   <tr key={order.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 font-medium"><Link href={`/dashboard/orders/${order.id}`}>#{order.id}</Link></td>
                     <td className="px-6 py-4">{order.customerName}</td>
-                    <td className="px-6 py-4 text-gray-500">{new Date(order.createdAt).toLocaleDateString('ar-IQ')}</td>
                     <td className="px-6 py-4">
                       <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(order.status)}`}>
                         {getStatusLabel(order.status)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 font-medium">{formatPrice(order.total)}</td>
                   </tr>
                 ))}
               </tbody>

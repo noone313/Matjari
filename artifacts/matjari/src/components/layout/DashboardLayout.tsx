@@ -3,12 +3,11 @@ import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGetMe, useGetDashboardStats, getGetDashboardStatsQueryKey, getGetVapidPublicKeyQueryOptions, useSubscribeToPush } from '@workspace/api-client-react';
 import { useQueryClient, type QueryClient } from '@tanstack/react-query';
-import { LayoutDashboard, Package, ShoppingBag, Tags, Star as StarIcon, Settings, LogOut, Store, ExternalLink, Copy, Check, Gift, Menu, X, Bell, ChevronLeft, ChevronRight, ArrowRight, Clock, User, Package as PackageIcon } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, Tags, Star as StarIcon, Settings, LogOut, Store, ExternalLink, Copy, Check, Gift, Menu, X, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { ToastAction } from '@/components/ui/toast';
-import { formatPrice, getStatusLabel, getStatusColor } from '@/lib/utils';
 
 /** Play a short two-tone chime using the Web Audio API. Fails silently if unavailable. */
 function playNewOrderSound() {
@@ -301,32 +300,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="flex flex-col">
               <span className="text-gray-500">الطلبات</span>
               <span className="font-semibold text-gray-900">{stats.totalOrders || 0}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Recent Orders in Sidebar */}
-        {stats?.recentOrders && stats.recentOrders.length > 0 && (
-          <div className="px-6 py-4 border-b border-gray-100">
-            <h3 className="font-medium text-gray-900 mb-3 text-sm">أحدث الطلبات</h3>
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              {stats.recentOrders.slice(0, 5).map(order => (
-                <Link key={order.id} href={`/dashboard/orders/${order.id}`} className="block p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-medium text-gray-900 text-sm truncate">#{order.id}</span>
-                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium border ${getStatusColor(order.status)}`}>
-                      {getStatusLabel(order.status)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-2 mt-1">
-                    <span className="text-gray-500 text-[11px] truncate flex-1">{order.customerName}</span>
-                    <span className="text-gray-400 text-[10px] whitespace-nowrap">{new Date(order.createdAt).toLocaleDateString('ar-IQ')}</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-            <div className="mt-2 text-center">
-              <Link href="/dashboard/orders" className="text-xs text-primary hover:underline">عرض جميع الطلبات</Link>
             </div>
           </div>
         )}
