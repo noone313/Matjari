@@ -5,7 +5,8 @@ import { formatPrice, getStatusLabel, getStatusColor } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowRight, MapPin, Phone, CreditCard, Gift } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { ArrowRight, MapPin, Phone, CreditCard, Gift, Printer } from 'lucide-react';
 
 export default function OrderDetail() {
   const { id } = useParams();
@@ -14,6 +15,7 @@ export default function OrderDetail() {
   const updateStatus = useUpdateOrderStatus();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { merchant } = useAuth();
 
   const handleStatusChange = (newStatus: string) => {
     updateStatus.mutate({ id: orderId, data: { status: newStatus } }, {
@@ -29,7 +31,8 @@ export default function OrderDetail() {
   if (!order.items) return <div>جاري التحميل...</div>;
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-16">
+    <>
+      <div className="space-y-6 max-w-4xl mx-auto pb-16 print:hidden">
       <div className="flex items-center gap-4">
         <Link href="/dashboard/orders">
           <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full border border-gray-200 bg-white">
@@ -45,6 +48,10 @@ export default function OrderDetail() {
           </div>
           <p className="text-gray-500 mt-1">{new Date(order.createdAt).toLocaleString('ar-IQ')}</p>
         </div>
+        <Button variant="outline" className="ms-auto" onClick={() => window.print()}>
+          <Printer className="w-4 h-4 ml-2" />
+          طباعة الإيصال
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -137,6 +144,83 @@ export default function OrderDetail() {
           )}
         </div>
       </div>
-    </div>
+      </div>
+
+      <div id="order-receipt" className="hidden print:block bg-white text-gray-900" dir="rtl">
+        <style>{`
+          @media print {
+            body * { visibility: hidden; }
+            #order-receipt, #order-receipt * { visibility: visible; }
+            #order-receipt { position: absolute; top: 0; left: 0; right: 0; width: 100%; }
+            @page { margin: 12mm; }
+          }
+        `}</style>
+        <div className="border border-gray-300 rounded-lg p-6 max-w-2xl mx-auto">
+          <div className="text-center border-b border-gray-300 pb-4">
+            <div className="text-2xl font-bold font-serif">{merchant?.storeName || 'متجري'}</div>
+            {merchant?.phone && (
+              <div className="text-sm text-gray-600 mt-1" dir="ltr">{merchant.phone}</div>
+            )}
+            <div className="text-lg font-bold mt-2">إيصال طلب</div>
+          </div>
+
+          <div className="py-4 border-b border-gray-300 grid grid-cols-1 sm:grid-cols-2 gap-y-2 text-sm">
+            <div><span className="text-gray-500">رقم الطلب: </span><span className="font-bold">#{order.id}</span></div>
+            <div><span className="text-gray-500">التاريخ: </span>{new Date(order.createdAt).toLocaleString('ar-IQ')}</div>
+            <div><span className="text-gray-500">الحالة: </span>{getStatusLabel(order.status)}</div>
+            <div><span className="text-gray-500">طريقة الدفع: </span>{order.paymentMethod === 'cod' ? 'الدفع عند الاستلام' : 'تحويل بنكي'}</div>
+          </div>
+
+          <div className="py-4 border-b border-gray-300 text-sm space-y-1">
+            <div><span className="text-gray-500">العميل: </span><span className="font-bold">{order.customerName}</span></div>
+            <div><span className="text-gray-500">الهاتف: </span><span dir="ltr">{order.customerPhone}</span></div>
+            <div><span className="text-gray-500">العنوان: </span>{order.customerAddress}</div>
+          </div>
+
+          <table className="w-full text-sm">
+            <tbody>
+              {order.items.map((item, i) => (
+                <tr key={i} className="border-b border-gray-200 last:border-0">
+                  <td className="py-3">
+                    <div className="font-medium">{item.productName}</div>
+                    {item.variantLabel && <div className="text-gray-500 text-xs">{item.variantLabel}</div>}
+                  </td>
+                  <td className="py-3 text-center whitespace-nowrap">{item.quantity} × {formatPrice(item.priceAtOrder)}</td>
+                  <td className="py-3 text-left font-bold whitespace-nowrap">{formatPrice(item.priceAtOrder * item.quantity)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <div className="py-4 space-y-1 text-sm">
+            <div className="flex justify-between">
+              <span>المجموع الفرعي</span>
+              <span>{formatPrice(order.subtotal)}</span>
+            </div>
+            {order.discountCode && (
+              <div className="flex justify-between text-green-700">
+                <span>خصم ({order.discountCode})</span>
+                <span>- {formatPrice(order.subtotal - order.total)}</span>
+              </div>
+            )}
+            <div className="flex justify-between font-bold text-base pt-2 mt-1 border-t border-gray-300">
+              <span>الإجمالي</span>
+              <span>{formatPrice(order.total)}</span>
+            </div>
+          </div>
+
+          {order.isGift && (
+            <div className="py-3 border-t border-gray-300 text-sm">
+              <div className="font-bold">هدية</div>
+              {order.giftMessage && <div className="text-gray-600 mt-1">"{order.giftMessage}"</div>}
+            </div>
+          )}
+
+          <div className="pt-4 text-center text-sm text-gray-600 border-t border-gray-300">
+            شكراً لتسوقك من {merchant?.storeName || 'متجري'}
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
