@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 export type CustomFetchOptions = RequestInit & {
   responseType?: "json" | "text" | "blob" | "auto";
 };
@@ -16,6 +18,19 @@ const DEFAULT_JSON_ACCEPT = "application/json, application/problem+json";
 // ---------------------------------------------------------------------------
 
 let _baseUrl: string | null = null;
+
+// Web builds (Vite) can define VITE_API_URL at build time to make every
+// relative `/api/...` request absolute, removing the need for a dev-only
+// proxy in production. When VITE_API_URL is absent (or in non-Vite runtimes
+// such as Expo/Metro, where `import.meta.env` is unavailable), requests stay
+// relative and rely on `setBaseUrl()`/the dev proxy instead.
+try {
+  _baseUrl = import.meta.env?.VITE_API_URL
+    ? String(import.meta.env.VITE_API_URL).replace(/\/+$/, "")
+    : null;
+} catch {
+  _baseUrl = null;
+}
 let _authTokenGetter: AuthTokenGetter | null = () => localStorage.getItem("matjari_token");
 
 /**
