@@ -1,5 +1,5 @@
 import { db, merchantsTable, productsTable, reviewsTable } from "@workspace/db";
-import { eq, and, desc, count } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { type AuthRequest } from "../../middleware/auth";
 import { DecideReviewParams, DecideReviewBody, DeleteReviewParams } from "@workspace/api-zod";
 import { type Response } from "express";
@@ -7,55 +7,30 @@ import { type Response } from "express";
 export function listReviews(req: AuthRequest, res: Response) {
   const merchantId = req.merchantId!;
   const status = Array.isArray(req.query.status) ? req.query.status[0] : req.query.status;
-  const page = Array.isArray(req.query.page) ? req.query.page[0] : req.query.page;
-  const limit = Array.isArray(req.query.limit) ? req.query.limit[0] : req.query.limit;
-  const pageNum = parseInt(page as string || "1", 10);
-  const limitNum = parseInt(limit as string || "20", 10);
-  const offset = (pageNum - 1) * limitNum;
 
   const conditions = [eq(productsTable.merchantId, merchantId)];
   if (status === "pending") conditions.push(eq(reviewsTable.isApproved, false));
   if (status === "approved") conditions.push(eq(reviewsTable.isApproved, true));
 
-  Promise.all([
-    db.select({ count: count() })
-      .from(reviewsTable)
-      .innerJoin(productsTable, eq(reviewsTable.productId, productsTable.id))
-      .where(eq(productsTable.merchantId, merchantId)),
-    db.select({
-      id: reviewsTable.id,
-      productId: reviewsTable.productId,
-      productName: productsTable.name,
-      customerName: reviewsTable.customerName,
-      rating: reviewsTable.rating,
-      comment: reviewsTable.comment,
-      isApproved: reviewsTable.isApproved,
-      createdAt: reviewsTable.createdAt,
-    })
-      .from(reviewsTable)
-      .innerJoin(productsTable, eq(reviewsTable.productId, productsTable.id))
-      .where(and(...conditions))
-      .orderBy(desc(reviewsTable.createdAt))
-      .limit(limitNum)
-      .offset(offset),
-    db.select({ count: count() })
-      .from(reviewsTable)
-      .innerJoin(productsTable, eq(reviewsTable.productId, productsTable.id))
-      .where(eq(productsTable.merchantId, merchantId)),
-  ]).then(([totalRes, reviews, total]) => {
-    res.json({
-      reviews,
-      pagination: {
-        page: pageNum,
-        limit: limitNum,
-        total: Number(total[0]?.count ?? 0),
-        totalPages: Math.ceil(Number(total[0]?.count ?? 0) / limitNum),
-      },
+  db.select({
+    id: reviewsTable.id,
+    productId: reviewsTable.productId,
+    productName: productsTable.name,
+    customerName: reviewsTable.customerName,
+    rating: reviewsTable.rating,
+    comment: reviewsTable.comment,
+    isApproved: reviewsTable.isApproved,
+    createdAt: reviewsTable.createdAt,
+  })
+    .from(reviewsTable)
+    .innerJoin(productsTable, eq(reviewsTable.productId, productsTable.id))
+    .where(and(...conditions))
+    .orderBy(desc(reviewsTable.createdAt))
+    .then((reviews) => res.json({ reviews }))
+    .catch((err) => {
+      console.error(err);
+      res.status(500).json({ error: "فشل جلب التقييمات" });
     });
-  }).catch((err) => {
-    console.error(err);
-    res.status(500).json({ error: "فشل جلب التقييمات" });
-  });
 }
 
 export function decideReview(req: AuthRequest, res: Response) {

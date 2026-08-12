@@ -24,12 +24,9 @@ export function getOrders(req: AuthRequest, res: Response) {
   ]).then(([totalRes, orders]) => {
     res.json({
       orders,
-      pagination: {
-        page: pageNum,
-        limit: limitNum,
-        total: Number(totalRes[0]?.count ?? 0),
-        totalPages: Math.ceil(Number(totalRes[0]?.count ?? 0) / limitNum),
-      },
+      total: Number(totalRes[0]?.count ?? 0),
+      page: pageNum,
+      pageSize: limitNum,
     });
   }).catch((err) => {
     console.error(err);
