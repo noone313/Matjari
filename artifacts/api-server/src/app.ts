@@ -36,7 +36,12 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   logger.error({ err }, "Unhandled error");
   const status = (err as any).statusCode ?? 500;
   const message = status === 500 ? "حدث خطأ داخلي في الخادم" : err.message;
-  res.status(status).json({ error: message });
+  const body: { error: string; detail?: string; stack?: string } = { error: message };
+  if (status === 500 && process.env.DEBUG_ERRORS === "1") {
+    body.detail = err.message;
+    body.stack = err.stack;
+  }
+  res.status(status).json(body);
 });
 
 export default app;
