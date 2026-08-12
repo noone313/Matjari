@@ -19,15 +19,26 @@ const DEFAULT_JSON_ACCEPT = "application/json, application/problem+json";
 
 let _baseUrl: string | null = null;
 
+// Accept a host like "api.example.com" (missing scheme) and normalise it to a
+// full https URL. Values that already carry a scheme (http://, https://) pass
+// through untouched. A missing scheme previously produced a relative path that
+// the browser resolved against the frontend origin, causing 404s in production.
+function normalizeBaseUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const value = String(url).trim().replace(/\/+$/, "");
+  if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(value)) {
+    return `https://${value}`;
+  }
+  return value;
+}
+
 // Web builds (Vite) can define VITE_API_URL at build time to make every
 // relative `/api/...` request absolute, removing the need for a dev-only
 // proxy in production. When VITE_API_URL is absent (or in non-Vite runtimes
 // such as Expo/Metro, where `import.meta.env` is unavailable), requests stay
 // relative and rely on `setBaseUrl()`/the dev proxy instead.
 try {
-  _baseUrl = import.meta.env?.VITE_API_URL
-    ? String(import.meta.env.VITE_API_URL).replace(/\/+$/, "")
-    : null;
+  _baseUrl = normalizeBaseUrl(import.meta.env?.VITE_API_URL);
 } catch {
   _baseUrl = null;
 }
@@ -41,7 +52,7 @@ let _authTokenGetter: AuthTokenGetter | null = () => localStorage.getItem("matja
  * Pass `null` to clear the base URL.
  */
 export function setBaseUrl(url: string | null): void {
-  _baseUrl = url ? url.replace(/\/+$/, "") : null;
+  _baseUrl = normalizeBaseUrl(url);
 }
 
 /**
