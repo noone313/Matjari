@@ -1,5 +1,5 @@
 import { db, merchantsTable, discountCodesTable } from "@workspace/db";
-import { eq, and, desc, count } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { type AuthRequest } from "../../middleware/auth";
 import { CreateDiscountBody, DeleteDiscountParams, ToggleDiscountParams, ValidateDiscountBody } from "@workspace/api-zod";
 import { type Response } from "express";
@@ -7,33 +7,22 @@ import { type Response } from "express";
 export function listDiscounts(req: AuthRequest, res: Response) {
   const merchantId = req.merchantId!;
   const status = Array.isArray(req.query.status) ? req.query.status[0] : req.query.status;
-  const page = Array.isArray(req.query.page) ? req.query.page[0] : req.query.page;
-  const limit = Array.isArray(req.query.limit) ? req.query.limit[0] : req.query.limit;
-  const pageNum = parseInt(page as string || "1", 10);
-  const limitNum = parseInt(limit as string || "20", 10);
-  const offset = (pageNum - 1) * limitNum;
 
   const conditions = [eq(discountCodesTable.merchantId, merchantId)];
   if (status === "active") conditions.push(eq(discountCodesTable.isActive, true));
   if (status === "inactive") conditions.push(eq(discountCodesTable.isActive, false));
 
-  Promise.all([
-    db.select({ count: count() }).from(discountCodesTable).where(and(eq(discountCodesTable.merchantId, merchantId))),
-    db.select().from(discountCodesTable).where(and(eq(discountCodesTable.merchantId, merchantId))).orderBy(desc(discountCodesTable.createdAt)).limit(limitNum).offset(offset),
-  ]).then(([totalRes, discounts]) => {
-    res.json({
-      discounts,
-      pagination: {
-        page: pageNum,
-        limit: limitNum,
-        total: Number(totalRes[0]?.count ?? 0),
-        totalPages: Math.ceil(Number(totalRes[0]?.count ?? 0) / limitNum),
-      },
+  const whereClause = and(...conditions);
+
+  db.select()
+    .from(discountCodesTable)
+    .where(whereClause)
+    .orderBy(desc(discountCodesTable.createdAt))
+    .then((discounts) => res.json(discounts))
+    .catch((err) => {
+      console.error(err);
+      res.status(500).json({ error: "فشل جلب أكواد الخصم" });
     });
-  }).catch((err) => {
-    console.error(err);
-    res.status(500).json({ error: "فشل جلب أكواد الخصم" });
-  });
 }
 
 export function createDiscount(req: AuthRequest, res: Response) {
