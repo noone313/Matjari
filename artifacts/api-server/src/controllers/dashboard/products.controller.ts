@@ -1,5 +1,5 @@
 import { db, merchantsTable, productsTable, productVariantsTable, productImagesTable } from "@workspace/db";
-import { eq, and, desc, sql, count, inArray } from "drizzle-orm";
+import { eq, and, desc, sql, inArray } from "drizzle-orm";
 import { type AuthRequest } from "../../middleware/auth";
 import { CreateProductBody, UpdateProductBody, UpdateProductParams, DeleteProductParams, GetProductParams, ListProductsQueryParams } from "@workspace/api-zod";
 import { type Response } from "express";
@@ -27,11 +27,6 @@ export function getProducts(req: AuthRequest, res: Response) {
   const merchantId = req.merchantId!;
   const q = Array.isArray(req.query.q) ? req.query.q[0] : req.query.q;
   const category = Array.isArray(req.query.category) ? req.query.category[0] : req.query.category;
-  const page = Array.isArray(req.query.page) ? req.query.page[0] : req.query.page;
-  const limit = Array.isArray(req.query.limit) ? req.query.limit[0] : req.query.limit;
-  const pageNum = parseInt(page as string || "1", 10);
-  const limitNum = parseInt(limit as string || "20", 10);
-  const offset = (pageNum - 1) * limitNum;
 
   const conditions = [eq(productsTable.merchantId, merchantId)];
   if (q) conditions.push(sql`${productsTable.name} ILIKE ${'%' + q + '%'}`);
@@ -39,47 +34,31 @@ export function getProducts(req: AuthRequest, res: Response) {
 
   const whereClause = and(...conditions);
 
-  Promise.all([
-    db.select({ count: count() }).from(productsTable).where(whereClause),
-    db.select().from(productsTable).where(whereClause).orderBy(desc(productsTable.createdAt)).limit(limitNum).offset(offset),
-  ]).then(([totalRes, products]) => {
-    const productIds = products.map(p => p.id);
-    if (productIds.length > 0) {
-      db.select().from(productVariantsTable).where(inArray(productVariantsTable.productId, productIds))
+  db.select()
+    .from(productsTable)
+    .where(whereClause)
+    .orderBy(desc(productsTable.createdAt))
+    .then((products) => {
+      const productIds = products.map(p => p.id);
+      if (productIds.length === 0) {
+        res.json([]);
+        return;
+      }
+      db.select()
+        .from(productVariantsTable)
+        .where(inArray(productVariantsTable.productId, productIds))
         .then((variants) => {
-          const productsWithVariants = products.map(p => ({
-            ...p,
-            variants: variants.filter(v => v.productId === p.id),
-          }));
-          res.json({
-            products: productsWithVariants,
-            pagination: {
-              page: pageNum,
-              limit: limitNum,
-              total: Number(totalRes[0]?.count ?? 0),
-              totalPages: Math.ceil(Number(totalRes[0]?.count ?? 0) / limitNum),
-            },
-          });
+          res.json(products.map(p => ({ ...p, variants: variants.filter(v => v.productId === p.id) })));
         })
         .catch((err) => {
           console.error(err);
           res.status(500).json({ error: "فشل جلب المنتجات" });
         });
-    } else {
-      res.json({
-        products: [],
-        pagination: {
-          page: pageNum,
-          limit: limitNum,
-          total: Number(totalRes[0]?.count ?? 0),
-          totalPages: 0,
-        },
-      });
-    }
-  }).catch((err) => {
-    console.error(err);
-    res.status(500).json({ error: "فشل جلب المنتجات" });
-  });
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).json({ error: "فشل جلب المنتجات" });
+    });
 }
 
 export function getProduct(req: AuthRequest, res: Response) {
