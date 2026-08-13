@@ -8,5 +8,10 @@
 
 export interface DiscountCodeValidationResult {
   valid: boolean;
-  percentOff?: number;
+  /** @nullable */
+  percentOff?: number | null;
+  /** @nullable */
+  amountOff?: number | null;
+  /** @nullable */
+  minOrderTotal?: number | null;
 }

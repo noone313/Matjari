@@ -19,7 +19,9 @@ export const discountCodesTable = pgTable(
       .notNull()
       .references(() => merchantsTable.id, { onDelete: "cascade" }),
     code: varchar("code", { length: 30 }).notNull(),
-    percentOff: integer("percent_off").notNull(),
+    percentOff: integer("percent_off"),
+    amountOff: integer("amount_off"),
+    minOrderTotal: integer("min_order_total"),
     isActive: boolean("is_active").notNull().default(true),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { useListProducts, useDeleteProduct, getGetProductQueryKey } from '@workspace/api-client-react';
+import { useListProducts, useDeleteProduct, useUpdateProduct, getGetProductQueryKey } from '@workspace/api-client-react';
 import { formatPrice, getCategoryLabel, CATEGORIES, getApiUrl } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link } from 'wouter';
-import { Plus, Search, Edit, Trash2, Package } from 'lucide-react';
+import { Plus, Search, Edit, Archive, ArchiveRestore, Package } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 
@@ -13,18 +13,28 @@ export default function Products() {
   const [category, setCategory] = useState('');
   const { data: products, isLoading, refetch } = useListProducts({ q: search, category: category || undefined });
   const deleteMutation = useDeleteProduct();
+  const updateMutation = useUpdateProduct();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const handleDelete = (id: number) => {
-    if (confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
+  const handleArchive = (id: number) => {
+    if (confirm('هل تريد أرشفة هذا المنتج؟ سيختفي من المتجر ويمكن استعادته لاحقاً.')) {
       deleteMutation.mutate({ id }, {
         onSuccess: () => {
-          toast({ title: 'تم الحذف بنجاح' });
+          toast({ title: 'تمت أرشفة المنتج' });
           refetch();
         }
       });
     }
+  };
+
+  const handleRestore = (id: number) => {
+    updateMutation.mutate({ id, data: { data: { isActive: true } } }, {
+      onSuccess: () => {
+        toast({ title: 'تمت استعادة المنتج' });
+        refetch();
+      }
+    });
   };
 
   return (
@@ -105,7 +115,7 @@ export default function Products() {
                       <td className="px-6 py-4 font-medium">{formatPrice(minPrice)}</td>
                       <td className="px-6 py-4">
                         <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${product.isActive ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-700 border-gray-200'}`}>
-                          {product.isActive ? 'نشط' : 'غير نشط'}
+                          {product.isActive ? 'نشط' : 'مؤرشف'}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-center">
@@ -115,15 +125,27 @@ export default function Products() {
                               <Edit className="w-4 h-4" />
                             </Button>
                           </Link>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-gray-500 hover:text-red-600"
-                            onClick={() => handleDelete(product.id)}
-                            disabled={deleteMutation.isPending}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          {product.isActive ? (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-gray-500 hover:text-red-600"
+                              onClick={() => handleArchive(product.id)}
+                              disabled={deleteMutation.isPending}
+                            >
+                              <Archive className="w-4 h-4" />
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-gray-500 hover:text-green-600"
+                              onClick={() => handleRestore(product.id)}
+                              disabled={updateMutation.isPending}
+                            >
+                              <ArchiveRestore className="w-4 h-4" />
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </tr>

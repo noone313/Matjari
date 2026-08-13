@@ -304,14 +304,21 @@ export interface DiscountCode {
   id: number;
   merchantId: number;
   code: string;
-  percentOff: number;
+  /** @nullable */
+  percentOff?: number | null;
+  /** @nullable */
+  amountOff?: number | null;
+  /** @nullable */
+  minOrderTotal?: number | null;
   isActive: boolean;
   createdAt: string;
 }
 
 export interface DiscountInput {
   code: string;
-  percentOff: number;
+  percentOff?: number;
+  amountOff?: number;
+  minOrderTotal?: number;
   isActive?: boolean;
 }
 
@@ -321,13 +328,23 @@ export interface DiscountValidation {
 
 export interface DiscountValidationResult {
   valid: boolean;
-  percentOff: number;
-  code: string;
+  /** @nullable */
+  percentOff?: number | null;
+  /** @nullable */
+  amountOff?: number | null;
+  /** @nullable */
+  minOrderTotal?: number | null;
+  code?: string;
 }
 
 export interface DiscountCodeValidationResult {
   valid: boolean;
-  percentOff?: number;
+  /** @nullable */
+  percentOff?: number | null;
+  /** @nullable */
+  amountOff?: number | null;
+  /** @nullable */
+  minOrderTotal?: number | null;
 }
 
 export interface StorePublic {

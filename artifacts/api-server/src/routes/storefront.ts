@@ -25,6 +25,15 @@ import {
 
 const router = Router();
 
+// Compute the discount amount (IQD) for a subtotal. Returns null when the
+// discount does not apply (e.g. min order not reached).
+function computeDiscountAmount(discount: typeof discountCodesTable.$inferSelect, subtotal: number): number | null {
+  if (discount.minOrderTotal != null && subtotal < discount.minOrderTotal) return null;
+  if (discount.amountOff != null) return Math.min(discount.amountOff, subtotal);
+  if (discount.percentOff != null) return Math.round((subtotal * discount.percentOff) / 100);
+  return null;
+}
+
 // GET /stores/:slug
 router.get("/:slug", async (req, res): Promise<void> => {
   const params = GetStoreParams.safeParse(req.params);
@@ -412,7 +421,7 @@ router.post("/:slug/validate-discount", async (req, res): Promise<void> => {
     return;
   }
 
-  res.json({ valid: true, percentOff: discount.percentOff, code: discount.code });
+  res.json({ valid: true, percentOff: discount.percentOff ?? null, amountOff: discount.amountOff ?? null, minOrderTotal: discount.minOrderTotal ?? null, code: discount.code });
 });
 
 // GET /stores/:slug/discounts/:code/validate
@@ -453,7 +462,7 @@ router.get("/:slug/discounts/:code/validate", async (req, res): Promise<void> =>
     return;
   }
 
-  res.json({ valid: true, percentOff: discount.percentOff });
+  res.json({ valid: true, percentOff: discount.percentOff ?? null, amountOff: discount.amountOff ?? null, minOrderTotal: discount.minOrderTotal ?? null });
 });
 
 // POST /stores/:slug/orders
@@ -604,8 +613,11 @@ router.post("/:slug/orders", async (req, res): Promise<void> => {
       .limit(1);
 
     if (discount) {
-      total = Math.round(subtotal * (1 - discount.percentOff / 100));
-      appliedDiscount = discount.code;
+      const discountAmount = computeDiscountAmount(discount, subtotal);
+      if (discountAmount != null) {
+        total = subtotal - discountAmount;
+        appliedDiscount = discount.code;
+      }
     }
   }
 

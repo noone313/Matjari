@@ -10,7 +10,7 @@ import { Trash2, ChevronRight, Gift } from 'lucide-react';
 export default function StoreCart({ slug }: { slug: string }) {
   const { items, updateQuantity, removeFromCart, subtotal } = useCart();
   const [discountCode, setDiscountCode] = useState('');
-  const [appliedDiscount, setAppliedDiscount] = useState<{code: string, percent: number} | null>(null);
+  const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; percentOff?: number | null; amountOff?: number | null; minOrderTotal?: number | null } | null>(null);
   const [discountError, setDiscountError] = useState('');
   
   const validateMutation = useValidateDiscount();
@@ -22,7 +22,12 @@ export default function StoreCart({ slug }: { slug: string }) {
     validateMutation.mutate({ slug, data: { code: discountCode.trim() } }, {
       onSuccess: (res) => {
         if (res.valid) {
-          setAppliedDiscount({ code: res.code, percent: res.percentOff });
+          if (res.minOrderTotal != null && subtotal < res.minOrderTotal) {
+            setDiscountError(`كود الخصم يتطلب حد أدنى للطلب بقيمة ${formatPrice(res.minOrderTotal)}`);
+            setAppliedDiscount(null);
+            return;
+          }
+          setAppliedDiscount({ code: res.code ?? discountCode.trim(), percentOff: res.percentOff ?? null, amountOff: res.amountOff ?? null, minOrderTotal: res.minOrderTotal ?? null });
           setDiscountError('');
         } else {
           setDiscountError('كود الخصم غير صالح أو منتهي');
@@ -54,7 +59,11 @@ export default function StoreCart({ slug }: { slug: string }) {
     );
   }
 
-  const discountAmount = appliedDiscount ? (subtotal * appliedDiscount.percent) / 100 : 0;
+  const discountAmount = appliedDiscount
+    ? (appliedDiscount.amountOff != null
+      ? Math.min(appliedDiscount.amountOff, subtotal)
+      : (subtotal * (appliedDiscount.percentOff ?? 0)) / 100)
+    : 0;
   const total = subtotal - discountAmount;
 
   return (

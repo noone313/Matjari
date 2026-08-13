@@ -84,3 +84,9 @@ export type {
 // GetStoreOrderQueryParams live in ./generated/api, so only TrackOrderResponse
 // (which has no matching zod const) is re-exported explicitly.
 export type { TrackOrderResponse } from "./generated/types";
+
+// Remaining generated types not listed above, re-exported explicitly to avoid
+// colliding with the generated zod consts of the same names in ./generated/api.
+// Note: BrowseStoreProductsParams and GetStoreOrderParams are intentionally NOT
+// re-exported here — they only exist as zod const values in ./generated/api.
+export type { ListReviewsStatus } from "./generated/types";

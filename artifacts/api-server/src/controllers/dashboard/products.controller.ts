@@ -193,7 +193,10 @@ export function deleteProduct(req: AuthRequest, res: Response) {
   const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const productId = parseInt(idParam, 10);
 
-  db.delete(productsTable)
+  // Soft-delete: archive the product so it disappears from the storefront while
+  // preserving order/wishlist history. Restore by setting isActive back to true.
+  db.update(productsTable)
+    .set({ isActive: false })
     .where(and(eq(productsTable.id, productId), eq(productsTable.merchantId, merchantId)))
     .then((result) => {
       if (result.rowCount === 0) {
@@ -203,7 +206,7 @@ export function deleteProduct(req: AuthRequest, res: Response) {
       }
     }).catch((err) => {
       console.error(err);
-      res.status(500).json({ error: "فشل حذف المنتج" });
+      res.status(500).json({ error: "فشل أرشفة المنتج" });
     });
 }
 

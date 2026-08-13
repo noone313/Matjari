@@ -484,7 +484,9 @@ export const ListDiscountsResponseItem = zod.object({
   "id": zod.number(),
   "merchantId": zod.number(),
   "code": zod.string(),
-  "percentOff": zod.number(),
+  "percentOff": zod.number().nullish(),
+  "amountOff": zod.number().nullish(),
+  "minOrderTotal": zod.number().nullish(),
   "isActive": zod.boolean(),
   "createdAt": zod.string()
 })
@@ -496,7 +498,9 @@ export const ListDiscountsResponse = zod.array(ListDiscountsResponseItem)
  */
 export const CreateDiscountBody = zod.object({
   "code": zod.string(),
-  "percentOff": zod.number(),
+  "percentOff": zod.number().optional(),
+  "amountOff": zod.number().optional(),
+  "minOrderTotal": zod.number().optional(),
   "isActive": zod.boolean().optional()
 })
 
@@ -504,7 +508,9 @@ export const CreateDiscountResponse = zod.object({
   "id": zod.number(),
   "merchantId": zod.number(),
   "code": zod.string(),
-  "percentOff": zod.number(),
+  "percentOff": zod.number().nullish(),
+  "amountOff": zod.number().nullish(),
+  "minOrderTotal": zod.number().nullish(),
   "isActive": zod.boolean(),
   "createdAt": zod.string()
 })
@@ -531,7 +537,9 @@ export const ToggleDiscountResponse = zod.object({
   "id": zod.number(),
   "merchantId": zod.number(),
   "code": zod.string(),
-  "percentOff": zod.number(),
+  "percentOff": zod.number().nullish(),
+  "amountOff": zod.number().nullish(),
+  "minOrderTotal": zod.number().nullish(),
   "isActive": zod.boolean(),
   "createdAt": zod.string()
 })
@@ -1073,8 +1081,10 @@ export const ValidateDiscountBody = zod.object({
 
 export const ValidateDiscountResponse = zod.object({
   "valid": zod.boolean(),
-  "percentOff": zod.number(),
-  "code": zod.string()
+  "percentOff": zod.number().nullish(),
+  "amountOff": zod.number().nullish(),
+  "minOrderTotal": zod.number().nullish(),
+  "code": zod.string().optional()
 })
 
 
@@ -1088,7 +1098,9 @@ export const ValidateDiscountCodeParams = zod.object({
 
 export const ValidateDiscountCodeResponse = zod.object({
   "valid": zod.boolean(),
-  "percentOff": zod.number().optional()
+  "percentOff": zod.number().nullish(),
+  "amountOff": zod.number().nullish(),
+  "minOrderTotal": zod.number().nullish()
 })
 
 

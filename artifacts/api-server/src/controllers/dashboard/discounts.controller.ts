@@ -33,11 +33,28 @@ export function createDiscount(req: AuthRequest, res: Response) {
     return;
   }
 
+  const { code, percentOff, amountOff, minOrderTotal, isActive } = body.data;
+
+  if (percentOff == null && amountOff == null) {
+    res.status(400).json({ error: "حدد نسبة الخصم أو المبلغ الثابت" });
+    return;
+  }
+  if (percentOff != null && (percentOff < 1 || percentOff > 100)) {
+    res.status(400).json({ error: "نسبة الخصم يجب أن تكون بين 1 و 100" });
+    return;
+  }
+  if (amountOff != null && amountOff <= 0) {
+    res.status(400).json({ error: "مبلغ الخصم يجب أن يكون أكبر من صفر" });
+    return;
+  }
+
   db.insert(discountCodesTable).values({
     merchantId,
-    code: body.data.code.toUpperCase(),
-    percentOff: body.data.percentOff,
-    isActive: body.data.isActive ?? true,
+    code: code.toUpperCase(),
+    percentOff: percentOff ?? null,
+    amountOff: amountOff ?? null,
+    minOrderTotal: minOrderTotal ?? null,
+    isActive: isActive ?? true,
   }).returning()
     .then(([discount]) => res.status(201).json(discount))
     .catch((err) => {

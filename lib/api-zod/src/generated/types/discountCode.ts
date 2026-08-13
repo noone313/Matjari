@@ -10,7 +10,12 @@ export interface DiscountCode {
   id: number;
   merchantId: number;
   code: string;
-  percentOff: number;
+  /** @nullable */
+  percentOff?: number | null;
+  /** @nullable */
+  amountOff?: number | null;
+  /** @nullable */
+  minOrderTotal?: number | null;
   isActive: boolean;
   createdAt: string;
 }

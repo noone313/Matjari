@@ -32,6 +32,8 @@ export default function StoreHome({ slug }: { slug: string }) {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('');
   const [sortBy, setSortBy] = useState<'default' | 'price_asc' | 'price_desc'>('default');
+  const [priceMin, setPriceMin] = useState('');
+  const [priceMax, setPriceMax] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
   const [brokenImages, setBrokenImages] = useState<Set<number>>(new Set());
   const [location, setLocation] = useLocation();
@@ -107,24 +109,39 @@ export default function StoreHome({ slug }: { slug: string }) {
     toast({ title: 'تمت إضافة الباقة للسلة' });
   };
 
+  const productMinPrice = (p: Product) => (p.variants?.length ? Math.min(...p.variants.map((v) => v.price)) : 0);
+
   let products = allProducts?.filter((p) => {
     if (!p.imageUrls?.length || !p.imageUrls.some((u) => u?.trim())) return false;
     if (brokenImages.has(p.id)) return false;
     return true;
   }) ?? [];
 
+  // Price range filter (client-side; catalog is loaded fully)
+  const priceBounds = useMemo(() => {
+    const prices = (allProducts ?? [])
+      .filter((p) => p.imageUrls?.length && p.imageUrls.some((u) => u?.trim()) && !brokenImages.has(p.id))
+      .map(productMinPrice)
+      .filter((v) => v > 0);
+    return {
+      min: prices.length ? Math.min(...prices) : 0,
+      max: prices.length ? Math.max(...prices) : 0,
+    };
+  }, [allProducts, brokenImages]);
+
+  const minBound = priceMin === '' ? 0 : Number(priceMin);
+  const maxBound = priceMax === '' ? Infinity : Number(priceMax);
+  const hasPriceFilter = priceMin !== '' || priceMax !== '';
+
+  products = products.filter((p) => {
+    const price = productMinPrice(p);
+    return price >= minBound && price <= maxBound;
+  });
+
   if (sortBy === 'price_asc') {
-    products = [...products].sort((a, b) => {
-      const aMin = a.variants?.length ? Math.min(...a.variants.map((v) => v.price)) : 0;
-      const bMin = b.variants?.length ? Math.min(...b.variants.map((v) => v.price)) : 0;
-      return aMin - bMin;
-    });
+    products = [...products].sort((a, b) => productMinPrice(a) - productMinPrice(b));
   } else if (sortBy === 'price_desc') {
-    products = [...products].sort((a, b) => {
-      const aMin = a.variants?.length ? Math.min(...a.variants.map((v) => v.price)) : 0;
-      const bMin = b.variants?.length ? Math.min(...b.variants.map((v) => v.price)) : 0;
-      return bMin - aMin;
-    });
+    products = [...products].sort((a, b) => productMinPrice(b) - productMinPrice(a));
   }
 
   const totalCount = products.length;
@@ -198,6 +215,44 @@ export default function StoreHome({ slug }: { slug: string }) {
               </li>
             ))}
           </ul>
+        </div>
+
+        {/* Price range */}
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 mb-4 font-medium">السعر</p>
+          <div className="flex items-center gap-2 mb-3">
+            <input
+              type="number"
+              inputMode="numeric"
+              dir="ltr"
+              min={0}
+              max={priceBounds.max || undefined}
+              placeholder={priceBounds.min ? formatPrice(priceBounds.min) : 'من'}
+              value={priceMin}
+              onChange={(e) => setPriceMin(e.target.value)}
+              className="w-full text-xs border border-zinc-200 rounded px-2 py-1.5 outline-none focus:border-primary placeholder:text-zinc-300"
+            />
+            <span className="text-zinc-300 text-xs">–</span>
+            <input
+              type="number"
+              inputMode="numeric"
+              dir="ltr"
+              min={0}
+              max={priceBounds.max || undefined}
+              placeholder={priceBounds.max ? formatPrice(priceBounds.max) : 'إلى'}
+              value={priceMax}
+              onChange={(e) => setPriceMax(e.target.value)}
+              className="w-full text-xs border border-zinc-200 rounded px-2 py-1.5 outline-none focus:border-primary placeholder:text-zinc-300"
+            />
+          </div>
+          {hasPriceFilter && (
+            <button
+              onClick={() => { setPriceMin(''); setPriceMax(''); }}
+              className="text-xs text-primary hover:underline"
+            >
+              مسح الفلتر
+            </button>
+          )}
         </div>
       </aside>
 
@@ -468,6 +523,43 @@ export default function StoreHome({ slug }: { slug: string }) {
                   </li>
                 ))}
               </ul>
+            </div>
+
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 mb-4">السعر</p>
+              <div className="flex items-center gap-2 mb-3">
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  dir="ltr"
+                  min={0}
+                  max={priceBounds.max || undefined}
+                  placeholder={priceBounds.min ? formatPrice(priceBounds.min) : 'من'}
+                  value={priceMin}
+                  onChange={(e) => setPriceMin(e.target.value)}
+                  className="w-full text-sm border border-zinc-200 rounded px-2 py-2 outline-none focus:border-primary placeholder:text-zinc-300"
+                />
+                <span className="text-zinc-300 text-sm">–</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  dir="ltr"
+                  min={0}
+                  max={priceBounds.max || undefined}
+                  placeholder={priceBounds.max ? formatPrice(priceBounds.max) : 'إلى'}
+                  value={priceMax}
+                  onChange={(e) => setPriceMax(e.target.value)}
+                  className="w-full text-sm border border-zinc-200 rounded px-2 py-2 outline-none focus:border-primary placeholder:text-zinc-300"
+                />
+              </div>
+              {hasPriceFilter && (
+                <button
+                  onClick={() => { setPriceMin(''); setPriceMax(''); }}
+                  className="text-xs text-primary hover:underline"
+                >
+                  مسح الفلتر
+                </button>
+              )}
             </div>
           </div>
         </div>

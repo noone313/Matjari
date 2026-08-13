@@ -8,6 +8,8 @@
 
 export interface DiscountInput {
   code: string;
-  percentOff: number;
+  percentOff?: number;
+  amountOff?: number;
+  minOrderTotal?: number;
   isActive?: boolean;
 }

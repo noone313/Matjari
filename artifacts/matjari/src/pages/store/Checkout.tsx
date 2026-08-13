@@ -43,7 +43,7 @@ export default function StoreCheckout({ slug }: { slug: string }) {
   const urlDiscountCode = searchParams.get('discount') ?? '';
   const [discountInput, setDiscountInput] = useState(urlDiscountCode);
   const debouncedDiscount = useDebounced(discountInput.trim(), 400);
-  const [appliedDiscount, setAppliedDiscount] = useState<number>(0);
+  const [appliedDiscount, setAppliedDiscount] = useState<{ percentOff?: number | null; amountOff?: number | null; minOrderTotal?: number | null } | null>(null);
   const [discountMessage, setDiscountMessage] = useState<{ type: 'valid' | 'invalid'; text: string } | null>(null);
   const [discountChecking, setDiscountChecking] = useState(false);
   const validatedRef = useRef('');
@@ -52,7 +52,7 @@ export default function StoreCheckout({ slug }: { slug: string }) {
   useEffect(() => {
     const code = debouncedDiscount.trim();
     if (!code) {
-      setAppliedDiscount(0);
+      setAppliedDiscount(null);
       setDiscountMessage(null);
       validatedRef.current = '';
       return;
@@ -64,24 +64,30 @@ export default function StoreCheckout({ slug }: { slug: string }) {
         if (cancelled) return;
         validatedRef.current = code;
         if (res.valid) {
-          setAppliedDiscount(res.percentOff ?? 0);
-          setDiscountMessage({ type: 'valid', text: `تم تطبيق الخصم ${res.percentOff}%` });
+          if (res.minOrderTotal != null && subtotal < res.minOrderTotal) {
+            setAppliedDiscount(null);
+            setDiscountMessage({ type: 'invalid', text: `هذا الكود يتطلب حد أدنى للطلب بقيمة ${formatPrice(res.minOrderTotal)}` });
+          } else {
+            setAppliedDiscount({ percentOff: res.percentOff ?? null, amountOff: res.amountOff ?? null, minOrderTotal: res.minOrderTotal ?? null });
+            const label = res.amountOff != null ? `خصم ${formatPrice(res.amountOff)}` : `خصم ${res.percentOff}%`;
+            setDiscountMessage({ type: 'valid', text: `تم تطبيق الخصم: ${label}` });
+          }
         } else {
-          setAppliedDiscount(0);
+          setAppliedDiscount(null);
           setDiscountMessage({ type: 'invalid', text: 'الكود غير صالح أو منتهي' });
         }
       })
       .catch(() => {
         if (cancelled) return;
         validatedRef.current = code;
-        setAppliedDiscount(0);
+        setAppliedDiscount(null);
         setDiscountMessage({ type: 'invalid', text: 'الكود غير صالح أو منتهي' });
       })
       .finally(() => {
         if (!cancelled) setDiscountChecking(false);
       });
     return () => { cancelled = true; };
-  }, [debouncedDiscount, slug]);
+  }, [debouncedDiscount, slug, subtotal]);
 
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -102,7 +108,11 @@ export default function StoreCheckout({ slug }: { slug: string }) {
     return <div className="text-center py-24 text-gray-500">سلة التسوق فارغة</div>;
   }
 
-  const discountAmount = (subtotal * appliedDiscount) / 100;
+  const discountAmount = appliedDiscount
+    ? (appliedDiscount.amountOff != null
+      ? Math.min(appliedDiscount.amountOff, subtotal)
+      : (subtotal * (appliedDiscount.percentOff ?? 0)) / 100)
+    : 0;
   const total = subtotal - discountAmount;
 
   const onSubmit = (data: z.infer<typeof schema>) => {
@@ -263,7 +273,7 @@ export default function StoreCheckout({ slug }: { slug: string }) {
                 <span>{formatPrice(subtotal)}</span>
               </div>
               
-              {appliedDiscount > 0 && (
+              {appliedDiscount && discountMessage?.type === 'valid' && (
                 <div className="flex justify-between text-[hsl(var(--primary))] font-bold">
                   <span>خصم الترويج ({discountInput.trim().toUpperCase()})</span>
                   <span>- {formatPrice(discountAmount)}</span>

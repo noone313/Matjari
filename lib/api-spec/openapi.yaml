@@ -1731,7 +1731,7 @@ components:
     # ─── Discounts ───────────────────────────────────────────
     DiscountCode:
       type: object
-      required: [id, merchantId, code, percentOff, isActive, createdAt]
+      required: [id, merchantId, code, isActive, createdAt]
       properties:
         id:
           type: number
@@ -1740,7 +1740,11 @@ components:
         code:
           type: string
         percentOff:
-          type: number
+          type: ["number", "null"]
+        amountOff:
+          type: ["number", "null"]
+        minOrderTotal:
+          type: ["number", "null"]
         isActive:
           type: boolean
         createdAt:
@@ -1748,11 +1752,15 @@ components:
 
     DiscountInput:
       type: object
-      required: [code, percentOff]
+      required: [code]
       properties:
         code:
           type: string
         percentOff:
+          type: number
+        amountOff:
+          type: number
+        minOrderTotal:
           type: number
         isActive:
           type: boolean
@@ -1766,12 +1774,16 @@ components:
 
     DiscountValidationResult:
       type: object
-      required: [valid, percentOff, code]
+      required: [valid]
       properties:
         valid:
           type: boolean
         percentOff:
-          type: number
+          type: ["number", "null"]
+        amountOff:
+          type: ["number", "null"]
+        minOrderTotal:
+          type: ["number", "null"]
         code:
           type: string
 
@@ -1782,7 +1794,11 @@ components:
         valid:
           type: boolean
         percentOff:
-          type: number
+          type: ["number", "null"]
+        amountOff:
+          type: ["number", "null"]
+        minOrderTotal:
+          type: ["number", "null"]
 
     # ─── Storefront ──────────────────────────────────────────
     StorePublic:

@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
-import { useGetStoreOrder, getGetStoreOrderQueryKey, TrackOrderResponse } from '@workspace/api-client-react';
-import { formatPrice, getStatusLabel, getStatusColor } from '@/lib/utils';
+import React, { useState, useMemo } from 'react';
+import { useGetStoreOrder, getGetStoreOrderQueryKey, useBrowseStoreProducts, getBrowseStoreProductsQueryKey } from '@workspace/api-client-react';
+import { formatPrice, getStatusLabel, getStatusColor, getApiUrl } from '@/lib/utils';
 import { Link } from 'wouter';
-import { PackageSearch, Loader2, Truck, XCircle } from 'lucide-react';
+import { PackageSearch, Loader2, Truck, XCircle, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useCart } from '@/contexts/CartContext';
+import { useToast } from '@/hooks/use-toast';
 
 const ORDER_STEPS = ['new', 'processing', 'shipped', 'delivered'];
 
@@ -12,6 +14,8 @@ export default function StoreTrack({ slug }: { slug: string }) {
   const [orderId, setOrderId] = useState('');
   const [phone, setPhone] = useState('');
   const [submitted, setSubmitted] = useState<{ orderId: number; phone: string } | null>(null);
+  const { addToCart } = useCart();
+  const { toast } = useToast();
 
   const orderIdNumber = submitted ? submitted.orderId : -1;
   const phoneParam = submitted ? { phone: submitted.phone } : { phone: '' };
@@ -27,6 +31,56 @@ export default function StoreTrack({ slug }: { slug: string }) {
       },
     },
   );
+
+  // Catalog needed to rebuild cart items with current price/image when re-ordering.
+  const { data: catalog } = useBrowseStoreProducts(slug, {}, {
+    query: {
+      enabled: !!order,
+      queryKey: getBrowseStoreProductsQueryKey(slug, {}),
+    },
+  });
+
+  const variantLookup = useMemo(() => {
+    const map = new Map<number, { variantId: number; productId: number; productName: string; variantLabel: string; price: number; image?: string; category: string }>();
+    for (const product of catalog ?? []) {
+      for (const variant of product.variants ?? []) {
+        map.set(variant.id, {
+          variantId: variant.id,
+          productId: product.id,
+          productName: product.name,
+          variantLabel: variant.variantLabel,
+          price: variant.price,
+          image: product.imageUrls?.find((u) => u?.trim()) ? getApiUrl(product.imageUrls!.find((u) => u?.trim())!) : undefined,
+          category: product.category,
+        });
+      }
+    }
+    return map;
+  }, [catalog]);
+
+  const handleReorder = () => {
+    if (!order) return;
+    let added = 0;
+    let skipped = 0;
+    for (const item of order.items) {
+      if (item.variantId == null) {
+        skipped++;
+        continue;
+      }
+      const match = variantLookup.get(item.variantId);
+      if (!match) {
+        skipped++;
+        continue;
+      }
+      addToCart({ ...match, quantity: item.quantity });
+      added++;
+    }
+    if (added > 0) {
+      toast({ title: `تمت إعادة ${added} عنصر للسلة` });
+    } else {
+      toast({ title: 'تعذرت إعادة الطلب: المنتجات غير متوفرة حالياً' });
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -180,6 +234,11 @@ export default function StoreTrack({ slug }: { slug: string }) {
               <span dir="ltr">{formatPrice(order.total)}</span>
             </div>
           </div>
+
+          <Button onClick={handleReorder} className="w-full h-12 font-bold mt-6">
+            <RotateCcw className="w-4 h-4" />
+            إعادة الطلب
+          </Button>
         </div>
       )}
 
