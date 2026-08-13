@@ -6,6 +6,7 @@ import { useComparison, MAX_COMPARISON } from '@/contexts/ComparisonContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { normalizeWhatsAppNumber } from '@/lib/utils';
 import { ShoppingBag, Menu, X, Phone, MessageCircle, Instagram, Scale, Heart, PackageSearch } from 'lucide-react';
+import HeroCarousel from '@/components/store/HeroCarousel';
 
 export default function StoreLayout({ children, slug }: { children: React.ReactNode; slug: string }) {
   const { data: store, isLoading } = useGetStore(slug, {
@@ -185,8 +186,10 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
         </div>
       )}
 
-      {/* ── Hero banner (only on home) ────────── */}
-      {isHome && store.bannerUrl && (
+      {/* ── Hero (only on home) ───────────────── */}
+      {isHome && store.heroEnabled && store.heroSlides?.length ? (
+        <HeroCarousel slides={store.heroSlides} storeName={store.storeName} description={store.description} />
+      ) : isHome && store.bannerUrl ? (
         <div className="relative h-[55vh] min-h-[320px] w-full overflow-hidden bg-zinc-100">
           <img
             src={store.bannerUrl}
@@ -202,7 +205,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
             )}
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* ── Page content ─────────────────────── */}
       <main className="flex-1 max-w-screen-xl mx-auto w-full px-4 md:px-6 py-10">

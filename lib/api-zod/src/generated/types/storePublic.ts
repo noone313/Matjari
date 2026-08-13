@@ -5,6 +5,7 @@
  * متجري — SaaS perfume & cosmetics storefront platform API
  * OpenAPI spec version: 0.1.0
  */
+import type { HeroSlide } from './heroSlide';
 
 export interface StorePublic {
   slug: string;
@@ -13,6 +14,9 @@ export interface StorePublic {
   logoUrl?: string | null;
   /** @nullable */
   bannerUrl?: string | null;
+  /** Whether the merchant enabled the hero image gallery on their storefront */
+  heroEnabled: boolean;
+  heroSlides?: HeroSlide[];
   /** @nullable */
   description?: string | null;
   accentColor: string;

@@ -2,12 +2,27 @@ import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useGetDashboardSettings, useUpdateDashboardSettings } from '@workspace/api-client-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { getApiUrl } from '@/lib/utils';
+import {
+  useGetDashboardSettings,
+  useUpdateDashboardSettings,
+  useListHeroSlides,
+  useCreateHeroSlide,
+  useUpdateHeroSlide,
+  useDeleteHeroSlide,
+  useUploadHeroSlideImage,
+  useDeleteHeroSlideImage,
+  getListHeroSlidesQueryKey,
+} from '@workspace/api-client-react';
+import type { HeroSlide } from '@workspace/api-client-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { ImagePlus, Trash2, ArrowUp, ArrowDown, Upload, X, ImageOff } from 'lucide-react';
 
 const schema = z.object({
   storeName: z.string().min(2, 'مطلوب'),
@@ -18,8 +33,181 @@ const schema = z.object({
   instagramHandle: z.string().optional().nullable(),
   whatsappNumber: z.string().optional().nullable(),
   bankTransferInfo: z.string().optional().nullable(),
-  accentColor: z.string().default('43 74% 49%'), // Provide an HSL value text field or color picker simplified
+  accentColor: z.string().default('43 74% 49%'),
 });
+
+function HeroGallerySection() {
+  const { data: settings } = useGetDashboardSettings();
+  const updateSettings = useUpdateDashboardSettings();
+  const { data, isLoading } = useListHeroSlides();
+  const createSlide = useCreateHeroSlide();
+  const updateSlide = useUpdateHeroSlide();
+  const deleteSlide = useDeleteHeroSlide();
+  const uploadImage = useUploadHeroSlideImage();
+  const deleteImage = useDeleteHeroSlideImage();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const slides = data?.slides ?? [];
+  const ordered = [...slides].sort((a, b) => a.position - b.position);
+  const heroEnabled = settings?.heroEnabled ?? false;
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: getListHeroSlidesQueryKey() });
+
+  const toggleHero = (enabled: boolean) => {
+    updateSettings.mutate(
+      { data: { heroEnabled: enabled } },
+      { onSuccess: () => toast({ title: enabled ? 'تم تفعيل معرض الصور' : 'تم إخفاء معرض الصور' }) },
+    );
+  };
+
+  const addSlide = () => {
+    createSlide.mutate(
+      { data: {} },
+      { onSuccess: () => { invalidate(); toast({ title: 'تمت إضافة شريحة جديدة — ارفع صورة لها' }); } },
+    );
+  };
+
+  const updateField = (id: number, patch: Partial<{ title: string | null; subtitle: string | null; linkUrl: string | null }>) => {
+    updateSlide.mutate({ id, data: patch }, { onSuccess: invalidate });
+  };
+
+  const move = (index: number, dir: -1 | 1) => {
+    const target = ordered[index + dir];
+    if (!target) return;
+    updateSlide.mutate({ id: ordered[index].id, data: { position: target.position } });
+    updateSlide.mutate({ id: target.id, data: { position: ordered[index].position } });
+    setTimeout(invalidate, 300);
+  };
+
+  const remove = (slide: HeroSlide) => {
+    if (!window.confirm('حذف هذه الشريحة نهائياً؟')) return;
+    deleteSlide.mutate(
+      { id: slide.id },
+      { onSuccess: () => { invalidate(); toast({ title: 'تم حذف الشريحة' }); } },
+    );
+  };
+
+  const onFile = (slide: HeroSlide, file?: File | null) => {
+    if (!file) return;
+    uploadImage.mutate(
+      { id: slide.id, data: { image: file } },
+      { onSuccess: () => { invalidate(); toast({ title: 'تم رفع الصورة' }); } },
+    );
+  };
+
+  const removeImage = (slide: HeroSlide) => {
+    deleteImage.mutate(
+      { id: slide.id },
+      { onSuccess: () => { invalidate(); toast({ title: 'تم حذف الصورة' }); } },
+    );
+  };
+
+  return (
+    <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm space-y-6">
+      <div className="flex items-center justify-between border-b pb-4">
+        <div>
+          <h3 className="text-lg font-bold text-gray-900">معرض الصور العلوي (Hero)</h3>
+          <p className="text-sm text-gray-500 mt-1">
+            يظهر كمعرض صور متحرك في أعلى صفحة متجرك فوق المنتجات
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-600">{heroEnabled ? 'ظاهر للعملاء' : 'مخفي'}</span>
+          <Switch checked={heroEnabled} onCheckedChange={toggleHero} />
+        </div>
+      </div>
+
+      {heroEnabled && (
+        <>
+          {isLoading ? (
+            <div className="text-sm text-gray-500 py-4">جاري تحميل الشرائح...</div>
+          ) : ordered.length === 0 ? (
+            <div className="py-8 text-center text-sm text-gray-500 border border-dashed border-gray-200 rounded-lg">
+              لا توجد شرائح بعد — أضف شريحة وارفع لها صورة لعرضها للعملاء
+            </div>
+          ) : (
+            <ul className="space-y-4">
+              {ordered.map((slide, index) => (
+                <li key={slide.id} className="border border-gray-200 rounded-lg p-4 space-y-3">
+                  <div className="flex items-start gap-4">
+                    <div className="w-36 h-24 rounded-md overflow-hidden bg-zinc-100 flex items-center justify-center shrink-0">
+                      {slide.imageUrl ? (
+                        <img src={getApiUrl(slide.imageUrl)} alt={slide.title ?? ''} className="w-full h-full object-cover" />
+                      ) : (
+                        <ImagePlus className="w-6 h-6 text-zinc-300" />
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0 space-y-3">
+                      <div>
+                        <Label>العنوان (اختياري)</Label>
+                        <Input
+                          defaultValue={slide.title ?? ''}
+                          onBlur={(e) => updateField(slide.id, { title: e.target.value || null })}
+                          placeholder="مثال: تشكيلة عود جديدة"
+                        />
+                      </div>
+                      <div>
+                        <Label>الوصف المختصر (اختياري)</Label>
+                        <Input
+                          defaultValue={slide.subtitle ?? ''}
+                          onBlur={(e) => updateField(slide.id, { subtitle: e.target.value || null })}
+                          placeholder="سطر يظهر فوق الصورة"
+                        />
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 pt-1">
+                        <label className="inline-flex items-center gap-2 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-md cursor-pointer transition-colors">
+                          <Upload className="w-3.5 h-3.5" />
+                          {slide.imageUrl ? 'استبدال الصورة' : 'رفع صورة'}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => onFile(slide, e.target.files?.[0])}
+                          />
+                        </label>
+                        {slide.imageUrl && (
+                          <button
+                            onClick={() => removeImage(slide)}
+                            className="inline-flex items-center gap-2 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-red-50 hover:text-red-600 px-3 py-2 rounded-md transition-colors"
+                          >
+                            <ImageOff className="w-3.5 h-3.5" />
+                            حذف الصورة
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1 shrink-0">
+                      <Button variant="ghost" size="icon" disabled={index === 0} onClick={() => move(index, -1)} title="تحريك لأعلى">
+                        <ArrowUp className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" disabled={index === ordered.length - 1} onClick={() => move(index, 1)} title="تحريك لأسفل">
+                        <ArrowDown className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => remove(slide)} title="حذف الشريحة">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <div>
+            <Button type="button" variant="outline" onClick={addSlide} disabled={createSlide.isPending}>
+              <ImagePlus className="w-4 h-4 ml-2" />
+              إضافة شريحة
+            </Button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function Settings() {
   const { data: settings, isLoading } = useGetDashboardSettings();
@@ -61,7 +249,6 @@ export default function Settings() {
     updateSettings.mutate({ data }, {
       onSuccess: () => {
         toast({ title: 'تم حفظ الإعدادات' });
-        // update local auth context if needed, but the hook invalidates ideally
       }
     });
   };
@@ -74,6 +261,8 @@ export default function Settings() {
         <h2 className="text-3xl font-bold text-gray-900 font-serif">إعدادات المتجر</h2>
         <p className="text-gray-500 mt-1">تخصيص هوية متجرك وطرق الدفع</p>
       </div>
+
+      <HeroGallerySection />
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm space-y-6">

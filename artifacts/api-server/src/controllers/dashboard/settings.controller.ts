@@ -45,6 +45,7 @@ export function updateSettings(req: AuthRequest, res: Response) {
       storeName: body.data.storeName ?? undefined,
       logoUrl: body.data.logoUrl ?? undefined,
       bannerUrl: body.data.bannerUrl ?? undefined,
+      heroEnabled: body.data.heroEnabled ?? undefined,
       description: body.data.description ?? undefined,
       accentColor: body.data.accentColor ?? undefined,
       bankTransferInfo: body.data.bankTransferInfo ?? undefined,

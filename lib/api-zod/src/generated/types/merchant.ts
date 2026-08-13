@@ -15,6 +15,7 @@ export interface Merchant {
   logoUrl?: string | null;
   /** @nullable */
   bannerUrl?: string | null;
+  heroEnabled?: boolean;
   /** @nullable */
   description?: string | null;
   accentColor: string;

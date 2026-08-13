@@ -91,3 +91,13 @@ export type { TrackOrderResponse } from "./generated/types";
 // Note: BrowseStoreProductsParams and GetStoreOrderParams are intentionally NOT
 // re-exported here — they only exist as zod const values in ./generated/api.
 export type { ListReviewsStatus } from "./generated/types";
+
+// Hero-gallery types: the zod consts for these names live in ./generated/api,
+// so re-export explicitly to avoid collisions.
+export type {
+  HeroImageResponse,
+  HeroSlide,
+  HeroSlideInput,
+  HeroSlideListResponse,
+  UploadHeroSlideImageBody,
+} from "./generated/types";

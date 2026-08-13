@@ -34,6 +34,7 @@ export const RegisterMerchantResponse = zod.object({
   "email": zod.string(),
   "logoUrl": zod.string().nullish(),
   "bannerUrl": zod.string().nullish(),
+  "heroEnabled": zod.boolean().optional(),
   "description": zod.string().nullish(),
   "accentColor": zod.string(),
   "bankTransferInfo": zod.string().nullish(),
@@ -65,6 +66,7 @@ export const LoginMerchantResponse = zod.object({
   "email": zod.string(),
   "logoUrl": zod.string().nullish(),
   "bannerUrl": zod.string().nullish(),
+  "heroEnabled": zod.boolean().optional(),
   "description": zod.string().nullish(),
   "accentColor": zod.string(),
   "bankTransferInfo": zod.string().nullish(),
@@ -96,6 +98,7 @@ export const GetMeResponse = zod.object({
   "email": zod.string(),
   "logoUrl": zod.string().nullish(),
   "bannerUrl": zod.string().nullish(),
+  "heroEnabled": zod.boolean().optional(),
   "description": zod.string().nullish(),
   "accentColor": zod.string(),
   "bankTransferInfo": zod.string().nullish(),
@@ -163,6 +166,7 @@ export const GetDashboardSettingsResponse = zod.object({
   "email": zod.string(),
   "logoUrl": zod.string().nullish(),
   "bannerUrl": zod.string().nullish(),
+  "heroEnabled": zod.boolean().optional(),
   "description": zod.string().nullish(),
   "accentColor": zod.string(),
   "bankTransferInfo": zod.string().nullish(),
@@ -182,6 +186,7 @@ export const UpdateDashboardSettingsBody = zod.object({
   "storeName": zod.string().optional(),
   "logoUrl": zod.string().nullish(),
   "bannerUrl": zod.string().nullish(),
+  "heroEnabled": zod.boolean().optional(),
   "description": zod.string().nullish(),
   "accentColor": zod.string().optional(),
   "bankTransferInfo": zod.string().nullish(),
@@ -197,6 +202,7 @@ export const UpdateDashboardSettingsResponse = zod.object({
   "email": zod.string(),
   "logoUrl": zod.string().nullish(),
   "bannerUrl": zod.string().nullish(),
+  "heroEnabled": zod.boolean().optional(),
   "description": zod.string().nullish(),
   "accentColor": zod.string(),
   "bankTransferInfo": zod.string().nullish(),
@@ -838,6 +844,122 @@ export const GetBundleImageResponse = zod.unknown()
 
 
 /**
+ * @summary List hero gallery slides for the current merchant
+ */
+export const ListHeroSlidesResponse = zod.object({
+  "slides": zod.array(zod.object({
+  "id": zod.number(),
+  "merchantId": zod.number(),
+  "title": zod.string().nullish(),
+  "subtitle": zod.string().nullish(),
+  "linkUrl": zod.string().nullish(),
+  "position": zod.number(),
+  "imageUrl": zod.string().nullish().describe('Public URL of the slide image, or null if not uploaded yet'),
+  "isActive": zod.boolean(),
+  "createdAt": zod.string()
+}))
+})
+
+
+/**
+ * @summary Create a new hero slide (image uploaded separately)
+ */
+export const CreateHeroSlideBody = zod.object({
+  "title": zod.string().nullish(),
+  "subtitle": zod.string().nullish(),
+  "linkUrl": zod.string().nullish(),
+  "position": zod.number().optional(),
+  "isActive": zod.boolean().optional()
+})
+
+export const CreateHeroSlideResponse = zod.object({
+  "id": zod.number(),
+  "merchantId": zod.number(),
+  "title": zod.string().nullish(),
+  "subtitle": zod.string().nullish(),
+  "linkUrl": zod.string().nullish(),
+  "position": zod.number(),
+  "imageUrl": zod.string().nullish().describe('Public URL of the slide image, or null if not uploaded yet'),
+  "isActive": zod.boolean(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Update a hero slide (title, subtitle, link, position, active)
+ */
+export const UpdateHeroSlideParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateHeroSlideBody = zod.object({
+  "title": zod.string().nullish(),
+  "subtitle": zod.string().nullish(),
+  "linkUrl": zod.string().nullish(),
+  "position": zod.number().optional(),
+  "isActive": zod.boolean().optional()
+})
+
+export const UpdateHeroSlideResponse = zod.object({
+  "id": zod.number(),
+  "merchantId": zod.number(),
+  "title": zod.string().nullish(),
+  "subtitle": zod.string().nullish(),
+  "linkUrl": zod.string().nullish(),
+  "position": zod.number(),
+  "imageUrl": zod.string().nullish().describe('Public URL of the slide image, or null if not uploaded yet'),
+  "isActive": zod.boolean(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Delete a hero slide and its image
+ */
+export const DeleteHeroSlideParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteHeroSlideResponse = zod.void()
+
+
+/**
+ * @summary Upload (or replace) the hero slide image — stored in the database
+ */
+export const UploadHeroSlideImageParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UploadHeroSlideImageBody = zod.object({
+  "image": zod.instanceof(File)
+})
+
+export const UploadHeroSlideImageResponse = zod.object({
+  "url": zod.string()
+})
+
+
+/**
+ * @summary Remove the hero slide image
+ */
+export const DeleteHeroSlideImageParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteHeroSlideImageResponse = zod.void()
+
+
+/**
+ * @summary Serve the hero slide image bytes (public)
+ */
+export const GetHeroSlideImageParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetHeroSlideImageResponse = zod.unknown()
+
+
+/**
  * @summary Get a public store
  */
 export const GetStoreParams = zod.object({
@@ -849,6 +971,18 @@ export const GetStoreResponse = zod.object({
   "storeName": zod.string(),
   "logoUrl": zod.string().nullish(),
   "bannerUrl": zod.string().nullish(),
+  "heroEnabled": zod.boolean().describe('Whether the merchant enabled the hero image gallery on their storefront'),
+  "heroSlides": zod.array(zod.object({
+  "id": zod.number(),
+  "merchantId": zod.number(),
+  "title": zod.string().nullish(),
+  "subtitle": zod.string().nullish(),
+  "linkUrl": zod.string().nullish(),
+  "position": zod.number(),
+  "imageUrl": zod.string().nullish().describe('Public URL of the slide image, or null if not uploaded yet'),
+  "isActive": zod.boolean(),
+  "createdAt": zod.string()
+})).optional(),
   "description": zod.string().nullish(),
   "accentColor": zod.string(),
   "phone": zod.string().nullish(),

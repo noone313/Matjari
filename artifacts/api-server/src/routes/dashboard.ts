@@ -12,6 +12,7 @@ import * as productsController from "../controllers/dashboard/products.controlle
 import * as pushController from "../controllers/dashboard/push.controller";
 import * as ordersController from "../controllers/dashboard/orders.controller";
 import * as settingsController from "../controllers/dashboard/settings.controller";
+import * as heroController from "../controllers/dashboard/hero.controller";
 
 import {
   UpdateDashboardSettingsBody,
@@ -91,6 +92,13 @@ router.get("/bundles", bundlesController.listBundles);
 router.post("/bundles", bundlesController.createBundle);
 router.put("/bundles/:id", bundlesController.updateBundle);
 router.delete("/bundles/:id", bundlesController.deleteBundle);
+
+// ─── Hero gallery ────────────────────────────────────────────────────────────
+
+router.get("/hero", heroController.listHeroSlides);
+router.post("/hero", heroController.createHeroSlide);
+router.put("/hero/:id", heroController.updateHeroSlide);
+router.delete("/hero/:id", heroController.deleteHeroSlide);
 
 // ─── Push Notifications ──────────────────────────────────────────────────────
 

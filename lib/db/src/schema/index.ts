@@ -5,4 +5,5 @@ export * from "./discounts";
 export * from "./reviews";
 export * from "./stockNotifications";
 export * from "./bundles";
+export * from "./hero";
 export * from "./push_subscriptions";

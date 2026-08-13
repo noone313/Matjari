@@ -35,6 +35,7 @@ export interface Merchant {
   logoUrl?: string | null;
   /** @nullable */
   bannerUrl?: string | null;
+  heroEnabled?: boolean;
   /** @nullable */
   description?: string | null;
   accentColor: string;
@@ -66,6 +67,7 @@ export interface MerchantUpdate {
   logoUrl?: string | null;
   /** @nullable */
   bannerUrl?: string | null;
+  heroEnabled?: boolean;
   /** @nullable */
   description?: string | null;
   accentColor?: string;
@@ -358,6 +360,25 @@ export interface DiscountCodeValidationResult {
   minOrderTotal?: number | null;
 }
 
+export interface HeroSlide {
+  id: number;
+  merchantId: number;
+  /** @nullable */
+  title?: string | null;
+  /** @nullable */
+  subtitle?: string | null;
+  /** @nullable */
+  linkUrl?: string | null;
+  position: number;
+  /**
+     * Public URL of the slide image, or null if not uploaded yet
+     * @nullable
+     */
+  imageUrl?: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
 export interface StorePublic {
   slug: string;
   storeName: string;
@@ -365,6 +386,9 @@ export interface StorePublic {
   logoUrl?: string | null;
   /** @nullable */
   bannerUrl?: string | null;
+  /** Whether the merchant enabled the hero image gallery on their storefront */
+  heroEnabled: boolean;
+  heroSlides?: HeroSlide[];
   /** @nullable */
   description?: string | null;
   accentColor: string;
@@ -513,6 +537,25 @@ export interface BundleListResponse {
   bundles: Bundle[];
 }
 
+export interface HeroSlideInput {
+  /** @nullable */
+  title?: string | null;
+  /** @nullable */
+  subtitle?: string | null;
+  /** @nullable */
+  linkUrl?: string | null;
+  position?: number;
+  isActive?: boolean;
+}
+
+export interface HeroSlideListResponse {
+  slides: HeroSlide[];
+}
+
+export interface HeroImageResponse {
+  url: string;
+}
+
 export type ListProductsParams = {
 category?: string;
 q?: string;
@@ -541,6 +584,10 @@ productId?: number;
 };
 
 export type UploadBundleImageBody = {
+  image: Blob;
+};
+
+export type UploadHeroSlideImageBody = {
   image: Blob;
 };
 

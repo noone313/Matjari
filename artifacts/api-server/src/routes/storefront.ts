@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, merchantsTable, productsTable, productVariantsTable, ordersTable, orderItemsTable, discountCodesTable, reviewsTable, stockNotificationsTable, bundlesTable, bundleItemsTable } from "@workspace/db";
+import { db, merchantsTable, productsTable, productVariantsTable, ordersTable, orderItemsTable, discountCodesTable, reviewsTable, stockNotificationsTable, bundlesTable, bundleItemsTable, heroSlidesTable } from "@workspace/db";
 import { eq, and, ilike, sql, gte, ne, desc, count, avg, inArray } from "drizzle-orm";
 import { sendPushToMerchant } from "../lib/push";
 import {
@@ -53,11 +53,31 @@ router.get("/:slug", async (req, res): Promise<void> => {
     return;
   }
 
+  const heroSlides = merchant.heroEnabled
+    ? await db
+        .select()
+        .from(heroSlidesTable)
+        .where(and(eq(heroSlidesTable.merchantId, merchant.id), eq(heroSlidesTable.isActive, true)))
+        .orderBy(heroSlidesTable.position, heroSlidesTable.id)
+    : [];
+
   res.json({
     slug: merchant.slug,
     storeName: merchant.storeName,
     logoUrl: merchant.logoUrl,
     bannerUrl: merchant.bannerUrl,
+    heroEnabled: merchant.heroEnabled,
+    heroSlides: heroSlides.map((s) => ({
+      id: s.id,
+      merchantId: s.merchantId,
+      title: s.title,
+      subtitle: s.subtitle,
+      linkUrl: s.linkUrl,
+      position: s.position,
+      imageUrl: s.imageData ? `/api/hero/${s.id}/image` : null,
+      isActive: s.isActive,
+      createdAt: s.createdAt,
+    })),
     description: merchant.description,
     accentColor: merchant.accentColor,
     phone: merchant.phone,

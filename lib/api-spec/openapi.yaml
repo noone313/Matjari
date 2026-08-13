@@ -810,6 +810,180 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  # ─── Hero gallery (Dashboard) ────────────────────────────
+  /dashboard/hero:
+    get:
+      operationId: listHeroSlides
+      tags: [dashboard]
+      summary: List hero gallery slides for the current merchant
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeroSlideListResponse"
+    post:
+      operationId: createHeroSlide
+      tags: [dashboard]
+      summary: Create a new hero slide (image uploaded separately)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HeroSlideInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeroSlide"
+        "400":
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /dashboard/hero/{id}:
+    put:
+      operationId: updateHeroSlide
+      tags: [dashboard]
+      summary: Update a hero slide (title, subtitle, link, position, active)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HeroSlideInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeroSlide"
+        "404":
+          description: Slide not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteHeroSlide
+      tags: [dashboard]
+      summary: Delete a hero slide and its image
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Slide not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /dashboard/hero/{id}/image:
+    put:
+      operationId: uploadHeroSlideImage
+      tags: [dashboard]
+      summary: Upload (or replace) the hero slide image — stored in the database
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [image]
+              properties:
+                image:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Image stored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeroImageResponse"
+        "400":
+          description: No image provided
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Slide not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteHeroSlideImage
+      tags: [dashboard]
+      summary: Remove the hero slide image
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Image removed
+        "404":
+          description: Slide not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /hero/{id}/image:
+    get:
+      operationId: getHeroSlideImage
+      tags: [storefront]
+      summary: Serve the hero slide image bytes (public)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Image bytes
+          content:
+            image/*:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   # ─── Storefront (Public) ──────────────────────────────────
   /stores/{slug}:
     get:
@@ -1294,6 +1468,8 @@ components:
           type: ["string", "null"]
         bannerUrl:
           type: ["string", "null"]
+        heroEnabled:
+          type: boolean
         description:
           type: ["string", "null"]
         accentColor:
@@ -1322,6 +1498,8 @@ components:
           type: ["string", "null"]
         bannerUrl:
           type: ["string", "null"]
+        heroEnabled:
+          type: boolean
         description:
           type: ["string", "null"]
         accentColor:
@@ -1825,7 +2003,7 @@ components:
     # ─── Storefront ──────────────────────────────────────────
     StorePublic:
       type: object
-      required: [slug, storeName, accentColor, createdAt]
+      required: [slug, storeName, accentColor, createdAt, heroEnabled]
       properties:
         slug:
           type: string
@@ -1835,6 +2013,13 @@ components:
           type: ["string", "null"]
         bannerUrl:
           type: ["string", "null"]
+        heroEnabled:
+          type: boolean
+          description: Whether the merchant enabled the hero image gallery on their storefront
+        heroSlides:
+          type: array
+          items:
+            $ref: "#/components/schemas/HeroSlide"
         description:
           type: ["string", "null"]
         accentColor:
@@ -2081,3 +2266,58 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Bundle"
+
+    # ─── Hero gallery ──────────────────────────────────────
+    HeroSlide:
+      type: object
+      required: [id, merchantId, position, isActive, createdAt]
+      properties:
+        id:
+          type: number
+        merchantId:
+          type: number
+        title:
+          type: ["string", "null"]
+        subtitle:
+          type: ["string", "null"]
+        linkUrl:
+          type: ["string", "null"]
+        position:
+          type: number
+        imageUrl:
+          type: ["string", "null"]
+          description: Public URL of the slide image, or null if not uploaded yet
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+
+    HeroSlideInput:
+      type: object
+      properties:
+        title:
+          type: ["string", "null"]
+        subtitle:
+          type: ["string", "null"]
+        linkUrl:
+          type: ["string", "null"]
+        position:
+          type: number
+        isActive:
+          type: boolean
+
+    HeroSlideListResponse:
+      type: object
+      required: [slides]
+      properties:
+        slides:
+          type: array
+          items:
+            $ref: "#/components/schemas/HeroSlide"
+
+    HeroImageResponse:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
