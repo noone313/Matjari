@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useGetStoreProduct, getGetStoreProductQueryKey, useGetRelatedProducts, getGetRelatedProductsQueryKey, useGetProductReviews, getGetProductReviewsQueryKey, useCreateProductReview, useCreateStockNotification } from '@workspace/api-client-react';
 import { useCart } from '@/contexts/CartContext';
+import { useWishlist } from '@/contexts/WishlistContext';
 import { formatPrice, getCategoryLabel, getApiUrl } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { ChevronRight, Droplet, Leaf, Share2, Check, Star, BellRing } from 'lucide-react';
+import { ChevronRight, Droplet, Leaf, Share2, Check, Star, BellRing, Heart } from 'lucide-react';
 import { Link } from 'wouter';
 import { FragrancePyramid } from '@/components/store/FragrancePyramid';
 
@@ -15,6 +16,7 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
   const { data: product, isLoading } = useGetStoreProduct(slug, Number(productId), { query: { enabled: !!slug && !!productId, queryKey: getGetStoreProductQueryKey(slug, Number(productId)) } });
   const { addToCart } = useCart();
   const { toast } = useToast();
+  const { toggleWishlist, isWishlisted } = useWishlist();
 
   const [selectedVariant, setSelectedVariant] = useState<number | null>(null);
   const [quantity, setQuantity] = useState(1);
@@ -191,6 +193,17 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
                 </span>
               )}
             </div>
+            <button
+              onClick={() => {
+                const removing = isWishlisted(product.id);
+                toggleWishlist(product.id);
+                toast({ title: removing ? 'أُزيل من المفضلة' : 'أُضيف للمفضلة' });
+              }}
+              title={isWishlisted(product.id) ? 'إزالة من المفضلة' : 'أضف للمفضلة'}
+              className={`p-2 rounded-full transition-colors ${isWishlisted(product.id) ? 'text-[hsl(var(--primary))]' : 'hover:bg-zinc-100 text-zinc-400 hover:text-zinc-900'}`}
+            >
+              <Heart className={`w-4 h-4 ${isWishlisted(product.id) ? 'fill-current' : ''}`} />
+            </button>
             <button
               onClick={handleShare}
               title="مشاركة المنتج"

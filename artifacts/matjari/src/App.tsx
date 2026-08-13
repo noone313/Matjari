@@ -8,6 +8,7 @@ import { handleApiError } from '@/lib/sessionExpired';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { ComparisonProvider } from './contexts/ComparisonContext';
+import { WishlistProvider } from './contexts/WishlistContext';
 import NotFound from '@/pages/not-found';
 
 // --- Dashboard Pages ---
@@ -36,6 +37,7 @@ import StoreCompare from '@/pages/store/Compare';
 import StoreCart from '@/pages/store/Cart';
 import StoreCheckout from '@/pages/store/Checkout';
 import StoreConfirmation from '@/pages/store/Confirmation';
+import StoreWishlist from '@/pages/store/Wishlist';
 
 // Centralized 401 handling: an expired/invalid session on any protected
 // dashboard request clears the stored session and redirects to /login.
@@ -85,29 +87,34 @@ function StoreRouter({ params }: { params: { slug: string } }) {
   return (
     <CartProvider storeSlug={slug}>
       <ComparisonProvider storeSlug={slug}>
-        <StoreLayout slug={slug}>
-          <Switch>
-            <Route path="/store/:slug">
-              {() => <StoreHome slug={slug} />}
-            </Route>
-            <Route path="/store/:slug/product/:productId">
-              {(p) => <StoreProduct slug={slug} productId={p?.productId ?? ''} />}
-            </Route>
-            <Route path="/store/:slug/compare">
-              {() => <StoreCompare slug={slug} />}
-            </Route>
-            <Route path="/store/:slug/cart">
-              {() => <StoreCart slug={slug} />}
-            </Route>
-            <Route path="/store/:slug/checkout">
-              {() => <StoreCheckout slug={slug} />}
-            </Route>
-            <Route path="/store/:slug/confirmation/:orderId">
-              {() => <StoreConfirmation />}
-            </Route>
-            <Route component={NotFound} />
-          </Switch>
-        </StoreLayout>
+        <WishlistProvider storeSlug={slug}>
+          <StoreLayout slug={slug}>
+            <Switch>
+              <Route path="/store/:slug">
+                {() => <StoreHome slug={slug} />}
+              </Route>
+              <Route path="/store/:slug/product/:productId">
+                {(p) => <StoreProduct slug={slug} productId={p?.productId ?? ''} />}
+              </Route>
+              <Route path="/store/:slug/compare">
+                {() => <StoreCompare slug={slug} />}
+              </Route>
+              <Route path="/store/:slug/wishlist">
+                {() => <StoreWishlist slug={slug} />}
+              </Route>
+              <Route path="/store/:slug/cart">
+                {() => <StoreCart slug={slug} />}
+              </Route>
+              <Route path="/store/:slug/checkout">
+                {() => <StoreCheckout slug={slug} />}
+              </Route>
+              <Route path="/store/:slug/confirmation/:orderId">
+                {() => <StoreConfirmation />}
+              </Route>
+              <Route component={NotFound} />
+            </Switch>
+          </StoreLayout>
+        </WishlistProvider>
       </ComparisonProvider>
     </CartProvider>
   );

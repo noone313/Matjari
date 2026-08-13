@@ -3,8 +3,9 @@ import { Link, useLocation } from 'wouter';
 import { useGetStore, getGetStoreQueryKey } from '@workspace/api-client-react';
 import { useCart } from '@/contexts/CartContext';
 import { useComparison, MAX_COMPARISON } from '@/contexts/ComparisonContext';
+import { useWishlist } from '@/contexts/WishlistContext';
 import { normalizeWhatsAppNumber } from '@/lib/utils';
-import { ShoppingBag, Menu, X, Phone, MessageCircle, Instagram, Scale } from 'lucide-react';
+import { ShoppingBag, Menu, X, Phone, MessageCircle, Instagram, Scale, Heart } from 'lucide-react';
 
 export default function StoreLayout({ children, slug }: { children: React.ReactNode; slug: string }) {
   const { data: store, isLoading } = useGetStore(slug, {
@@ -12,6 +13,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
   });
   const { itemCount } = useCart();
   const { items: comparisonItems } = useComparison();
+  const { count: wishlistCount } = useWishlist();
   const [menuOpen, setMenuOpen] = useState(false);
   const [location] = useLocation();
 
@@ -63,8 +65,20 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
             {store.storeName}
           </Link>
 
-          {/* Right: cart */}
+          {/* Right: actions */}
           <div className="flex items-center gap-4 mr-auto">
+            <Link
+              href={`/store/${slug}/wishlist`}
+              className="relative p-1 text-zinc-600 hover:text-zinc-900 transition-colors"
+              aria-label="المفضلة"
+            >
+              <Heart className="w-5 h-5" />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-1 -left-1 w-4 h-4 bg-zinc-900 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {wishlistCount}
+                </span>
+              )}
+            </Link>
             <Link
               href={`/store/${slug}/cart`}
               className="relative p-1 text-zinc-600 hover:text-zinc-900 transition-colors"

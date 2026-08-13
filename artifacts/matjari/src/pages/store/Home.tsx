@@ -3,9 +3,10 @@ import { useBrowseStoreProducts, getBrowseStoreProductsQueryKey, useBrowseStoreB
 import type { Product } from '@workspace/api-client-react';
 import { formatPrice, getCategoryLabel, getApiUrl } from '@/lib/utils';
 import { Link, useLocation } from 'wouter';
-import { SlidersHorizontal, X, Scale, Check, Gift } from 'lucide-react';
+import { SlidersHorizontal, X, Scale, Check, Gift, Heart } from 'lucide-react';
 import { useComparison } from '@/contexts/ComparisonContext';
 import { useCart } from '@/contexts/CartContext';
+import { useWishlist } from '@/contexts/WishlistContext';
 import { useToast } from '@/hooks/use-toast';
 
 const CATEGORIES = [
@@ -36,6 +37,7 @@ export default function StoreHome({ slug }: { slug: string }) {
   const [location, setLocation] = useLocation();
   const { addToCompare, isInCompare } = useComparison();
   const { addToCart } = useCart();
+  const { toggleWishlist, isWishlisted } = useWishlist();
   const { toast } = useToast();
 
   const debouncedSearch = useDebounced(search, 300);
@@ -138,6 +140,14 @@ export default function StoreHome({ slug }: { slug: string }) {
     } else {
       toast({ title: 'تمت الإضافة للمقارنة' });
     }
+  };
+
+  const handleWishlist = (e: React.MouseEvent, product: Product) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const removing = isWishlisted(product.id);
+    toggleWishlist(product.id);
+    toast({ title: removing ? 'أُزيل من المفضلة' : 'أُضيف للمفضلة' });
   };
 
   return (
@@ -354,6 +364,19 @@ export default function StoreHome({ slug }: { slug: string }) {
                           </div>
                         ) : null;
                       })()}
+                      {/* Wishlist button */}
+                      <button
+                        onClick={(e) => handleWishlist(e, product)}
+                        aria-label={isWishlisted(product.id) ? 'إزالة من المفضلة' : 'أضف للمفضلة'}
+                        className={`absolute bottom-2 left-2 z-10 flex items-center gap-1.5 text-[10px] tracking-widest uppercase px-3 py-1.5 shadow-sm transition-colors ${
+                          isWishlisted(product.id)
+                            ? 'bg-[hsl(var(--primary))] text-white'
+                            : 'bg-white text-zinc-900 hover:bg-[hsl(var(--primary))] hover:text-white'
+                        }`}
+                      >
+                        <Heart className={`w-3 h-3 ${isWishlisted(product.id) ? 'fill-current' : ''}`} />
+                        {isWishlisted(product.id) ? 'محفوظ' : 'مفضلة'}
+                      </button>
                       {/* Compare button */}
                       <button
                         onClick={(e) => handleCompare(e, product)}
