@@ -1,7 +1,9 @@
-import { db, ordersTable, orderItemsTable } from "@workspace/db";
-import { eq, and, gte, sql, desc, count, inArray } from "drizzle-orm";
+import { db, ordersTable, orderItemsTable, productsTable, productVariantsTable } from "@workspace/db";
+import { eq, and, gte, lte, sql, desc, count, inArray } from "drizzle-orm";
 import { type AuthRequest } from "../../middleware/auth";
 import { type Response } from "express";
+
+const LOW_STOCK_THRESHOLD = 5;
 
 export async function getDashboardStats(req: AuthRequest, res: Response) {
   try {
@@ -57,6 +59,20 @@ export async function getDashboardStats(req: AuthRequest, res: Response) {
       .orderBy(desc(ordersTable.createdAt))
       .limit(10);
 
+    // Low-stock variants (stock <= threshold) with their product name
+    const lowStockRows = await db
+      .select({
+        variantId: productVariantsTable.id,
+        productId: productsTable.id,
+        productName: productsTable.name,
+        variantLabel: productVariantsTable.variantLabel,
+        stock: productVariantsTable.stock,
+      })
+      .from(productVariantsTable)
+      .innerJoin(productsTable, eq(productVariantsTable.productId, productsTable.id))
+      .where(and(eq(productsTable.merchantId, merchantId), lte(productVariantsTable.stock, LOW_STOCK_THRESHOLD)))
+      .orderBy(productVariantsTable.stock);
+
     res.json({
       ordersThisMonth: Number(monthlyOrders[0]?.count ?? 0),
       revenueThisMonth: Number(monthlyOrders[0]?.revenue ?? 0),
@@ -74,6 +90,14 @@ export async function getDashboardStats(req: AuthRequest, res: Response) {
         count: Number(s.count),
       })),
       recentOrders,
+      lowStockCount: lowStockRows.length,
+      lowStockItems: lowStockRows.map((r) => ({
+        variantId: r.variantId,
+        productId: r.productId,
+        productName: r.productName,
+        variantLabel: r.variantLabel,
+        stock: Number(r.stock),
+      })),
     });
   } catch (err) {
     console.error(err);

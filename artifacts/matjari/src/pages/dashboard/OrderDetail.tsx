@@ -1,12 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, Link } from 'wouter';
 import { useGetOrder, useUpdateOrderStatus, getGetOrderQueryKey } from '@workspace/api-client-react';
-import { formatPrice, getStatusLabel, getStatusColor } from '@/lib/utils';
+import { formatPrice, getStatusLabel, getStatusColor, buildWhatsAppUrl, buildOrderStatusWhatsAppMessage } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { ArrowRight, MapPin, Phone, CreditCard, Gift, Printer } from 'lucide-react';
+import { ArrowRight, MapPin, Phone, CreditCard, Gift, Printer, MessageCircle } from 'lucide-react';
 
 export default function OrderDetail() {
   const { id } = useParams();
@@ -16,11 +16,13 @@ export default function OrderDetail() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { merchant } = useAuth();
+  const [lastNotified, setLastNotified] = useState<string | null>(null);
 
   const handleStatusChange = (newStatus: string) => {
     updateStatus.mutate({ id: orderId, data: { status: newStatus } }, {
       onSuccess: () => {
         toast({ title: 'تم تحديث حالة الطلب' });
+        setLastNotified(newStatus);
         queryClient.invalidateQueries({ queryKey: getGetOrderQueryKey(orderId) });
       }
     });
@@ -101,6 +103,23 @@ export default function OrderDetail() {
               <Button variant={order.status === 'delivered' ? 'default' : 'outline'} onClick={() => handleStatusChange('delivered')}>تسليم</Button>
               <Button variant={order.status === 'cancelled' ? 'destructive' : 'outline'} onClick={() => handleStatusChange('cancelled')}>إلغاء</Button>
             </div>
+            <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between gap-3">
+              <p className="text-sm text-gray-500">
+                {lastNotified
+                  ? `تم تحديث الحالة إلى "${getStatusLabel(lastNotified)}". أرسل إشعاراً للعميل عبر واتساب.`
+                  : 'بعد تغيير الحالة، يمكنك إشعار العميل عبر واتساب برسالة جاهزة.'}
+              </p>
+              <a
+                href={buildWhatsAppUrl(order.customerPhone, buildOrderStatusWhatsAppMessage(order.id, lastNotified ?? order.status, merchant?.storeName ?? 'متجري', order.customerName))}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Button className="flex items-center gap-2 bg-green-600 hover:bg-green-700">
+                  <MessageCircle className="w-4 h-4" />
+                  إشعار واتساب
+                </Button>
+              </a>
+            </div>
           </div>
         </div>
 
@@ -111,6 +130,15 @@ export default function OrderDetail() {
               <div className="font-medium text-gray-900">{order.customerName}</div>
               <div className="text-gray-500 text-sm flex items-center gap-2 mt-1">
                 <Phone className="w-4 h-4" /> {order.customerPhone}
+                <a
+                  href={buildWhatsAppUrl(order.customerPhone, buildOrderStatusWhatsAppMessage(order.id, order.status, merchant?.storeName ?? 'متجري', order.customerName))}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-green-600 hover:text-green-700"
+                  title="راسل العميل عبر واتساب"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                </a>
               </div>
             </div>
             <div>

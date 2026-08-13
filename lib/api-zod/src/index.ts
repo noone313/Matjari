@@ -13,6 +13,7 @@ export type {
   HealthStatus,
   ListOrdersParams,
   ListProductsParams,
+  LowStockItem,
   Merchant,
   MerchantLogin,
   MerchantRegister,

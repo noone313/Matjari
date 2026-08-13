@@ -109,6 +109,14 @@ export interface Order {
   createdAt: string;
 }
 
+export interface LowStockItem {
+  variantId: number;
+  productId: number;
+  productName: string;
+  variantLabel: string;
+  stock: number;
+}
+
 export interface DashboardStats {
   ordersThisMonth: number;
   revenueThisMonth: number;
@@ -119,6 +127,9 @@ export interface DashboardStats {
   topProducts: TopProduct[];
   ordersByStatus: StatusCount[];
   recentOrders: Order[];
+  /** Number of product variants with stock at or below the low-stock threshold (5) */
+  lowStockCount: number;
+  lowStockItems: LowStockItem[];
 }
 
 export interface ProductVariant {

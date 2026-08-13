@@ -5,6 +5,7 @@
  * متجري — SaaS perfume & cosmetics storefront platform API
  * OpenAPI spec version: 0.1.0
  */
+import type { LowStockItem } from './lowStockItem';
 import type { Order } from './order';
 import type { StatusCount } from './statusCount';
 import type { TopProduct } from './topProduct';
@@ -19,4 +20,7 @@ export interface DashboardStats {
   topProducts: TopProduct[];
   ordersByStatus: StatusCount[];
   recentOrders: Order[];
+  /** Number of product variants with stock at or below the low-stock threshold (5) */
+  lowStockCount: number;
+  lowStockItems: LowStockItem[];
 }

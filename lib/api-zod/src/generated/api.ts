@@ -141,6 +141,14 @@ export const GetDashboardStatsResponse = zod.object({
   "total": zod.number(),
   "status": zod.string(),
   "createdAt": zod.string()
+})),
+  "lowStockCount": zod.number().describe('Number of product variants with stock at or below the low-stock threshold (5)'),
+  "lowStockItems": zod.array(zod.object({
+  "variantId": zod.number(),
+  "productId": zod.number(),
+  "productName": zod.string(),
+  "variantLabel": zod.string(),
+  "stock": zod.number()
 }))
 })
 

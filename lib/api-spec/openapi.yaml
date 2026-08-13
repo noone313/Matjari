@@ -1338,7 +1338,7 @@ components:
     # ─── Dashboard ──────────────────────────────────────────
     DashboardStats:
       type: object
-      required: [ordersThisMonth, revenueThisMonth, totalOrders, totalRevenue, newOrdersCount, topProducts, ordersByStatus, recentOrders]
+      required: [ordersThisMonth, revenueThisMonth, totalOrders, totalRevenue, newOrdersCount, topProducts, ordersByStatus, recentOrders, lowStockCount, lowStockItems]
       properties:
         ordersThisMonth:
           type: number
@@ -1363,6 +1363,28 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Order"
+        lowStockCount:
+          type: number
+          description: Number of product variants with stock at or below the low-stock threshold (5)
+        lowStockItems:
+          type: array
+          items:
+            $ref: "#/components/schemas/LowStockItem"
+
+    LowStockItem:
+      type: object
+      required: [variantId, productId, productName, variantLabel, stock]
+      properties:
+        variantId:
+          type: number
+        productId:
+          type: number
+        productName:
+          type: string
+        variantLabel:
+          type: string
+        stock:
+          type: number
 
     TopProduct:
       type: object

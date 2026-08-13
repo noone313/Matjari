@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useListOrders } from '@workspace/api-client-react';
-import { formatPrice, getStatusLabel, getStatusColor } from '@/lib/utils';
+import { formatPrice, getStatusLabel, getStatusColor, buildWhatsAppUrl, buildOrderStatusWhatsAppMessage } from '@/lib/utils';
 import { Link } from 'wouter';
-import { Eye } from 'lucide-react';
+import { Eye, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Orders() {
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
+  const { merchant } = useAuth();
 
   const { data, isLoading } = useListOrders({ status: statusFilter || undefined, page });
 
@@ -67,11 +69,23 @@ export default function Orders() {
                     </td>
                     <td className="px-6 py-4 font-bold">{formatPrice(order.total)}</td>
                     <td className="px-6 py-4 text-center">
-                      <Link href={`/dashboard/orders/${order.id}`}>
-                        <Button variant="ghost" size="icon" className="text-gray-500 hover:text-primary">
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                      </Link>
+                      <div className="flex items-center justify-center gap-1">
+                        <a
+                          href={buildWhatsAppUrl(order.customerPhone, buildOrderStatusWhatsAppMessage(order.id, order.status, merchant?.storeName ?? 'متجري', order.customerName))}
+                          target="_blank"
+                          rel="noreferrer"
+                          title="إشعار واتساب للعميل"
+                        >
+                          <Button variant="ghost" size="icon" className="text-gray-400 hover:text-green-600">
+                            <MessageCircle className="w-4 h-4" />
+                          </Button>
+                        </a>
+                        <Link href={`/dashboard/orders/${order.id}`}>
+                          <Button variant="ghost" size="icon" className="text-gray-500 hover:text-primary">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))

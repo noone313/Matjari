@@ -30,6 +30,7 @@ export * from './listProductsParams';
 export * from './listReviewsParams';
 export * from './listReviewsStatus';
 export * from './listStockNotificationsParams';
+export * from './lowStockItem';
 export * from './merchant';
 export * from './merchantLogin';
 export * from './merchantRegister';

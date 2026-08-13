@@ -63,3 +63,32 @@ export function normalizeWhatsAppNumber(raw: string | null | undefined): string 
   }
   return digits;
 }
+
+/** Build a wa.me deep link with a pre-filled message for the given number. */
+export function buildWhatsAppUrl(phone: string | null | undefined, message: string): string {
+  const number = normalizeWhatsAppNumber(phone);
+  if (!number) return '';
+  return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+}
+
+/**
+ * Pre-filled WhatsApp notification message for an order status update.
+ * Used by the dashboard so the merchant can notify the customer in one tap.
+ */
+export function buildOrderStatusWhatsAppMessage(
+  orderId: number,
+  status: string,
+  storeName: string,
+  customerName?: string,
+): string {
+  const greeting = customerName ? `مرحباً ${customerName}،\n` : '';
+  const orderRef = `طلبك رقم #${orderId}`;
+  const body: Record<string, string> = {
+    new: `تم استلام ${orderRef} وسنبدأ بتجهيزه قريباً.`,
+    processing: `${orderRef} قيد التجهيز الآن.`,
+    shipped: `تم شحن ${orderRef}! 🚚 سنوافيك بأي تحديث.`,
+    delivered: `تم توصيل ${orderRef}. شكراً لتسوقك معنا! ❤️`,
+    cancelled: `للأسف تم إلغاء ${orderRef}. تواصل معنا لأي استفسار.`,
+  };
+  return `${greeting}${body[status] ?? `${orderRef} ${getStatusLabel(status)}`}\n\n${storeName}`;
+}
