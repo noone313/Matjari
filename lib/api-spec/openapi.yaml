@@ -1183,6 +1183,49 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /stores/{slug}/orders/{orderId}:
+    get:
+      operationId: getStoreOrder
+      tags: [storefront]
+      summary: Track a store order by ID and phone
+      description: Returns the order status and line items to the customer. Requires the phone number used when placing the order to prevent enumeration of sequential order IDs.
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: number
+        - name: phone
+          in: query
+          required: true
+          description: Phone number used when placing the order (privacy check)
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Order status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrackOrderResponse"
+        "400":
+          description: Missing phone
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Order not found or phone mismatch
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -1593,6 +1636,28 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/OrderItem"
+
+    TrackOrderResponse:
+      type: object
+      required: [id, status, subtotal, total, createdAt, items]
+      properties:
+        id:
+          type: number
+        status:
+          type: string
+          description: One of new, processing, shipped, delivered, cancelled
+        subtotal:
+          type: number
+        total:
+          type: number
+        discountCode:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderItem"
 
     OrderListResponse:
       type: object

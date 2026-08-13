@@ -79,3 +79,8 @@ export type {
   BundleListResponse,
   UploadBundleImageBody,
 } from "./generated/types";
+
+// Store-order tracking types: the zod consts for GetStoreOrderParams and
+// GetStoreOrderQueryParams live in ./generated/api, so only TrackOrderResponse
+// (which has no matching zod const) is re-exported explicitly.
+export type { TrackOrderResponse } from "./generated/types";

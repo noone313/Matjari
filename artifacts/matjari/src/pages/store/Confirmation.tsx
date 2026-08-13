@@ -69,7 +69,12 @@ export default function StoreConfirmation() {
           <p className="text-sm text-gray-600 mb-4">يرجى الاحتفاظ برقم الطلب للمراجعة.</p>
         </div>
 
-        <div className="pt-8">
+        <div className="pt-8 flex items-center justify-center gap-3">
+          <Link href={`/store/${slug}/track`}>
+            <Button className="h-12 px-8 font-bold">
+              تتبع الطلب
+            </Button>
+          </Link>
           <Link href={`/store/${slug}`}>
             <Button variant="outline" className="h-12 px-8 font-bold border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900">
               العودة للمتجر

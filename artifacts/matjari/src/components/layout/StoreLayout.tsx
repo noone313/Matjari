@@ -5,7 +5,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useComparison, MAX_COMPARISON } from '@/contexts/ComparisonContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { normalizeWhatsAppNumber } from '@/lib/utils';
-import { ShoppingBag, Menu, X, Phone, MessageCircle, Instagram, Scale, Heart } from 'lucide-react';
+import { ShoppingBag, Menu, X, Phone, MessageCircle, Instagram, Scale, Heart, PackageSearch } from 'lucide-react';
 
 export default function StoreLayout({ children, slug }: { children: React.ReactNode; slug: string }) {
   const { data: store, isLoading } = useGetStore(slug, {
@@ -68,6 +68,20 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
           {/* Right: actions */}
           <div className="flex items-center gap-4 mr-auto">
             <Link
+              href={`/store/${slug}/track`}
+              className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900 transition-colors"
+            >
+              <PackageSearch className="w-4 h-4" />
+              تتبع طلبك
+            </Link>
+            <Link
+              href={`/store/${slug}/track`}
+              className="sm:hidden relative p-1 text-zinc-600 hover:text-zinc-900 transition-colors"
+              aria-label="تتبع طلبك"
+            >
+              <PackageSearch className="w-5 h-5" />
+            </Link>
+            <Link
               href={`/store/${slug}/wishlist`}
               className="relative p-1 text-zinc-600 hover:text-zinc-900 transition-colors"
               aria-label="المفضلة"
@@ -113,6 +127,12 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
               {label}
             </Link>
           ))}
+          <Link
+            href={`/store/${slug}/track`}
+            className="text-xs tracking-widest uppercase py-3 border-b-2 border-transparent hover:border-zinc-900 hover:text-zinc-900 text-zinc-500 transition-all whitespace-nowrap"
+          >
+            تتبع طلبك
+          </Link>
         </nav>
       </header>
 
@@ -153,6 +173,13 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
                   {label}
                 </Link>
               ))}
+              <Link
+                href={`/store/${slug}/track`}
+                onClick={() => setMenuOpen(false)}
+                className="text-sm tracking-widest uppercase text-zinc-700 hover:text-zinc-900 transition-colors py-1 border-b border-zinc-100"
+              >
+                تتبع طلبك
+              </Link>
             </nav>
           </div>
         </div>

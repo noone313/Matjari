@@ -19,6 +19,8 @@ import {
   CreateStockNotificationParams,
   CreateStockNotificationBody,
   BrowseStoreBundlesParams,
+  GetStoreOrderParams,
+  GetStoreOrderQueryParams,
 } from "@workspace/api-zod";
 
 const router = Router();
@@ -679,6 +681,78 @@ router.post("/:slug/orders", async (req, res): Promise<void> => {
     res.status(500).json({ error: "حدث خطأ أثناء إنشاء الطلب" });
     return;
   }
+});
+
+// GET /stores/:slug/orders/:orderId?phone=...
+// Customer order tracking. Requires the phone used at checkout so that
+// sequential order IDs cannot be enumerated to read other people's orders.
+router.get("/:slug/orders/:orderId", async (req, res): Promise<void> => {
+  const params = GetStoreOrderParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: "معرّف غير صالح" });
+    return;
+  }
+
+  const query = GetStoreOrderQueryParams.safeParse(req.query);
+  if (!query.success) {
+    res.status(400).json({ error: "رقم الهاتف مطلوب للتتبع" });
+    return;
+  }
+
+  const [merchant] = await db
+    .select()
+    .from(merchantsTable)
+    .where(eq(merchantsTable.slug, params.data.slug))
+    .limit(1);
+
+  if (!merchant) {
+    res.status(404).json({ error: "المتجر غير موجود" });
+    return;
+  }
+
+  const [order] = await db
+    .select()
+    .from(ordersTable)
+    .where(
+      and(
+        eq(ordersTable.id, params.data.orderId),
+        eq(ordersTable.merchantId, merchant.id),
+      ),
+    )
+    .limit(1);
+
+  if (!order) {
+    res.status(404).json({ error: "الطلب غير موجود" });
+    return;
+  }
+
+  const normalizePhone = (value: string) => value.replace(/[^\d]/g, "");
+  if (normalizePhone(query.data.phone) !== normalizePhone(order.customerPhone)) {
+    res.status(404).json({ error: "الطلب غير موجود" });
+    return;
+  }
+
+  const items = await db
+    .select()
+    .from(orderItemsTable)
+    .where(eq(orderItemsTable.orderId, order.id));
+
+  res.json({
+    id: order.id,
+    status: order.status,
+    subtotal: order.subtotal,
+    total: order.total,
+    discountCode: order.discountCode,
+    createdAt: order.createdAt,
+    items: items.map((item) => ({
+      id: item.id,
+      variantId: item.variantId,
+      productName: item.productName,
+      variantLabel: item.variantLabel,
+      quantity: item.quantity,
+      priceAtOrder: item.priceAtOrder,
+    })),
+  });
 });
 
 // GET /stores/:slug/bundles

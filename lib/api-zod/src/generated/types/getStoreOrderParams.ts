@@ -6,6 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface DiscountValidation {
-  code: string;
-}
+export type GetStoreOrderParams = {
+/**
+ * Phone number used when placing the order (privacy check)
+ */
+phone: string;
+};

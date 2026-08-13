@@ -38,6 +38,7 @@ import StoreCart from '@/pages/store/Cart';
 import StoreCheckout from '@/pages/store/Checkout';
 import StoreConfirmation from '@/pages/store/Confirmation';
 import StoreWishlist from '@/pages/store/Wishlist';
+import StoreTrack from '@/pages/store/Track';
 
 // Centralized 401 handling: an expired/invalid session on any protected
 // dashboard request clears the stored session and redirects to /login.
@@ -101,6 +102,9 @@ function StoreRouter({ params }: { params: { slug: string } }) {
               </Route>
               <Route path="/store/:slug/wishlist">
                 {() => <StoreWishlist slug={slug} />}
+              </Route>
+              <Route path="/store/:slug/track">
+                {() => <StoreTrack slug={slug} />}
               </Route>
               <Route path="/store/:slug/cart">
                 {() => <StoreCart slug={slug} />}
