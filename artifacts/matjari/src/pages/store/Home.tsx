@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useBrowseStoreProducts, getBrowseStoreProductsQueryKey, useBrowseStoreBundles, getBrowseStoreBundlesQueryKey } from '@workspace/api-client-react';
 import type { Product } from '@workspace/api-client-react';
-import { formatPrice, getCategoryLabel } from '@/lib/utils';
+import { formatPrice, getCategoryLabel, getApiUrl } from '@/lib/utils';
 import { Link, useLocation } from 'wouter';
 import { SlidersHorizontal, X, Scale, Check, Gift } from 'lucide-react';
 import { useComparison } from '@/contexts/ComparisonContext';
@@ -99,7 +99,7 @@ export default function StoreHome({ slug }: { slug: string }) {
       variantLabel: 'باقة هدايا',
       price: bundle.bundlePrice,
       quantity: 1,
-      image: bundle.imageUrl ?? undefined,
+      image: bundle.imageUrl ? getApiUrl(bundle.imageUrl) : undefined,
       category: 'bundle',
     });
     toast({ title: 'تمت إضافة الباقة للسلة' });
@@ -253,7 +253,7 @@ export default function StoreHome({ slug }: { slug: string }) {
                 <div key={bundle.id} data-testid={`card-bundle-${bundle.id}`} className="bg-white border border-zinc-100 rounded-lg overflow-hidden shadow-sm flex flex-col">
                   <div className="aspect-[4/3] overflow-hidden bg-zinc-50 relative">
                     {bundle.imageUrl ? (
-                      <img src={bundle.imageUrl} alt={bundle.name} className="w-full h-full object-cover" />
+                      <img src={bundle.imageUrl ? getApiUrl(bundle.imageUrl) : undefined} alt={bundle.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <Gift className="w-10 h-10 text-zinc-200" />
@@ -324,7 +324,7 @@ export default function StoreHome({ slug }: { slug: string }) {
                     <div className="aspect-[3/4] overflow-hidden bg-zinc-50 relative">
                       {product.imageUrls?.[0] ? (
                         <img
-                          src={product.imageUrls[0]}
+                          src={getApiUrl(product.imageUrls[0])}
                           alt={product.name}
                           className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700 ease-out"
                           onError={() => setBrokenImages((prev) => new Set(prev).add(product.id))}

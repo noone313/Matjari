@@ -38,9 +38,15 @@ export function getCategoryLabel(cat: string) {
   return CATEGORIES.find(c => c.value === cat)?.label || cat;
 }
 
+import { getBaseUrl } from '@workspace/api-client-react';
+
 /** Build an absolute API URL from a root-relative path like `/api/images/1` */
 export function getApiUrl(path: string): string {
-  return `${window.location.origin}${path}`;
+  const value = path?.trim();
+  if (!value) return value;
+  if (/^(https?:)?\/\//i.test(value) || /^(data|blob):/i.test(value)) return value;
+  const base = getBaseUrl() ?? window.location.origin;
+  return `${base}${value.startsWith('/') ? '' : '/'}${value}`;
 }
 
 /**

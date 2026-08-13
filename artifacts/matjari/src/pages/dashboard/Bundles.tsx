@@ -1,6 +1,6 @@
 import React from 'react';
 import { useListBundles, useDeleteBundle } from '@workspace/api-client-react';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, getApiUrl } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Link } from 'wouter';
 import { Plus, Edit, Trash2, Gift } from 'lucide-react';
@@ -64,7 +64,7 @@ export default function Bundles() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         {bundle.imageUrl ? (
-                          <img src={bundle.imageUrl} alt={bundle.name} className="w-10 h-10 rounded border border-gray-200 object-cover" />
+                          <img src={bundle.imageUrl ? getApiUrl(bundle.imageUrl) : undefined} alt={bundle.name} className="w-10 h-10 rounded border border-gray-200 object-cover" />
                         ) : (
                           <div className="w-10 h-10 rounded border border-gray-200 bg-gray-100 flex items-center justify-center">
                             <Gift className="w-5 h-5 text-gray-400" />

@@ -56,6 +56,15 @@ export function setBaseUrl(url: string | null): void {
 }
 
 /**
+ * Return the configured API base URL (normalised, trailing slash trimmed), or
+ * `null` when none is set. Relative `/api/...` paths can be made absolute by
+ * prepending this value — e.g. image URLs returned by the API.
+ */
+export function getBaseUrl(): string | null {
+  return _baseUrl;
+}
+
+/**
  * Register a getter that supplies a bearer auth token.  Before every fetch
  * the getter is invoked; when it returns a non-null string, an
  * `Authorization: Bearer <token>` header is attached to the request.

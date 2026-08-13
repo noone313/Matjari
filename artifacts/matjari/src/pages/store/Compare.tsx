@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'wouter';
 import { useComparison, MAX_COMPARISON } from '@/contexts/ComparisonContext';
 import { FragrancePyramid } from '@/components/store/FragrancePyramid';
-import { formatPrice, getCategoryLabel } from '@/lib/utils';
+import { formatPrice, getCategoryLabel, getApiUrl } from '@/lib/utils';
 import { X, Scale, Droplet, Leaf, RotateCcw } from 'lucide-react';
 import type { Product } from '@workspace/api-client-react';
 
@@ -32,7 +32,7 @@ function CompareColumn({ product, slug, onRemove }: { product: Product; slug: st
           <X className="w-4 h-4" />
         </button>
         {product.imageUrls?.[0] ? (
-          <img src={product.imageUrls[0]} alt={product.name} className="w-full h-full object-cover" />
+          <img src={getApiUrl(product.imageUrls[0])} alt={product.name} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center gap-2">
             <span className="text-5xl font-serif text-zinc-300 select-none">{product.name.charAt(0)}</span>

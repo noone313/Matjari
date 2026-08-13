@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useCart, cartItemKey } from '@/contexts/CartContext';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, getApiUrl } from '@/lib/utils';
 import { useValidateDiscount } from '@workspace/api-client-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -74,7 +74,7 @@ export default function StoreCart({ slug }: { slug: string }) {
             <div key={key} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex gap-4 items-center">
               <div className="w-20 h-20 bg-gray-50 rounded-lg border border-gray-100 overflow-hidden shrink-0">
                 {item.image ? (
-                  <img src={item.image} alt={item.productName} className="w-full h-full object-cover" />
+                  <img src={getApiUrl(item.image)} alt={item.productName} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">بدون صورة</div>
                 )}

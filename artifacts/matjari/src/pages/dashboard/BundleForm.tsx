@@ -6,6 +6,7 @@ import { useLocation, useParams } from 'wouter';
 import { useListBundles, useCreateBundle, useUpdateBundle, useListProducts, useUploadBundleImage, useDeleteBundleImage } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { getApiUrl } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -51,7 +52,7 @@ export default function BundleForm() {
 
   const previewUrl = imageFile
     ? URL.createObjectURL(imageFile)
-    : removeSavedImage ? null : savedImageUrl;
+    : removeSavedImage ? null : savedImageUrl ? getApiUrl(savedImageUrl) : null;
 
   const variantToProduct = useMemo(() => {
     const map = new Map<number, number>();

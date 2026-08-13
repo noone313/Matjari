@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useListProducts, useDeleteProduct, getGetProductQueryKey } from '@workspace/api-client-react';
-import { formatPrice, getCategoryLabel, CATEGORIES } from '@/lib/utils';
+import { formatPrice, getCategoryLabel, CATEGORIES, getApiUrl } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link } from 'wouter';
@@ -92,7 +92,7 @@ export default function Products() {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           {product.imageUrls?.[0] ? (
-                            <img src={product.imageUrls[0]} alt={product.name} className="w-10 h-10 rounded border border-gray-200 object-cover" />
+                            <img src={getApiUrl(product.imageUrls[0])} alt={product.name} className="w-10 h-10 rounded border border-gray-200 object-cover" />
                           ) : (
                             <div className="w-10 h-10 rounded border border-gray-200 bg-gray-100 flex items-center justify-center">
                               <Package className="w-5 h-5 text-gray-400" />

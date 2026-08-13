@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useGetStoreProduct, getGetStoreProductQueryKey, useGetRelatedProducts, getGetRelatedProductsQueryKey, useGetProductReviews, getGetProductReviewsQueryKey, useCreateProductReview, useCreateStockNotification } from '@workspace/api-client-react';
 import { useCart } from '@/contexts/CartContext';
-import { formatPrice, getCategoryLabel } from '@/lib/utils';
+import { formatPrice, getCategoryLabel, getApiUrl } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -68,7 +68,7 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
       setSelectedVariant(product.variants[0].id);
     }
     if (product && product.imageUrls && product.imageUrls.length > 0 && !activeImage) {
-      setActiveImage(product.imageUrls[0]);
+      setActiveImage(getApiUrl(product.imageUrls[0]));
     }
   }, [product, selectedVariant, activeImage]);
 
@@ -129,7 +129,7 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
       variantLabel: currentVariant.variantLabel,
       price: currentVariant.price,
       quantity: qty,
-      image: product.imageUrls?.[0],
+      image: product.imageUrls?.[0] ? getApiUrl(product.imageUrls[0]) : undefined,
       category: product.category
     });
     toast({ title: 'تمت الإضافة للسلة' });
@@ -148,7 +148,7 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
         <div className="p-6 md:border-l border-gray-100 flex flex-col items-center">
           <div className="aspect-square w-full max-w-md bg-gray-50 rounded-lg overflow-hidden mb-4 border border-gray-100">
             {activeImage ? (
-              <img src={activeImage} alt={product.name} className="w-full h-full object-cover" />
+              <img src={getApiUrl(activeImage)} alt={product.name} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-300">بدون صورة</div>
             )}
@@ -158,10 +158,10 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
               {product.imageUrls.map((img, i) => (
                 <button 
                   key={i} 
-                  onClick={() => setActiveImage(img)}
-                  className={`w-20 h-20 rounded-md overflow-hidden border-2 transition-colors ${activeImage === img ? 'border-[hsl(var(--primary))]' : 'border-transparent hover:border-gray-200'}`}
+                  onClick={() => setActiveImage(getApiUrl(img))}
+                  className={`w-20 h-20 rounded-md overflow-hidden border-2 transition-colors ${activeImage === getApiUrl(img) ? 'border-[hsl(var(--primary))]' : 'border-transparent hover:border-gray-200'}`}
                 >
-                  <img src={img} className="w-full h-full object-cover" alt="" />
+                  <img src={getApiUrl(img)} className="w-full h-full object-cover" alt="" />
                 </button>
               ))}
             </div>
@@ -352,7 +352,7 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
                   <div className="bg-white group cursor-pointer border border-zinc-100">
                     <div className="aspect-[3/4] overflow-hidden bg-zinc-50">
                       {p.imageUrls?.[0] ? (
-                        <img src={p.imageUrls[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700" />
+                        <img src={getApiUrl(p.imageUrls[0])} alt={p.name} className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-3xl font-serif text-zinc-200">
                           {p.name.charAt(0)}
