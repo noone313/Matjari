@@ -48,26 +48,28 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
 
       {/* ── Navbar ───────────────────────────── */}
       <header className="sticky top-0 z-50 bg-white border-b border-zinc-100">
-        <div className="max-w-screen-xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-screen-xl mx-auto px-6 h-16 flex items-center">
           {/* Left: hamburger (mobile) */}
-          <button
-            onClick={() => setMenuOpen(true)}
-            className="md:hidden p-1 text-zinc-500 hover:text-zinc-900 transition-colors"
-            aria-label="القائمة"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
+          <div className="w-10 md:hidden flex-shrink-0">
+            <button
+              onClick={() => setMenuOpen(true)}
+              className="p-1 text-zinc-500 hover:text-zinc-900 transition-colors"
+              aria-label="القائمة"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          </div>
 
           {/* Center: store name */}
           <Link
             href={`/store/${slug}`}
-            className="absolute right-1/2 translate-x-1/2 font-serif font-bold text-xl tracking-tight hover:opacity-70 transition-opacity whitespace-nowrap"
+            className="flex-1 text-center font-serif font-bold text-xl tracking-tight hover:opacity-70 transition-opacity whitespace-nowrap overflow-hidden text-ellipsis"
           >
             {store.storeName}
           </Link>
 
           {/* Right: actions */}
-          <div className="flex items-center gap-4">
+          <div className="w-10 flex-shrink-0 flex items-center justify-end gap-3">
             <Link
               href={`/store/${slug}/track`}
               className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900 transition-colors"
