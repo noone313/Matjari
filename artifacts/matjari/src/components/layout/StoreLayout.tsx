@@ -67,7 +67,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
           </Link>
 
           {/* Right: actions */}
-          <div className="flex items-center gap-4 mr-auto">
+          <div className="flex items-center gap-4">
             <Link
               href={`/store/${slug}/track`}
               className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900 transition-colors"
