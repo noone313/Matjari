@@ -14,6 +14,7 @@ import {
   useUploadHeroSlideImage,
   useDeleteHeroSlideImage,
   getListHeroSlidesQueryKey,
+  getGetDashboardSettingsQueryKey,
 } from '@workspace/api-client-react';
 import type { HeroSlide } from '@workspace/api-client-react';
 import { useToast } from '@/hooks/use-toast';
@@ -219,6 +220,7 @@ function HeroGallerySection() {
 export default function Settings() {
   const { data: settings, isLoading } = useGetDashboardSettings();
   const updateSettings = useUpdateDashboardSettings();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof schema>>({
@@ -269,6 +271,7 @@ export default function Settings() {
   const onSubmit = (data: z.infer<typeof schema>) => {
     updateSettings.mutate({ data }, {
       onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getGetDashboardSettingsQueryKey() });
         toast({ title: 'تم حفظ الإعدادات' });
       }
     });
