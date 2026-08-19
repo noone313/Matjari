@@ -63,13 +63,13 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
           {/* Center: store name */}
           <Link
             href={`/store/${slug}`}
-            className="flex-1 min-w-0 text-center font-serif font-bold text-xl tracking-tight hover:opacity-70 transition-opacity whitespace-nowrap overflow-hidden text-ellipsis"
+            className="flex-1 min-w-0 text-center font-serif font-bold text-lg tracking-tight hover:opacity-70 transition-opacity"
           >
             {store.storeName}
           </Link>
 
           {/* Right: actions */}
-          <div className="flex-shrink-0 flex items-center justify-end gap-3">
+          <div className="flex-shrink-0 flex items-center justify-end gap-2">
             <Link
               href={`/store/${slug}/track`}
               className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900 transition-colors"
@@ -79,31 +79,31 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
             </Link>
             <Link
               href={`/store/${slug}/track`}
-              className="sm:hidden relative p-1 text-zinc-600 hover:text-zinc-900 transition-colors"
+              className="sm:hidden p-0.5 text-zinc-600 hover:text-zinc-900 transition-colors"
               aria-label="تتبع طلبك"
             >
-              <PackageSearch className="w-5 h-5" />
+              <PackageSearch className="w-4 h-4" />
             </Link>
             <Link
               href={`/store/${slug}/wishlist`}
-              className="relative p-1 text-zinc-600 hover:text-zinc-900 transition-colors"
+              className="relative p-0.5 text-zinc-600 hover:text-zinc-900 transition-colors"
               aria-label="المفضلة"
             >
-              <Heart className="w-5 h-5" />
+              <Heart className="w-4 h-4" />
               {wishlistCount > 0 && (
-                <span className="absolute -top-1 -left-1 w-4 h-4 bg-zinc-900 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                <span className="absolute -top-1 -left-1 w-3.5 h-3.5 bg-zinc-900 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                   {wishlistCount}
                 </span>
               )}
             </Link>
             <Link
               href={`/store/${slug}/cart`}
-              className="relative p-1 text-zinc-600 hover:text-zinc-900 transition-colors"
+              className="relative p-0.5 text-zinc-600 hover:text-zinc-900 transition-colors"
               aria-label="السلة"
             >
-              <ShoppingBag className="w-5 h-5" />
+              <ShoppingBag className="w-4 h-4" />
               {itemCount > 0 && (
-                <span className="absolute -top-1 -left-1 w-4 h-4 bg-zinc-900 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                <span className="absolute -top-1 -left-1 w-3.5 h-3.5 bg-zinc-900 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                   {itemCount}
                 </span>
               )}
