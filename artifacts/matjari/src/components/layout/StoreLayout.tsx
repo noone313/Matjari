@@ -48,12 +48,12 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
 
       {/* ── Navbar ───────────────────────────── */}
       <header className="sticky top-0 z-50 bg-white border-b border-zinc-100">
-        <div className="max-w-screen-xl mx-auto px-6 h-16 flex items-center">
-          {/* Left: hamburger (mobile) */}
-          <div className="w-20 flex-shrink-0 md:hidden">
+        <div className="max-w-screen-xl mx-auto h-16 flex items-center">
+          {/* Left: hamburger (mobile only) */}
+          <div className="w-16 flex-shrink-0 md:hidden flex items-center justify-center">
             <button
               onClick={() => setMenuOpen(true)}
-              className="md:hidden p-1 text-zinc-500 hover:text-zinc-900 transition-colors"
+              className="p-1 text-zinc-500 hover:text-zinc-900 transition-colors"
               aria-label="القائمة"
             >
               <Menu className="w-5 h-5" />
@@ -63,23 +63,23 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
           {/* Center: store name */}
           <Link
             href={`/store/${slug}`}
-            className="flex-1 min-w-0 text-center font-serif font-bold text-lg tracking-tight hover:opacity-70 transition-opacity"
+            className="flex-1 min-w-0 text-center px-4 font-serif font-bold text-lg tracking-tight hover:opacity-70 transition-opacity"
           >
             {store.storeName}
           </Link>
 
           {/* Right: actions */}
-          <div className="w-20 md:w-auto flex-shrink-0 flex items-center justify-end gap-2">
+          <div className="w-16 md:w-auto flex-shrink-0 flex items-center justify-center md:justify-end gap-2 px-2 md:px-0">
             <Link
               href={`/store/${slug}/track`}
-              className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900 transition-colors"
+              className="hidden md:inline-flex items-center gap-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900 transition-colors whitespace-nowrap"
             >
               <PackageSearch className="w-4 h-4" />
               تتبع طلبك
             </Link>
             <Link
               href={`/store/${slug}/track`}
-              className="sm:hidden p-0.5 text-zinc-600 hover:text-zinc-900 transition-colors"
+              className="md:hidden p-0.5 text-zinc-600 hover:text-zinc-900 transition-colors"
               aria-label="تتبع طلبك"
             >
               <PackageSearch className="w-4 h-4" />
