@@ -50,10 +50,10 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
       <header className="sticky top-0 z-50 bg-white border-b border-zinc-100">
         <div className="max-w-screen-xl mx-auto px-6 h-16 flex items-center">
           {/* Left: hamburger (mobile) */}
-          <div className="w-10 md:hidden flex-shrink-0">
+          <div className="w-20 flex-shrink-0 md:hidden">
             <button
               onClick={() => setMenuOpen(true)}
-              className="p-1 text-zinc-500 hover:text-zinc-900 transition-colors"
+              className="md:hidden p-1 text-zinc-500 hover:text-zinc-900 transition-colors"
               aria-label="القائمة"
             >
               <Menu className="w-5 h-5" />
@@ -63,13 +63,13 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
           {/* Center: store name */}
           <Link
             href={`/store/${slug}`}
-            className="flex-1 text-center font-serif font-bold text-xl tracking-tight hover:opacity-70 transition-opacity whitespace-nowrap overflow-hidden text-ellipsis"
+            className="flex-1 min-w-0 text-center font-serif font-bold text-xl tracking-tight hover:opacity-70 transition-opacity whitespace-nowrap overflow-hidden text-ellipsis"
           >
             {store.storeName}
           </Link>
 
           {/* Right: actions */}
-          <div className="w-10 flex-shrink-0 flex items-center justify-end gap-3">
+          <div className="flex-shrink-0 flex items-center justify-end gap-3">
             <Link
               href={`/store/${slug}/track`}
               className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900 transition-colors"
