@@ -1482,6 +1482,20 @@ components:
           type: ["string", "null"]
         whatsappNumber:
           type: ["string", "null"]
+        aboutUs:
+          type: ["string", "null"]
+        contactUs:
+          type: ["string", "null"]
+        storeEmail:
+          type: ["string", "null"]
+        location:
+          type: ["string", "null"]
+        facebook:
+          type: ["string", "null"]
+        twitter:
+          type: ["string", "null"]
+        tiktok:
+          type: ["string", "null"]
         createdAt:
           type: string
         productCount:
@@ -1511,6 +1525,20 @@ components:
         instagramHandle:
           type: ["string", "null"]
         whatsappNumber:
+          type: ["string", "null"]
+        aboutUs:
+          type: ["string", "null"]
+        contactUs:
+          type: ["string", "null"]
+        storeEmail:
+          type: ["string", "null"]
+        location:
+          type: ["string", "null"]
+        facebook:
+          type: ["string", "null"]
+        twitter:
+          type: ["string", "null"]
+        tiktok:
           type: ["string", "null"]
 
     # ─── Dashboard ──────────────────────────────────────────
@@ -2031,6 +2059,20 @@ components:
         instagramHandle:
           type: ["string", "null"]
         whatsappNumber:
+          type: ["string", "null"]
+        aboutUs:
+          type: ["string", "null"]
+        contactUs:
+          type: ["string", "null"]
+        storeEmail:
+          type: ["string", "null"]
+        location:
+          type: ["string", "null"]
+        facebook:
+          type: ["string", "null"]
+        twitter:
+          type: ["string", "null"]
+        tiktok:
           type: ["string", "null"]
         createdAt:
           type: string
