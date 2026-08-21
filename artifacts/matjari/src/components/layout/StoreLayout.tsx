@@ -48,7 +48,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
 
       {/* ── Navbar ───────────────────────────── */}
       <header className="sticky top-0 z-50 bg-white border-b border-zinc-100">
-        <div className="max-w-screen-xl mx-auto px-3 h-16 flex items-center">
+        <div className="max-w-screen-xl mx-auto h-16 flex items-center">
           {/* Left: hamburger (mobile only) */}
           <div className="w-16 flex-shrink-0 md:hidden flex items-center justify-center">
             <button
