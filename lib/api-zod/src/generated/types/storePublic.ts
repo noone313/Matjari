@@ -28,5 +28,19 @@ export interface StorePublic {
   instagramHandle?: string | null;
   /** @nullable */
   whatsappNumber?: string | null;
+  /** @nullable */
+  aboutUs?: string | null;
+  /** @nullable */
+  contactUs?: string | null;
+  /** @nullable */
+  storeEmail?: string | null;
+  /** @nullable */
+  location?: string | null;
+  /** @nullable */
+  facebook?: string | null;
+  /** @nullable */
+  twitter?: string | null;
+  /** @nullable */
+  tiktok?: string | null;
   createdAt: string;
 }

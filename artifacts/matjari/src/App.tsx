@@ -62,6 +62,8 @@ function DashboardRouter() {
   return (
     <DashboardLayout>
       <Switch>
+        <Route path="/login"><Redirect to="/dashboard" /></Route>
+        <Route path="/register"><Redirect to="/dashboard" /></Route>
         <Route path="/">
           <Redirect to="/dashboard" />
         </Route>

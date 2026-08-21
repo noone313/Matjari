@@ -41,6 +41,13 @@ export const RegisterMerchantResponse = zod.object({
   "phone": zod.string().nullish(),
   "instagramHandle": zod.string().nullish(),
   "whatsappNumber": zod.string().nullish(),
+  "aboutUs": zod.string().nullish(),
+  "contactUs": zod.string().nullish(),
+  "storeEmail": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "facebook": zod.string().nullish(),
+  "twitter": zod.string().nullish(),
+  "tiktok": zod.string().nullish(),
   "createdAt": zod.string(),
   "productCount": zod.number().nullish(),
   "orderCount": zod.number().nullish()
@@ -73,6 +80,13 @@ export const LoginMerchantResponse = zod.object({
   "phone": zod.string().nullish(),
   "instagramHandle": zod.string().nullish(),
   "whatsappNumber": zod.string().nullish(),
+  "aboutUs": zod.string().nullish(),
+  "contactUs": zod.string().nullish(),
+  "storeEmail": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "facebook": zod.string().nullish(),
+  "twitter": zod.string().nullish(),
+  "tiktok": zod.string().nullish(),
   "createdAt": zod.string(),
   "productCount": zod.number().nullish(),
   "orderCount": zod.number().nullish()
@@ -105,6 +119,13 @@ export const GetMeResponse = zod.object({
   "phone": zod.string().nullish(),
   "instagramHandle": zod.string().nullish(),
   "whatsappNumber": zod.string().nullish(),
+  "aboutUs": zod.string().nullish(),
+  "contactUs": zod.string().nullish(),
+  "storeEmail": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "facebook": zod.string().nullish(),
+  "twitter": zod.string().nullish(),
+  "tiktok": zod.string().nullish(),
   "createdAt": zod.string(),
   "productCount": zod.number().nullish(),
   "orderCount": zod.number().nullish()
@@ -173,6 +194,13 @@ export const GetDashboardSettingsResponse = zod.object({
   "phone": zod.string().nullish(),
   "instagramHandle": zod.string().nullish(),
   "whatsappNumber": zod.string().nullish(),
+  "aboutUs": zod.string().nullish(),
+  "contactUs": zod.string().nullish(),
+  "storeEmail": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "facebook": zod.string().nullish(),
+  "twitter": zod.string().nullish(),
+  "tiktok": zod.string().nullish(),
   "createdAt": zod.string(),
   "productCount": zod.number().nullish(),
   "orderCount": zod.number().nullish()
@@ -192,7 +220,14 @@ export const UpdateDashboardSettingsBody = zod.object({
   "bankTransferInfo": zod.string().nullish(),
   "phone": zod.string().nullish(),
   "instagramHandle": zod.string().nullish(),
-  "whatsappNumber": zod.string().nullish()
+  "whatsappNumber": zod.string().nullish(),
+  "aboutUs": zod.string().nullish(),
+  "contactUs": zod.string().nullish(),
+  "storeEmail": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "facebook": zod.string().nullish(),
+  "twitter": zod.string().nullish(),
+  "tiktok": zod.string().nullish()
 })
 
 export const UpdateDashboardSettingsResponse = zod.object({
@@ -209,6 +244,13 @@ export const UpdateDashboardSettingsResponse = zod.object({
   "phone": zod.string().nullish(),
   "instagramHandle": zod.string().nullish(),
   "whatsappNumber": zod.string().nullish(),
+  "aboutUs": zod.string().nullish(),
+  "contactUs": zod.string().nullish(),
+  "storeEmail": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "facebook": zod.string().nullish(),
+  "twitter": zod.string().nullish(),
+  "tiktok": zod.string().nullish(),
   "createdAt": zod.string(),
   "productCount": zod.number().nullish(),
   "orderCount": zod.number().nullish()
@@ -989,6 +1031,13 @@ export const GetStoreResponse = zod.object({
   "bankTransferInfo": zod.string().nullish(),
   "instagramHandle": zod.string().nullish(),
   "whatsappNumber": zod.string().nullish(),
+  "aboutUs": zod.string().nullish(),
+  "contactUs": zod.string().nullish(),
+  "storeEmail": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "facebook": zod.string().nullish(),
+  "twitter": zod.string().nullish(),
+  "tiktok": zod.string().nullish(),
   "createdAt": zod.string()
 })
 
