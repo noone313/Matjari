@@ -51,3 +51,6 @@ Thumbs.db
 # secrets / local env (never commit)
 .env
 *.env.local
+
+# temp diagnostic files
+temp_*
