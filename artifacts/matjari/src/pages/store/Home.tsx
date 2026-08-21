@@ -348,6 +348,13 @@ export default function StoreHome({ slug }: { slug: string }) {
                     <span className="absolute top-3 right-3 text-[10px] font-bold px-2 py-1 rounded-full bg-[hsl(var(--primary))] text-white flex items-center gap-1">
                       <Gift className="w-3 h-3" /> باقة
                     </span>
+                    <button
+                      onClick={() => handleAddBundle(bundle)}
+                      className="absolute top-0 inset-x-0 z-10 flex items-center justify-center gap-1.5 text-[10px] font-bold tracking-widest uppercase px-3 py-2 bg-gray-900/80 backdrop-blur-sm text-white active:bg-gray-900 transition-colors"
+                    >
+                      <ShoppingBag className="w-3 h-3" />
+                      أضف الباقة
+                    </button>
                   </div>
                   <div className="p-4 flex flex-col flex-1">
                     <h3 className="font-bold text-gray-900 font-serif line-clamp-1">{bundle.name}</h3>
@@ -357,14 +364,8 @@ export default function StoreHome({ slug }: { slug: string }) {
                     <p className="text-xs text-gray-400 mt-2">
                       {bundle.items.map((it) => `${it.productName} (${it.variantLabel})`).join('، ')}
                     </p>
-                    <div className="mt-3 flex items-center justify-between mt-auto">
+                    <div className="mt-auto pt-3">
                       <span className="font-bold text-[hsl(var(--primary))]">{formatPrice(bundle.bundlePrice)}</span>
-                      <button
-                        onClick={() => handleAddBundle(bundle)}
-                        className="text-xs font-bold px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition-colors"
-                      >
-                        أضف الباقة
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -440,6 +441,14 @@ export default function StoreHome({ slug }: { slug: string }) {
                           </div>
                         ) : null;
                       })()}
+                      {/* Add to cart - top of image */}
+                      <button
+                        onClick={(e) => handleAddToCart(e, product)}
+                        className="absolute top-0 inset-x-0 z-10 flex items-center justify-center gap-1.5 text-[10px] font-bold tracking-widest uppercase px-3 py-2 bg-gray-900/80 backdrop-blur-sm text-white active:bg-gray-900 transition-colors"
+                      >
+                        <ShoppingBag className="w-3 h-3" />
+                        أضف للسلة
+                      </button>
                       {/* Wishlist button */}
                       <button
                         onClick={(e) => handleWishlist(e, product)}
@@ -485,13 +494,6 @@ export default function StoreHome({ slug }: { slug: string }) {
                           {hasMultipleVariants ? 'من ' : ''}{formatPrice(minPrice)}
                         </span>
                       </div>
-                      <button
-                        onClick={(e) => handleAddToCart(e, product)}
-                        className="mt-3 w-full flex items-center justify-center gap-2 text-xs font-bold tracking-widest uppercase px-4 py-2.5 bg-gray-900 text-white hover:bg-gray-800 transition-colors"
-                      >
-                        <ShoppingBag className="w-3.5 h-3.5" />
-                        أضف للسلة
-                      </button>
                     </div>
                   </div>
                 </Link>
