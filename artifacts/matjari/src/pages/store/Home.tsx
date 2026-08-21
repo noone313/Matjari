@@ -3,7 +3,7 @@ import { useBrowseStoreProducts, getBrowseStoreProductsQueryKey, useBrowseStoreB
 import type { Product } from '@workspace/api-client-react';
 import { formatPrice, getCategoryLabel, getApiUrl } from '@/lib/utils';
 import { Link, useLocation } from 'wouter';
-import { SlidersHorizontal, X, Scale, Check, Gift, Heart } from 'lucide-react';
+import { SlidersHorizontal, X, Scale, Check, Gift, Heart, ShoppingBag } from 'lucide-react';
 import { useComparison } from '@/contexts/ComparisonContext';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
@@ -165,6 +165,27 @@ export default function StoreHome({ slug }: { slug: string }) {
     const removing = isWishlisted(product.id);
     toggleWishlist(product.id);
     toast({ title: removing ? 'أُزيل من المفضلة' : 'أُضيف للمفضلة' });
+  };
+
+  const handleAddToCart = (e: React.MouseEvent, product: Product) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const firstVariant = product.variants?.[0];
+    if (!firstVariant) {
+      toast({ title: 'المنتج غير متوفر حالياً' });
+      return;
+    }
+    addToCart({
+      productId: product.id,
+      variantId: firstVariant.id,
+      productName: product.name,
+      variantLabel: firstVariant.label ?? firstVariant.name ?? 'افتراضي',
+      price: firstVariant.price,
+      quantity: 1,
+      image: product.imageUrls?.[0] ? getApiUrl(product.imageUrls[0]) : undefined,
+      category: product.category,
+    });
+    toast({ title: 'تمت إضافة المنتج للسلة' });
   };
 
   return (
@@ -423,7 +444,7 @@ export default function StoreHome({ slug }: { slug: string }) {
                       <button
                         onClick={(e) => handleWishlist(e, product)}
                         aria-label={isWishlisted(product.id) ? 'إزالة من المفضلة' : 'أضف للمفضلة'}
-                        className={`absolute bottom-2 left-2 z-10 flex items-center gap-1.5 text-[10px] tracking-widest uppercase px-3 py-1.5 shadow-sm transition-colors ${
+                        className={`absolute bottom-14 right-2 z-10 flex items-center gap-1.5 text-[10px] tracking-widest uppercase px-3 py-1.5 shadow-sm transition-colors ${
                           isWishlisted(product.id)
                             ? 'bg-[hsl(var(--primary))] text-white'
                             : 'bg-white text-zinc-900 hover:bg-[hsl(var(--primary))] hover:text-white'
@@ -464,6 +485,13 @@ export default function StoreHome({ slug }: { slug: string }) {
                           {hasMultipleVariants ? 'من ' : ''}{formatPrice(minPrice)}
                         </span>
                       </div>
+                      <button
+                        onClick={(e) => handleAddToCart(e, product)}
+                        className="mt-3 w-full flex items-center justify-center gap-2 text-xs font-bold tracking-widest uppercase px-4 py-2.5 bg-gray-900 text-white hover:bg-gray-800 transition-colors"
+                      >
+                        <ShoppingBag className="w-3.5 h-3.5" />
+                        أضف للسلة
+                      </button>
                     </div>
                   </div>
                 </Link>
