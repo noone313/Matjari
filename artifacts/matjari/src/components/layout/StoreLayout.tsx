@@ -5,7 +5,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useComparison, MAX_COMPARISON } from '@/contexts/ComparisonContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { normalizeWhatsAppNumber } from '@/lib/utils';
-import { ShoppingBag, Menu, X, Phone, MessageCircle, Instagram, Scale, Heart, PackageSearch, Mail, MapPin, ExternalLink } from 'lucide-react';
+import { ShoppingBag, Menu, X, Phone, MessageCircle, Instagram, Scale, Heart, PackageSearch } from 'lucide-react';
 import HeroCarousel from '@/components/store/HeroCarousel';
 
 export default function StoreLayout({ children, slug }: { children: React.ReactNode; slug: string }) {
@@ -215,122 +215,50 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
       </main>
 
       {/* ── Footer ───────────────────────────── */}
-      <footer className="border-t border-zinc-100 mt-16 bg-zinc-50">
-        <div className="max-w-screen-xl mx-auto px-6 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-sm">
-            {/* Column 1: About */}
-            <div>
-              <p className="font-serif font-bold text-zinc-900 text-base mb-3">{store.storeName}</p>
-              {store.description && (
-                <p className="text-zinc-500 leading-relaxed mb-3">{store.description}</p>
-              )}
-              {store.aboutUs && (
-                <p className="text-zinc-500 leading-relaxed text-xs">{store.aboutUs}</p>
-              )}
-            </div>
-
-            {/* Column 2: Contact */}
-            <div>
-              <h4 className="font-bold text-zinc-900 mb-3">تواصل معنا</h4>
-              <ul className="space-y-2 text-zinc-500">
-                {store.phone && (
-                  <li>
-                    <a href={`tel:${store.phone}`} className="flex items-center gap-2 hover:text-zinc-900 transition-colors">
-                      <Phone className="w-4 h-4" />
-                      {store.phone}
-                    </a>
-                  </li>
-                )}
-                {store.storeEmail && (
-                  <li>
-                    <a href={`mailto:${store.storeEmail}`} className="flex items-center gap-2 hover:text-zinc-900 transition-colors">
-                      <Mail className="w-4 h-4" />
-                      {store.storeEmail}
-                    </a>
-                  </li>
-                )}
-                {store.location && (
-                  <li className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
-                    {store.location}
-                  </li>
-                )}
-                {store.contactUs && (
-                  <li className="text-xs leading-relaxed">{store.contactUs}</li>
-                )}
-              </ul>
-            </div>
-
-            {/* Column 3: Social Media */}
-            <div>
-              <h4 className="font-bold text-zinc-900 mb-3">وسائل التواصل</h4>
-              <ul className="space-y-2 text-zinc-500">
-                {store.instagramHandle && (
-                  <li>
-                    <a
-                      href={`https://instagram.com/${store.instagramHandle.replace(/^@/, '')}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center gap-2 hover:text-zinc-900 transition-colors"
-                    >
-                      <Instagram className="w-4 h-4" />
-                      انستقرام
-                    </a>
-                  </li>
-                )}
-                {store.whatsappNumber && (
-                  <li>
-                    <a
-                      href={`https://wa.me/${normalizeWhatsAppNumber(store.whatsappNumber)}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center gap-2 hover:text-zinc-900 transition-colors"
-                    >
-                      <MessageCircle className="w-4 h-4" />
-                      واتساب
-                    </a>
-                  </li>
-                )}
-                {store.facebook && (
-                  <li>
-                    <a href={store.facebook} target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:text-zinc-900 transition-colors">
-                      <ExternalLink className="w-4 h-4" />
-                      فيسبوك
-                    </a>
-                  </li>
-                )}
-                {store.twitter && (
-                  <li>
-                    <a href={store.twitter} target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:text-zinc-900 transition-colors">
-                      <ExternalLink className="w-4 h-4" />
-                      تويتر / X
-                    </a>
-                  </li>
-                )}
-                {store.tiktok && (
-                  <li>
-                    <a href={store.tiktok} target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:text-zinc-900 transition-colors">
-                      <ExternalLink className="w-4 h-4" />
-                      تيك توك
-                    </a>
-                  </li>
-                )}
-              </ul>
-            </div>
-
-            {/* Column 4: Bank Info */}
-            {store.bankTransferInfo && (
-              <div>
-                <h4 className="font-bold text-zinc-900 mb-3">الدفع البنكي</h4>
-                <p className="text-zinc-500 leading-relaxed text-xs whitespace-pre-line">{store.bankTransferInfo}</p>
-              </div>
+      <footer className="border-t border-zinc-100 mt-16">
+        <div className="max-w-screen-xl mx-auto px-6 py-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 text-sm text-zinc-400">
+          <div>
+            <p className="font-serif font-bold text-zinc-900 text-base mb-1">{store.storeName}</p>
+            {store.description && (
+              <p className="max-w-xs leading-relaxed">{store.description}</p>
             )}
           </div>
-
-          <div className="border-t border-zinc-200 mt-8 pt-6 text-center text-xs text-zinc-400">
+          {store.phone && (
+            <a href={`tel:${store.phone}`} className="flex items-center gap-2 hover:text-zinc-900 transition-colors">
+              <Phone className="w-4 h-4" />
+              {store.phone}
+            </a>
+          )}
+          {(store.instagramHandle || store.whatsappNumber) && (
+            <div className="flex items-center gap-4">
+              {store.instagramHandle && (
+                <a
+                  href={`https://instagram.com/${store.instagramHandle.replace(/^@/, '')}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="انستقرام"
+                  className="flex items-center gap-2 text-zinc-900 hover:text-primary transition-colors"
+                >
+                  <Instagram className="w-4 h-4" />
+                </a>
+              )}
+              {store.whatsappNumber && (
+                <a
+                  href={`https://wa.me/${normalizeWhatsAppNumber(store.whatsappNumber)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="واتساب"
+                  className="flex items-center gap-2 text-zinc-900 hover:text-primary transition-colors"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                </a>
+              )}
+            </div>
+          )}
+          <p className="text-xs">
             مشغل بواسطة{' '}
             <span className="font-bold text-zinc-900 font-serif">متجري</span>
-          </div>
+          </p>
         </div>
       </footer>
 

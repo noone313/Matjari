@@ -15,13 +15,6 @@ const STATEMENTS = [
     is_active boolean NOT NULL DEFAULT true,
     created_at timestamp NOT NULL DEFAULT now()
   )`,
-  `ALTER TABLE merchants ADD COLUMN IF NOT EXISTS about_us text`,
-  `ALTER TABLE merchants ADD COLUMN IF NOT EXISTS contact_us text`,
-  `ALTER TABLE merchants ADD COLUMN IF NOT EXISTS store_email varchar(150)`,
-  `ALTER TABLE merchants ADD COLUMN IF NOT EXISTS location text`,
-  `ALTER TABLE merchants ADD COLUMN IF NOT EXISTS facebook varchar(200)`,
-  `ALTER TABLE merchants ADD COLUMN IF NOT EXISTS twitter varchar(200)`,
-  `ALTER TABLE merchants ADD COLUMN IF NOT EXISTS tiktok varchar(200)`,
 ];
 
 export async function migrate(): Promise<void> {

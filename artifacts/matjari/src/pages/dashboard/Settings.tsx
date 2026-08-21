@@ -34,13 +34,6 @@ const schema = z.object({
   whatsappNumber: z.string().optional().nullable(),
   bankTransferInfo: z.string().optional().nullable(),
   accentColor: z.string().default('43 74% 49%'),
-  aboutUs: z.string().optional().nullable(),
-  contactUs: z.string().optional().nullable(),
-  storeEmail: z.string().optional().nullable(),
-  location: z.string().optional().nullable(),
-  facebook: z.string().optional().nullable(),
-  twitter: z.string().optional().nullable(),
-  tiktok: z.string().optional().nullable(),
 });
 
 function HeroGallerySection() {
@@ -233,13 +226,6 @@ export default function Settings() {
       whatsappNumber: '',
       bankTransferInfo: '',
       accentColor: '43 74% 49%',
-      aboutUs: '',
-      contactUs: '',
-      storeEmail: '',
-      location: '',
-      facebook: '',
-      twitter: '',
-      tiktok: '',
     }
   });
 
@@ -255,13 +241,6 @@ export default function Settings() {
         whatsappNumber: settings.whatsappNumber,
         bankTransferInfo: settings.bankTransferInfo,
         accentColor: settings.accentColor || '43 74% 49%',
-        aboutUs: settings.aboutUs,
-        contactUs: settings.contactUs,
-        storeEmail: settings.storeEmail,
-        location: settings.location,
-        facebook: settings.facebook,
-        twitter: settings.twitter,
-        tiktok: settings.tiktok,
       });
     }
   }, [settings, form]);
@@ -341,50 +320,6 @@ export default function Settings() {
           <div className="space-y-2">
             <Label>معلومات التحويل البنكي (تظهر للعميل عند الدفع)</Label>
             <Textarea {...form.register('bankTransferInfo')} rows={4} placeholder="اسم البنك: ...\nرقم الحساب: ..." />
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm space-y-6">
-          <h3 className="text-lg font-bold text-gray-900 border-b pb-2">نبذة عنا</h3>
-          <div className="space-y-2">
-            <Label>نبذة عن المتجر</Label>
-            <Textarea {...form.register('aboutUs')} rows={4} placeholder="اكتب نبذة مختصرة عن متجرك وتاريخه..." />
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm space-y-6">
-          <h3 className="text-lg font-bold text-gray-900 border-b pb-2">تواصل معنا</h3>
-          <div className="space-y-2">
-            <Label>معلومات التواصل</Label>
-            <Textarea {...form.register('contactUs')} rows={3} placeholder="معلومات التواصل مع المتجر..." />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label>ايميل المتجر (اختياري)</Label>
-              <Input {...form.register('storeEmail')} dir="ltr" className="text-left" placeholder="store@example.com" />
-            </div>
-            <div className="space-y-2">
-              <Label>الموقع / العنوان (اختياري)</Label>
-              <Input {...form.register('location')} placeholder="مثال: بغداد، العراق" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm space-y-6">
-          <h3 className="text-lg font-bold text-gray-900 border-b pb-2">وسائل التواصل الاجتماعي</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-2">
-              <Label>فيسبوك (اختياري)</Label>
-              <Input {...form.register('facebook')} dir="ltr" className="text-left" placeholder="https://facebook.com/..." />
-            </div>
-            <div className="space-y-2">
-              <Label>تويتر / X (اختياري)</Label>
-              <Input {...form.register('twitter')} dir="ltr" className="text-left" placeholder="https://x.com/..." />
-            </div>
-            <div className="space-y-2">
-              <Label>تيك توك (اختياري)</Label>
-              <Input {...form.register('tiktok')} dir="ltr" className="text-left" placeholder="https://tiktok.com/..." />
-            </div>
           </div>
         </div>
 

@@ -84,13 +84,6 @@ router.get("/:slug", async (req, res): Promise<void> => {
     bankTransferInfo: merchant.bankTransferInfo,
     instagramHandle: merchant.instagramHandle,
     whatsappNumber: merchant.whatsappNumber,
-    aboutUs: merchant.aboutUs,
-    contactUs: merchant.contactUs,
-    storeEmail: merchant.storeEmail,
-    location: merchant.location,
-    facebook: merchant.facebook,
-    twitter: merchant.twitter,
-    tiktok: merchant.tiktok,
     createdAt: merchant.createdAt,
   });
 });

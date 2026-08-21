@@ -17,13 +17,6 @@ export const merchantsTable = pgTable("merchants", {
   phone: varchar("phone", { length: 20 }),
   instagramHandle: varchar("instagram_handle", { length: 100 }),
   whatsappNumber: varchar("whatsapp_number", { length: 20 }),
-  aboutUs: text("about_us"),
-  contactUs: text("contact_us"),
-  storeEmail: varchar("store_email", { length: 150 }),
-  location: text("location"),
-  facebook: varchar("facebook", { length: 200 }),
-  twitter: varchar("twitter", { length: 200 }),
-  tiktok: varchar("tiktok", { length: 200 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

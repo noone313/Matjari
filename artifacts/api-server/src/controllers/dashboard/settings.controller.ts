@@ -52,13 +52,6 @@ export function updateSettings(req: AuthRequest, res: Response) {
       phone: body.data.phone ?? undefined,
       instagramHandle: body.data.instagramHandle ?? undefined,
       whatsappNumber: body.data.whatsappNumber ?? undefined,
-      aboutUs: body.data.aboutUs ?? undefined,
-      contactUs: body.data.contactUs ?? undefined,
-      storeEmail: body.data.storeEmail ?? undefined,
-      location: body.data.location ?? undefined,
-      facebook: body.data.facebook ?? undefined,
-      twitter: body.data.twitter ?? undefined,
-      tiktok: body.data.tiktok ?? undefined,
     })
     .where(eq(merchantsTable.id, req.merchantId!))
     .returning()
