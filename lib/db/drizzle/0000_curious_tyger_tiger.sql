@@ -1,14 +1,3 @@
-import { pool } from "@workspace/db";
-import { logger } from "./lib/logger";
-
-// ─── Schema baseline ─────────────────────────────────────────────────────────
-// Full DDL generated once via `drizzle-kit generate` (source of truth:
-// lib/db/src/schema). Kept inline so a FRESH database self-provisions at boot.
-//
-// Idempotency: every statement is re-runnable. On existing databases the
-// "already exists" errors (table/type/column/constraint) are tolerated and
-// skipped, so this never mutates or destroys existing data.
-const BASELINE_SQL = `
 CREATE TYPE "public"."product_category" AS ENUM('perfume_men', 'perfume_women', 'oud', 'skincare', 'makeup', 'gifts');--> statement-breakpoint
 CREATE TYPE "public"."order_status" AS ENUM('new', 'processing', 'shipped', 'delivered', 'cancelled');--> statement-breakpoint
 CREATE TYPE "public"."payment_method" AS ENUM('cod', 'bank_transfer');--> statement-breakpoint
@@ -30,21 +19,24 @@ CREATE TABLE "merchants" (
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "merchants_slug_unique" UNIQUE("slug"),
 	CONSTRAINT "merchants_email_unique" UNIQUE("email")
-);--> statement-breakpoint
+);
+--> statement-breakpoint
 CREATE TABLE "product_images" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"product_id" integer NOT NULL,
 	"data" "bytea" NOT NULL,
 	"mime_type" varchar(50) DEFAULT 'image/jpeg' NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL
-);--> statement-breakpoint
+);
+--> statement-breakpoint
 CREATE TABLE "product_variants" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"product_id" integer NOT NULL,
 	"variant_label" varchar(50) NOT NULL,
 	"price" integer NOT NULL,
 	"stock" integer DEFAULT 0 NOT NULL
-);--> statement-breakpoint
+);
+--> statement-breakpoint
 CREATE TABLE "products" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"merchant_id" integer NOT NULL,
@@ -60,7 +52,8 @@ CREATE TABLE "products" (
 	"batch_expiry" varchar(20),
 	"is_active" boolean DEFAULT true NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL
-);--> statement-breakpoint
+);
+--> statement-breakpoint
 CREATE TABLE "order_items" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"order_id" integer NOT NULL,
@@ -69,7 +62,8 @@ CREATE TABLE "order_items" (
 	"variant_label" varchar(50) NOT NULL,
 	"quantity" integer NOT NULL,
 	"price_at_order" integer NOT NULL
-);--> statement-breakpoint
+);
+--> statement-breakpoint
 CREATE TABLE "orders" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"merchant_id" integer NOT NULL,
@@ -84,7 +78,8 @@ CREATE TABLE "orders" (
 	"total" integer NOT NULL,
 	"status" "order_status" DEFAULT 'new' NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL
-);--> statement-breakpoint
+);
+--> statement-breakpoint
 CREATE TABLE "discount_codes" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"merchant_id" integer NOT NULL,
@@ -95,7 +90,8 @@ CREATE TABLE "discount_codes" (
 	"is_active" boolean DEFAULT true NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "discount_codes_merchant_id_code_unique" UNIQUE("merchant_id","code")
-);--> statement-breakpoint
+);
+--> statement-breakpoint
 CREATE TABLE "reviews" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"product_id" integer NOT NULL,
@@ -104,20 +100,23 @@ CREATE TABLE "reviews" (
 	"comment" text,
 	"is_approved" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL
-);--> statement-breakpoint
+);
+--> statement-breakpoint
 CREATE TABLE "stock_notifications" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"variant_id" integer NOT NULL,
 	"customer_phone" varchar(20) NOT NULL,
 	"notified" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL
-);--> statement-breakpoint
+);
+--> statement-breakpoint
 CREATE TABLE "bundle_items" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"bundle_id" integer NOT NULL,
 	"variant_id" integer NOT NULL,
 	"quantity" integer DEFAULT 1 NOT NULL
-);--> statement-breakpoint
+);
+--> statement-breakpoint
 CREATE TABLE "bundles" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"merchant_id" integer NOT NULL,
@@ -128,7 +127,8 @@ CREATE TABLE "bundles" (
 	"bundle_price" integer NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL
-);--> statement-breakpoint
+);
+--> statement-breakpoint
 CREATE TABLE "hero_slides" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"merchant_id" integer NOT NULL,
@@ -140,7 +140,8 @@ CREATE TABLE "hero_slides" (
 	"image_mime" varchar(50),
 	"is_active" boolean DEFAULT true NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL
-);--> statement-breakpoint
+);
+--> statement-breakpoint
 CREATE TABLE "push_subscriptions" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"merchant_id" integer NOT NULL,
@@ -149,7 +150,8 @@ CREATE TABLE "push_subscriptions" (
 	"auth" text NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "push_subscriptions_endpoint_unique" UNIQUE("endpoint")
-);--> statement-breakpoint
+);
+--> statement-breakpoint
 ALTER TABLE "product_images" ADD CONSTRAINT "product_images_product_id_products_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "product_variants" ADD CONSTRAINT "product_variants_product_id_products_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "products" ADD CONSTRAINT "products_merchant_id_merchants_id_fk" FOREIGN KEY ("merchant_id") REFERENCES "public"."merchants"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -160,42 +162,7 @@ ALTER TABLE "discount_codes" ADD CONSTRAINT "discount_codes_merchant_id_merchant
 ALTER TABLE "reviews" ADD CONSTRAINT "reviews_product_id_products_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stock_notifications" ADD CONSTRAINT "stock_notifications_variant_id_product_variants_id_fk" FOREIGN KEY ("variant_id") REFERENCES "public"."product_variants"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "bundle_items" ADD CONSTRAINT "bundle_items_bundle_id_bundles_id_fk" FOREIGN KEY ("bundle_id") REFERENCES "public"."bundles"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "bundle_items" ADD CONSTRAINT "bundle_items_variant_id_product_variants_id_fk" FOREIGN KEY ("variant_id") REFERENCES "public"."product_variants"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "bundle_items" ADD CONSTRAINT "bundle_items_variant_id_product_variants_id_fk" FOREIGN KEY ("variant_id") REFERENCES "public"."product_variants"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "bundles" ADD CONSTRAINT "bundles_merchant_id_merchants_id_fk" FOREIGN KEY ("merchant_id") REFERENCES "public"."merchants"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "hero_slides" ADD CONSTRAINT "hero_slides_merchant_id_merchants_id_fk" FOREIGN KEY ("merchant_id") REFERENCES "public"."merchants"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "push_subscriptions" ADD CONSTRAINT "push_subscriptions_merchant_id_merchants_id_fk" FOREIGN KEY ("merchant_id") REFERENCES "public"."merchants"("id") ON DELETE cascade ON UPDATE no action;
-`;
-
-// PostgreSQL codes meaning "this object already exists" — safe to skip when
-// running the baseline repeatedly.
-const ALREADY_EXISTS_CODES = new Set([
-  "42P07", // duplicate_table
-  "42710", // duplicate_object (types, constraints)
-  "42701", // duplicate_column
-  "42P16", // inconsistent_parameterization guard
-]);
-
-export async function migrate(): Promise<void> {
-  const client = await pool.connect();
-  try {
-    const statements = BASELINE_SQL.split("--> statement-breakpoint");
-    let skipped = 0;
-    for (const raw of statements) {
-      const sql = raw.trim();
-      if (!sql) continue;
-      try {
-        await client.query(sql);
-      } catch (err) {
-        const code = (err as { code?: string }).code;
-        if (!code || !ALREADY_EXISTS_CODES.has(code)) throw err;
-        skipped++;
-      }
-    }
-    logger.info(
-      { applied: statements.length - skipped, skipped },
-      "Database migrations applied",
-    );
-  } finally {
-    client.release();
-  }
-}
