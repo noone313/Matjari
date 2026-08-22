@@ -7,6 +7,7 @@ import { useWishlist } from '@/contexts/WishlistContext';
 import { normalizeWhatsAppNumber } from '@/lib/utils';
 import { ShoppingBag, Menu, X, Phone, MessageCircle, Instagram, Scale, Heart, PackageSearch } from 'lucide-react';
 import HeroCarousel from '@/components/store/HeroCarousel';
+import BottomNav from '@/components/layout/BottomNav';
 import { StoreShellSkeleton } from '@/components/skeletons';
 
 export default function StoreLayout({ children, slug }: { children: React.ReactNode; slug: string }) {
@@ -32,6 +33,8 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
   }
 
   const isHome = location === `/store/${slug}` || location === `/store/${slug}/`;
+  // نخفي الشريط السفلي في صفحة الدفع لتجنب تشتيت المستخدم أثناء إتمام الطلب
+  const isCheckout = location.includes('/checkout');
 
   return (
     <div className="min-h-screen bg-white text-zinc-900 font-sans flex flex-col">
@@ -213,7 +216,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
 
       {/* ── Footer ───────────────────────────── */}
       <footer className="border-t border-zinc-100 mt-16">
-        <div className="max-w-screen-xl mx-auto px-6 py-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 text-sm text-zinc-400">
+        <div className="max-w-screen-xl mx-auto px-6 pt-12 pb-28 md:pb-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 text-sm text-zinc-400">
           <div>
             <p className="font-serif font-bold text-zinc-900 text-base mb-1">{store.storeName}</p>
             {store.description && (
@@ -264,7 +267,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
         <Link
           href={`/store/${slug}/compare`}
           aria-label="عرض المقارنة"
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-zinc-900 text-white pl-3 pr-5 py-3 shadow-2xl hover:bg-zinc-800 transition-colors"
+          className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-zinc-900 text-white pl-3 pr-5 py-3 shadow-2xl hover:bg-zinc-800 transition-colors"
         >
           <span className="relative flex items-center justify-center w-8 h-8 rounded-full bg-[hsl(var(--primary))] text-white">
             <Scale className="w-4 h-4" />
@@ -287,7 +290,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
             target="_blank"
             rel="noreferrer"
             aria-label="تواصل عبر واتساب"
-            className="fixed bottom-6 left-6 z-50 w-14 h-14 rounded-full bg-[#25D366] text-white shadow-xl flex items-center justify-center hover:bg-[#20bc5a] transition-colors group"
+            className="fixed bottom-24 md:bottom-6 left-4 md:left-6 z-50 w-14 h-14 rounded-full bg-[#25D366] text-white shadow-xl flex items-center justify-center hover:bg-[#20bc5a] transition-colors group"
           >
             <MessageCircle className="w-7 h-7 fill-white stroke-none" />
             <span className="absolute right-full ml-3 mr-3 whitespace-nowrap bg-zinc-900 text-white text-xs rounded px-3 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
@@ -296,6 +299,15 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
           </a>
         );
       })()}
+      {/* ── Mobile bottom navigation ─────────── */}
+      {!isCheckout && (
+        <BottomNav
+          slug={slug}
+          itemCount={itemCount}
+          wishlistCount={wishlistCount}
+          onOpenCategories={() => setMenuOpen(true)}
+        />
+      )}
     </div>
   );
 }
