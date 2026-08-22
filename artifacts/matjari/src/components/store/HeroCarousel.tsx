@@ -26,6 +26,11 @@ export default function HeroCarousel({ slides, storeName, description }: HeroCar
     setCanNext(emblaApi.canScrollNext());
   }, [emblaApi]);
 
+  // Re-initialize carousel when slides change (e.g., dynamic data)
+  useEffect(() => {
+    if (emblaApi) emblaApi.reInit();
+  }, [slides.length, emblaApi]);
+
   useEffect(() => {
     if (!emblaApi) return;
     onSelect();
