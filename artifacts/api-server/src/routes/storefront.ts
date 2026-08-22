@@ -55,7 +55,18 @@ router.get("/:slug", async (req, res): Promise<void> => {
 
   const heroSlides = merchant.heroEnabled
     ? await db
-        .select()
+        .select({
+          id: heroSlidesTable.id,
+          merchantId: heroSlidesTable.merchantId,
+          title: heroSlidesTable.title,
+          subtitle: heroSlidesTable.subtitle,
+          linkUrl: heroSlidesTable.linkUrl,
+          position: heroSlidesTable.position,
+          imageData: heroSlidesTable.imageData,
+          imageMime: heroSlidesTable.imageMime,
+          isActive: heroSlidesTable.isActive,
+          createdAt: heroSlidesTable.createdAt,
+        })
         .from(heroSlidesTable)
         .where(and(eq(heroSlidesTable.merchantId, merchant.id), eq(heroSlidesTable.isActive, true)))
         .orderBy(heroSlidesTable.position, heroSlidesTable.id)

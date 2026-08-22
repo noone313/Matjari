@@ -3,6 +3,11 @@ import { merchantsTable } from "./merchants";
 
 const bytea = customType<{ data: Buffer; notNull: false; default: false }>({
   dataType() { return "bytea"; },
+  fromDriver(value: unknown): Buffer {
+    if (value instanceof Buffer) return value;
+    if (value instanceof Uint8Array) return Buffer.from(value);
+    return Buffer.from(String(value), "hex");
+  },
 });
 
 export const heroSlidesTable = pgTable("hero_slides", {

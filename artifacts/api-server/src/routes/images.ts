@@ -227,9 +227,11 @@ router.get("/hero/:id/image", async (req, res) => {
 
     if (!slide?.data || !slide.mime) return res.status(404).send("Not found");
 
+    const imageData = slide.data instanceof Buffer ? slide.data : Buffer.from(slide.data);
     res.set("Content-Type", slide.mime);
-    res.set("Cache-Control", "public, max-age=31536000, immutable");
-    return res.send(slide.data);
+    res.set("Cache-Control", "public, max-age=31536000");
+    res.set("Content-Length", imageData.length.toString());
+    return res.send(imageData);
   } catch (err) {
     console.error(err);
     return res.status(500).send("Error");
