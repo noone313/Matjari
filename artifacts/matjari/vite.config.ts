@@ -83,7 +83,11 @@ export default defineConfig(async ({ command }) => {
         : {
             proxy: {
               '/api': {
-                target: `http://localhost:${process.env.API_PORT ?? 8080}`,
+                // In hosted environments (e.g. Railway) point the proxy at the
+                // real API service via API_PROXY_TARGET; falls back to local dev.
+                target:
+                  process.env.API_PROXY_TARGET ??
+                  `http://localhost:${process.env.API_PORT ?? 8080}`,
                 changeOrigin: true,
               },
             },
