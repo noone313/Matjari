@@ -67,13 +67,11 @@ export default function HeroCarousel({ slides, storeName, description }: HeroCar
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-black/10" />
                 <div className="absolute inset-x-0 bottom-0 flex flex-col items-center justify-end pb-14 text-center text-white px-6">
-                  {slide.title && (
-                    <h1 className="font-serif text-3xl md:text-5xl font-bold tracking-tight mb-2 drop-shadow-sm">
-                      {slide.title}
-                    </h1>
-                  )}
+                  <h1 className="font-serif text-3xl md:text-5xl font-bold tracking-tight mb-2 drop-shadow-sm">
+                    {slide.title ?? storeName}
+                  </h1>
                   {slide.subtitle && (
-                    <p className="text-white/85 text-sm md:text-lg max-w-lg leading-relaxed drop-shadow-sm">
+                    <p className="text-white/95 text-base md:text-lg max-w-lg leading-relaxed drop-shadow-md bg-black/20 px-3 py-1.5 rounded-lg">
                       {slide.subtitle}
                     </p>
                   )}
