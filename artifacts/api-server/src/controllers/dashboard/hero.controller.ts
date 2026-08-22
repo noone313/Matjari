@@ -65,15 +65,16 @@ export async function updateHeroSlide(req: AuthRequest, res: Response) {
     return;
   }
 
+  const patch: Record<string, unknown> = {};
+  if (body.title !== undefined) patch.title = body.title;
+  if (body.subtitle !== undefined) patch.subtitle = body.subtitle;
+  if (body.linkUrl !== undefined) patch.linkUrl = body.linkUrl;
+  if (body.position !== undefined) patch.position = body.position;
+  if (body.isActive !== undefined) patch.isActive = body.isActive;
+
   const [slide] = await db
     .update(heroSlidesTable)
-    .set({
-      title: body.title ?? null,
-      subtitle: body.subtitle ?? null,
-      linkUrl: body.linkUrl ?? null,
-      position: body.position ?? undefined,
-      isActive: body.isActive ?? undefined,
-    })
+    .set(patch)
     .where(eq(heroSlidesTable.id, slideId))
     .returning();
 
