@@ -3,6 +3,7 @@ import { useListReviews, useDecideReview, useDeleteReview } from '@workspace/api
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Check, X, Star } from 'lucide-react';
+import { TableRowsSkeleton } from '@/components/skeletons';
 
 type StatusTab = 'pending' | 'approved' | 'all';
 
@@ -100,7 +101,7 @@ export default function Reviews() {
           </thead>
           <tbody className="divide-y divide-gray-100">
             {isLoading ? (
-              <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">جاري التحميل...</td></tr>
+              <TableRowsSkeleton rows={4} cols={6} />
             ) : reviews.length === 0 ? (
               <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">لا توجد تقييمات</td></tr>
             ) : (

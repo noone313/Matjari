@@ -3,11 +3,12 @@ import { useGetDashboardStats } from '@workspace/api-client-react';
 import { formatPrice, getStatusLabel, getStatusColor } from '@/lib/utils';
 import { Package, TrendingUp, ShoppingBag, DollarSign, AlertTriangle } from 'lucide-react';
 import { Link } from 'wouter';
+import { StatCardsSkeleton } from '@/components/skeletons';
 
 export default function Overview() {
   const { data: stats, isLoading } = useGetDashboardStats();
 
-  if (isLoading) return <div className="animate-pulse space-y-8"><div className="h-32 bg-gray-200 rounded-lg"></div></div>;
+  if (isLoading) return <StatCardsSkeleton />;
   if (!stats) return null;
 
   return (

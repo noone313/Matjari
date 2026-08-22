@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Link } from 'wouter';
 import { Plus, Search, Edit, Archive, ArchiveRestore, Package } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { TableRowsSkeleton } from '@/components/skeletons';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Products() {
@@ -88,7 +89,7 @@ export default function Products() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {isLoading ? (
-                <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">جاري التحميل...</td></tr>
+                <TableRowsSkeleton rows={5} cols={5} />
               ) : products?.length === 0 ? (
                 <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">لا توجد منتجات</td></tr>
               ) : (

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Trash2, Tag, Percent, Banknote } from 'lucide-react';
+import { TableRowsSkeleton } from '@/components/skeletons';
 import { Switch } from '@/components/ui/switch';
 import { formatPrice } from '@/lib/utils';
 
@@ -180,7 +181,7 @@ export default function Discounts() {
           </thead>
           <tbody className="divide-y divide-gray-100">
             {isLoading ? (
-              <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">جاري التحميل...</td></tr>
+              <TableRowsSkeleton rows={4} cols={6} />
             ) : discounts?.length === 0 ? (
               <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">لا توجد أكواد خصم</td></tr>
             ) : (

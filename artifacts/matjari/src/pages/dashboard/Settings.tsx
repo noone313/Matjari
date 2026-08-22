@@ -23,6 +23,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { ImagePlus, Trash2, ArrowUp, ArrowDown, Upload, X, ImageOff } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { DetailPanelSkeleton } from '@/components/skeletons';
 
 const schema = z.object({
   storeName: z.string().min(2, 'مطلوب'),
@@ -121,7 +123,17 @@ function HeroGallerySection() {
       {heroEnabled && (
         <>
           {isLoading ? (
-            <div className="text-sm text-gray-500 py-4">جاري تحميل الشرائح...</div>
+            <div className="space-y-4 py-4">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <div key={i} className="flex gap-4 items-center">
+                  <Skeleton className="w-28 h-20 rounded-lg bg-gray-100" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-9 w-full rounded-md bg-gray-100" />
+                    <Skeleton className="h-9 w-2/3 rounded-md bg-gray-100" />
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : ordered.length === 0 ? (
             <div className="py-8 text-center text-sm text-gray-500 border border-dashed border-gray-200 rounded-lg">
               لا توجد شرائح بعد — أضف شريحة وارفع لها صورة لعرضها للعملاء
@@ -253,7 +265,7 @@ export default function Settings() {
     });
   };
 
-  if (isLoading) return <div>جاري التحميل...</div>;
+  if (isLoading) return <div className="pt-8"><DetailPanelSkeleton /></div>;
 
   return (
     <div className="space-y-8 max-w-3xl pb-16">

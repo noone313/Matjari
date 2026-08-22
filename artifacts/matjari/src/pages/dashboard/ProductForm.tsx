@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { CATEGORIES, getApiUrl } from '@/lib/utils';
 import { Trash2, Plus, Upload, X, Loader2, BellRing, Phone } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { DetailPanelSkeleton } from '@/components/skeletons';
 
 // ─── Schema ────────────────────────────────────────────────────────────────────
 const variantSchema = z.object({
@@ -252,7 +253,7 @@ export default function ProductForm() {
     }
   };
 
-  if (isEdit && isLoading) return <div className="p-8 text-center">جاري التحميل...</div>;
+  if (isEdit && isLoading) return <div className="p-8"><DetailPanelSkeleton /></div>;
 
   return (
     <div className="max-w-3xl mx-auto space-y-8 pb-16">

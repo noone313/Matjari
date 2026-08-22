@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { ChevronRight, Droplet, Leaf, Share2, Check, Star, BellRing, Heart } from 'lucide-react';
 import { Link } from 'wouter';
+import { ProductPageSkeleton } from '@/components/skeletons';
 import { FragrancePyramid } from '@/components/store/FragrancePyramid';
 
 export default function StoreProduct({ slug, productId }: { slug: string, productId: string }) {
@@ -106,7 +107,7 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
     });
   };
 
-  if (isLoading) return <div className="text-center py-24">جاري التحميل...</div>;
+  if (isLoading) return <ProductPageSkeleton />;
   if (!product) return <div className="text-center py-24">المنتج غير موجود</div>;
 
   const currentVariant = product.variants.find(v => v.id === selectedVariant) || product.variants[0];

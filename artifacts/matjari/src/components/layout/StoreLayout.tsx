@@ -7,6 +7,7 @@ import { useWishlist } from '@/contexts/WishlistContext';
 import { normalizeWhatsAppNumber } from '@/lib/utils';
 import { ShoppingBag, Menu, X, Phone, MessageCircle, Instagram, Scale, Heart, PackageSearch } from 'lucide-react';
 import HeroCarousel from '@/components/store/HeroCarousel';
+import { StoreShellSkeleton } from '@/components/skeletons';
 
 export default function StoreLayout({ children, slug }: { children: React.ReactNode; slug: string }) {
   const { data: store, isLoading } = useGetStore(slug, {
@@ -19,11 +20,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
   const [location] = useLocation();
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <StoreShellSkeleton />;
   }
 
   if (!store) {

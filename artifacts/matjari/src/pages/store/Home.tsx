@@ -4,6 +4,7 @@ import type { Product } from '@workspace/api-client-react';
 import { formatPrice, getCategoryLabel, getApiUrl } from '@/lib/utils';
 import { Link, useLocation } from 'wouter';
 import { SlidersHorizontal, X, Scale, Check, Gift, Heart, ShoppingBag } from 'lucide-react';
+import { ProductGridSkeleton } from '@/components/skeletons';
 import { useComparison } from '@/contexts/ComparisonContext';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
@@ -376,17 +377,7 @@ export default function StoreHome({ slug }: { slug: string }) {
 
         {/* Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-px bg-white">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="bg-white">
-                <div className="aspect-[3/4] bg-zinc-50 animate-pulse" />
-                <div className="p-4 space-y-2">
-                  <div className="h-3 bg-zinc-100 rounded w-3/4 animate-pulse" />
-                  <div className="h-3 bg-zinc-100 rounded w-1/3 animate-pulse" />
-                </div>
-              </div>
-            ))}
-          </div>
+          <ProductGridSkeleton count={6} />
         ) : products.length === 0 ? (
           <div className="py-32 text-center">
             <p className="text-sm tracking-widest uppercase text-zinc-300">لا توجد منتجات</p>

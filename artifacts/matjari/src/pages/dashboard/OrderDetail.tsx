@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { DetailPanelSkeleton } from '@/components/skeletons';
 import { ArrowRight, MapPin, Phone, CreditCard, Gift, Printer, MessageCircle } from 'lucide-react';
 
 export default function OrderDetail() {
@@ -28,7 +29,7 @@ export default function OrderDetail() {
     });
   };
 
-  if (isLoading) return <div>جاري التحميل...</div>;
+  if (isLoading) return <div className="p-8"><DetailPanelSkeleton /></div>;
   if (!order) return <div>الطلب غير موجود</div>;
   if (!order.items) return <div>جاري التحميل...</div>;
 

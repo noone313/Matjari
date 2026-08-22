@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'wouter';
 import { Plus, Edit, Trash2, Gift } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { TableRowsSkeleton } from '@/components/skeletons';
 
 export default function Bundles() {
   const { data: bundlesData, isLoading, refetch } = useListBundles();
@@ -55,7 +56,7 @@ export default function Bundles() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {isLoading ? (
-                <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">جاري التحميل...</td></tr>
+                <TableRowsSkeleton rows={4} cols={5} />
               ) : bundles.length === 0 ? (
                 <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">لا توجد باقات بعد</td></tr>
               ) : (

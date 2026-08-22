@@ -4,6 +4,7 @@ import { useWishlist } from '@/contexts/WishlistContext';
 import { formatPrice, getCategoryLabel, getApiUrl } from '@/lib/utils';
 import { Link } from 'wouter';
 import { Heart } from 'lucide-react';
+import { ProductGridSkeleton } from '@/components/skeletons';
 
 export default function StoreWishlist({ slug }: { slug: string }) {
   const { items, removeFromWishlist } = useWishlist();
@@ -26,11 +27,7 @@ export default function StoreWishlist({ slug }: { slug: string }) {
     .filter((p): p is NonNullable<typeof products>[number] => Boolean(p));
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-32">
-        <div className="w-8 h-8 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <ProductGridSkeleton count={6} />;
   }
 
   if (wishlistProducts.length === 0) {

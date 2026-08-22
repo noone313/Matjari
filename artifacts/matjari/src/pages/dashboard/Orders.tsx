@@ -5,6 +5,7 @@ import { Link } from 'wouter';
 import { Eye, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { TableRowsSkeleton } from '@/components/skeletons';
 
 export default function Orders() {
   const [statusFilter, setStatusFilter] = useState('');
@@ -49,7 +50,7 @@ export default function Orders() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {isLoading ? (
-                <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">جاري التحميل...</td></tr>
+                <TableRowsSkeleton rows={5} cols={6} />
               ) : data?.orders.length === 0 ? (
                 <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">لا توجد طلبات تطابق بحثك</td></tr>
               ) : (
