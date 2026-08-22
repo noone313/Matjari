@@ -179,7 +179,7 @@ export default function StoreHome({ slug }: { slug: string }) {
       productId: product.id,
       variantId: firstVariant.id,
       productName: product.name,
-      variantLabel: firstVariant.label ?? firstVariant.name ?? 'افتراضي',
+      variantLabel: firstVariant.variantLabel || 'افتراضي',
       price: firstVariant.price,
       quantity: 1,
       image: product.imageUrls?.[0] ? getApiUrl(product.imageUrls[0]) : undefined,

@@ -190,7 +190,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
 
       {/* ── Hero (only on home) ───────────────── */}
       {isHome && store.heroEnabled && store.heroSlides?.length ? (
-        <HeroCarousel slides={store.heroSlides} storeName={store.storeName} description={store.description} />
+        <HeroCarousel slides={store.heroSlides} storeName={store.storeName} />
       ) : isHome && store.bannerUrl ? (
         <div className="relative h-[55vh] min-h-[320px] w-full overflow-hidden bg-zinc-100">
           <img
