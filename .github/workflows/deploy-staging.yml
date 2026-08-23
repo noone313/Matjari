@@ -29,6 +29,9 @@ jobs:
       - name: Typecheck & build api-server locally (fail fast)
         run: pnpm --filter @workspace/api-server build
 
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
       - name: Deploy to Railway (staging)
         working-directory: artifacts/api-server
         env:
@@ -56,6 +59,9 @@ jobs:
         env:
           # يُستبدل عند توفر دومين ثابت لخدمة الـ API في بيئة staging
           VITE_API_URL: ${{ vars.STAGING_API_URL }}
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
 
       - name: Deploy to Railway (staging)
         working-directory: artifacts/matjari
