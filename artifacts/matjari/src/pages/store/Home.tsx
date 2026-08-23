@@ -4,6 +4,7 @@ import type { Product } from '@workspace/api-client-react';
 import { formatPrice, getCategoryLabel, getApiUrl } from '@/lib/utils';
 import { Link, useLocation } from 'wouter';
 import { SlidersHorizontal, X, Scale, Check, Gift, Heart, ShoppingBag, SearchX, Store } from 'lucide-react';
+import { BlurImage } from '@/components/BlurImage';
 import { ProductGridSkeleton } from '@/components/skeletons';
 import { useComparison } from '@/contexts/ComparisonContext';
 import { useCart } from '@/contexts/CartContext';
@@ -36,7 +37,6 @@ export default function StoreHome({ slug }: { slug: string }) {
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
-  const [brokenImages, setBrokenImages] = useState<Set<number>>(new Set());
   const [location, setLocation] = useLocation();
   const { addToCompare, isInCompare } = useComparison();
   const { addToCart } = useCart();
@@ -114,21 +114,20 @@ export default function StoreHome({ slug }: { slug: string }) {
 
   let products = allProducts?.filter((p) => {
     if (!p.imageUrls?.length || !p.imageUrls.some((u) => u?.trim())) return false;
-    if (brokenImages.has(p.id)) return false;
     return true;
   }) ?? [];
 
   // Price range filter (client-side; catalog is loaded fully)
   const priceBounds = useMemo(() => {
     const prices = (allProducts ?? [])
-      .filter((p) => p.imageUrls?.length && p.imageUrls.some((u) => u?.trim()) && !brokenImages.has(p.id))
+      .filter((p) => p.imageUrls?.length && p.imageUrls.some((u) => u?.trim()))
       .map(productMinPrice)
       .filter((v) => v > 0);
     return {
       min: prices.length ? Math.min(...prices) : 0,
       max: prices.length ? Math.max(...prices) : 0,
     };
-  }, [allProducts, brokenImages]);
+  }, [allProducts]);
 
   const minBound = priceMin === '' ? 0 : Number(priceMin);
   const maxBound = priceMax === '' ? Infinity : Number(priceMax);
@@ -427,11 +426,16 @@ export default function StoreHome({ slug }: { slug: string }) {
                     {/* Image */}
                     <div className="aspect-[3/4] overflow-hidden bg-zinc-50 relative">
                       {product.imageUrls?.[0] ? (
-                        <img
+                        <BlurImage
                           src={getApiUrl(product.imageUrls[0])}
                           alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700 ease-out"
-                          onError={() => setBrokenImages((prev) => new Set(prev).add(product.id))}
+                          className="group-hover:scale-[1.03] transition-transform duration-700 ease-out"
+                          fallback={
+                            <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-zinc-100">
+                              <span className="text-5xl font-serif text-zinc-300 select-none">{product.name.charAt(0)}</span>
+                              <span className="text-[9px] tracking-widest uppercase text-zinc-300">بدون صورة</span>
+                            </div>
+                          }
                         />
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-zinc-100">

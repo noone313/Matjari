@@ -6,6 +6,7 @@ import { useComparison, MAX_COMPARISON } from '@/contexts/ComparisonContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { normalizeWhatsAppNumber } from '@/lib/utils';
 import { ShoppingBag, Menu, X, Phone, MessageCircle, Instagram, Scale, Heart, PackageSearch } from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import HeroCarousel from '@/components/store/HeroCarousel';
 import BottomNav from '@/components/layout/BottomNav';
 import { StoreShellSkeleton } from '@/components/skeletons';
@@ -26,7 +27,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
 
   if (!store) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center text-sm text-zinc-400 tracking-widest uppercase">
+      <div className="min-h-screen bg-background flex items-center justify-center text-sm text-muted-foreground tracking-widest uppercase">
         store not found
       </div>
     );
@@ -37,7 +38,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
   const isCheckout = location.includes('/checkout');
 
   return (
-    <div className="min-h-screen bg-white text-zinc-900 font-sans flex flex-col">
+    <div className="min-h-screen bg-background text-foreground font-sans flex flex-col">
       {/* ── Announcement bar ─────────────────── */}
       {store.phone && (
         <div className="bg-zinc-900 text-white text-xs tracking-widest text-center py-2.5 flex items-center justify-center gap-2">
@@ -47,7 +48,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
       )}
 
       {/* ── Navbar ───────────────────────────── */}
-      <header className="sticky top-0 z-50 bg-white border-b border-zinc-100">
+      <header className="sticky top-0 z-50 bg-background border-b border-border">
         <div className="max-w-screen-xl mx-auto px-3 h-16 flex items-center">
           {/* Left: hamburger (mobile only) */}
           <div className="w-16 flex-shrink-0 md:hidden flex items-center justify-center">
@@ -70,6 +71,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
 
           {/* Right: actions */}
           <div className="w-16 md:w-auto flex-shrink-0 flex items-center justify-center md:justify-end gap-2 px-2 md:px-0">
+            <ThemeToggle />
             <Link
               href={`/store/${slug}/track`}
               className="hidden md:inline-flex items-center gap-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900 transition-colors whitespace-nowrap"
@@ -112,7 +114,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
         </div>
 
         {/* Desktop nav pills */}
-        <nav className="hidden md:flex border-t border-zinc-100 max-w-screen-xl mx-auto px-6 gap-8 py-0">
+        <nav className="hidden md:flex border-t border-border max-w-screen-xl mx-auto px-6 gap-8 py-0">
           {[
             { label: 'كل المنتجات', cat: '' },
             { label: 'عطور رجالي', cat: 'perfume_men' },
@@ -146,7 +148,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
             className="flex-1 bg-black/40 backdrop-blur-sm"
             onClick={() => setMenuOpen(false)}
           />
-          <div className="w-72 bg-white h-full shadow-2xl flex flex-col p-8 gap-6 overflow-y-auto">
+          <div className="w-72 bg-background h-full shadow-2xl flex flex-col p-8 gap-6 overflow-y-auto">
             <button
               onClick={() => setMenuOpen(false)}
               className="self-start p-1 text-zinc-400 hover:text-zinc-900"
@@ -215,7 +217,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
       </main>
 
       {/* ── Footer ───────────────────────────── */}
-      <footer className="border-t border-zinc-100 mt-16">
+      <footer className="border-t border-border mt-16">
         <div className="max-w-screen-xl mx-auto px-6 pt-12 pb-28 md:pb-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 text-sm text-zinc-400">
           <div>
             <p className="font-serif font-bold text-zinc-900 text-base mb-1">{store.storeName}</p>
