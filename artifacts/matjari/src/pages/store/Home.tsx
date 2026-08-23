@@ -328,8 +328,8 @@ export default function StoreHome({ slug }: { slug: string }) {
           </div>
         )}
 
-        {/* Gift bundles */}
-        {bundles.length > 0 && (
+        {/* Gift bundles — hidden when searching by text */}
+        {bundles.length > 0 && !debouncedSearch && (
           <section className="mb-10">
             <div className="flex items-center gap-2 mb-5">
               <Gift className="w-5 h-5 text-[hsl(var(--primary))]" />

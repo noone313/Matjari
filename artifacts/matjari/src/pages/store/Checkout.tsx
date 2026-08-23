@@ -228,8 +228,7 @@ export default function StoreCheckout({ slug }: { slug: string }) {
                   <SelectTrigger className="h-12 bg-gray-50">
                     <SelectValue placeholder="اختر المحافظة" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {IRAQI_GOVERNORATES.map((g) => (
+                  <SelectContent className="max-h-56">{IRAQI_GOVERNORATES.map((g) => (
                       <SelectItem key={g} value={g}>{g}</SelectItem>
                     ))}
                   </SelectContent>
