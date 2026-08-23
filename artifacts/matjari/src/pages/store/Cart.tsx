@@ -5,7 +5,7 @@ import { useValidateDiscount } from '@workspace/api-client-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link } from 'wouter';
-import { Trash2, ChevronRight, Gift } from 'lucide-react';
+import { Trash2, ChevronRight, Gift, ShoppingBag } from 'lucide-react';
 
 export default function StoreCart({ slug }: { slug: string }) {
   const { items, updateQuantity, removeFromCart, subtotal } = useCart();
@@ -49,11 +49,14 @@ export default function StoreCart({ slug }: { slug: string }) {
 
   if (items.length === 0) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-        <h2 className="text-2xl font-bold text-gray-900 font-serif mb-4">سلة التسوق فارغة</h2>
-        <p className="text-gray-500 mb-8">لم تقم بإضافة أي منتجات للسلة بعد.</p>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 md:p-16 text-center max-w-lg mx-auto">
+        <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-6">
+          <ShoppingBag className="w-10 h-10 text-gray-300" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 font-serif mb-3">سلة التسوق فارغة</h2>
+        <p className="text-gray-500 mb-8 text-sm leading-relaxed">لم تقم بإضافة أي منتجات بعد. اكتشف مجموعة العطور والمنتجات المميزة.</p>
         <Link href={`/store/${slug}`}>
-          <Button className="h-12 px-8">تصفح المتجر</Button>
+          <Button className="h-12 px-8" style={{ backgroundColor: 'hsl(var(--primary))' }}>تصفح المتجر</Button>
         </Link>
       </div>
     );

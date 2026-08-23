@@ -152,7 +152,18 @@ export default function StoreCheckout({ slug }: { slug: string }) {
   const paymentMethod = form.watch('paymentMethod');
 
   if (items.length === 0) {
-    return <div className="text-center py-24 text-gray-500">سلة التسوق فارغة</div>;
+    return (
+      <div className="py-24 text-center max-w-md mx-auto">
+        <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-6">
+          <ShoppingCart className="w-10 h-10 text-gray-300" />
+        </div>
+        <h2 className="text-xl font-bold font-serif text-gray-900 mb-2">سلة التسوق فارغة</h2>
+        <p className="text-gray-500 mb-8 text-sm leading-relaxed">لم تقم بإضافة أي منتجات بعد. تصفح المتجر واكتشف العروض المميزة.</p>
+        <Link href={`/store/${slug}`}>
+          <Button className="h-12 px-8" style={{ backgroundColor: 'hsl(var(--primary))' }}>تصفح المتجر</Button>
+        </Link>
+      </div>
+    );
   }
 
   const discountAmount = appliedDiscount

@@ -3,7 +3,7 @@ import { useBrowseStoreProducts, getBrowseStoreProductsQueryKey, useBrowseStoreB
 import type { Product } from '@workspace/api-client-react';
 import { formatPrice, getCategoryLabel, getApiUrl } from '@/lib/utils';
 import { Link, useLocation } from 'wouter';
-import { SlidersHorizontal, X, Scale, Check, Gift, Heart, ShoppingBag } from 'lucide-react';
+import { SlidersHorizontal, X, Scale, Check, Gift, Heart, ShoppingBag, SearchX, Store } from 'lucide-react';
 import { ProductGridSkeleton } from '@/components/skeletons';
 import { useComparison } from '@/contexts/ComparisonContext';
 import { useCart } from '@/contexts/CartContext';
@@ -379,8 +379,34 @@ export default function StoreHome({ slug }: { slug: string }) {
         {isLoading ? (
           <ProductGridSkeleton count={6} />
         ) : products.length === 0 ? (
-          <div className="py-32 text-center">
-            <p className="text-sm tracking-widest uppercase text-zinc-300">لا توجد منتجات</p>
+          <div className="py-32 text-center max-w-md mx-auto">
+            {debouncedSearch || activeCategory ? (
+              <>
+                <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-6">
+                  <SearchX className="w-10 h-10 text-gray-300" />
+                </div>
+                <h3 className="text-lg font-bold font-serif text-gray-900 mb-2">لا توجد نتائج</h3>
+                <p className="text-gray-500 text-sm leading-relaxed mb-6">
+                  {debouncedSearch && <>لا توجد منتجات تطابق "<span className="font-bold text-gray-700">{debouncedSearch}</span>"</>}
+                  {debouncedSearch && activeCategory && <> في </>}
+                  {activeCategory && <>{CATEGORIES.find(c => c.value === activeCategory)?.label}</>}
+                </p>
+                <button
+                  onClick={() => { handleSearch(''); handleCategory(''); }}
+                  className="text-sm font-bold text-[hsl(var(--primary))] hover:underline underline-offset-4"
+                >
+                  مسح البحث والتصفية
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-6">
+                  <Store className="w-10 h-10 text-gray-300" />
+                </div>
+                <h3 className="text-lg font-bold font-serif text-gray-900 mb-2">هذا المتجر قيد الإعداد</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">لا توجد منتجات متاحة حالياً. تحقق لاحقاً لل thấy العروض الجديدة.</p>
+              </>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-px bg-white">
