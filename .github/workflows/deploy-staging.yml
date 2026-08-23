@@ -67,4 +67,4 @@ jobs:
         working-directory: artifacts/matjari
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway up --project 968922e3-db5f-43a5-949e-e26426a00558 --service "@workspace/matjari" --environment staging --detach --ci --yes
+        run: railway up --project 968922e3-db5f-43a5-949e-e26426a00558 --service "@workspace/matjari" --environment staging --detach --ci --yes --no-gitignore
