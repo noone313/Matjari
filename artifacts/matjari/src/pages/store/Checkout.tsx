@@ -11,17 +11,27 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { ChevronRight, CreditCard, Banknote, AlertCircle, CheckCircle2, XCircle, Gift } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ChevronRight, CreditCard, Banknote, AlertCircle, CheckCircle2, XCircle, Gift, Loader2, ShoppingCart, MapPin, PartyPopper } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+
+const IRAQI_GOVERNORATES = [
+  'بغداد', 'البصرة', 'نينوى', 'أربيل', 'النجف', 'كربلاء', 'الأنبار', 'ديالى',
+  'صلاح الدين', 'كركوك', 'دهوك', 'السليمانية', 'ميسان', 'ذي قار', 'المثنى', 'القادسية', 'واسط', 'حلبجة',
+] as const;
 
 const schema = z.object({
   customerName: z.string().min(2, 'الاسم مطلوب'),
-  customerPhone: z.string().min(10, 'رقم الهاتف مطلوب'),
-  customerAddress: z.string().min(5, 'العنوان مطلوب'),
+  customerPhone: z.string().min(10, 'رقم الهاتف مطلوب').regex(/^07/, 'يجب أن يبدأ الرقم بـ 07'),
+  governorate: z.string().min(1, 'المحافظة مطلوبة'),
+  district: z.string().min(2, 'المنطقة مطلوبة'),
+  street: z.string().min(3, 'العنوان التفصيلي مطلوب'),
   paymentMethod: z.enum(['cod', 'bank']),
   isGift: z.boolean(),
   giftMessage: z.string().optional().nullable(),
 });
+
+type FormData = z.infer<typeof schema>;
 
 function useDebounced<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -30,6 +40,42 @@ function useDebounced<T>(value: T, delay: number): T {
     return () => clearTimeout(t);
   }, [value, delay]);
   return debounced;
+}
+
+function StepIndicator({ current }: { current: number }) {
+  const steps = [
+    { label: 'السلة', icon: ShoppingCart },
+    { label: 'الدفع', icon: MapPin },
+    { label: 'التأكيد', icon: PartyPopper },
+  ];
+  return (
+    <div className="flex items-center justify-center gap-0 w-full max-w-md mx-auto mb-8">
+      {steps.map((step, i) => {
+        const Icon = step.icon;
+        const done = i < current;
+        const active = i === current;
+        return (
+          <React.Fragment key={step.label}>
+            {i > 0 && (
+              <div className={`flex-1 h-0.5 mx-1 rounded-full transition-colors duration-300 ${done ? 'bg-[hsl(var(--primary))]' : 'bg-gray-200'}`} />
+            )}
+            <div className="flex flex-col items-center gap-1.5 min-w-[60px]">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
+                done ? 'bg-[hsl(var(--primary))] text-white' :
+                active ? 'bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] ring-2 ring-[hsl(var(--primary))]' :
+                'bg-gray-100 text-gray-400'
+              }`}>
+                {done ? <CheckCircle2 className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
+              </div>
+              <span className={`text-xs font-medium ${active ? 'text-[hsl(var(--primary))]' : done ? 'text-gray-700' : 'text-gray-400'}`}>
+                {step.label}
+              </span>
+            </div>
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
 }
 
 export default function StoreCheckout({ slug }: { slug: string }) {
@@ -48,7 +94,6 @@ export default function StoreCheckout({ slug }: { slug: string }) {
   const [discountChecking, setDiscountChecking] = useState(false);
   const validatedRef = useRef('');
 
-  // Validate whenever the debounced discount field changes or on initial load from URL
   useEffect(() => {
     const code = debouncedDiscount.trim();
     if (!code) {
@@ -89,12 +134,14 @@ export default function StoreCheckout({ slug }: { slug: string }) {
     return () => { cancelled = true; };
   }, [debouncedDiscount, slug, subtotal]);
 
-  const form = useForm<z.infer<typeof schema>>({
+  const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       customerName: '',
       customerPhone: '',
-      customerAddress: '',
+      governorate: '',
+      district: '',
+      street: '',
       paymentMethod: 'cod',
       isGift: false,
       giftMessage: '',
@@ -115,17 +162,23 @@ export default function StoreCheckout({ slug }: { slug: string }) {
     : 0;
   const total = subtotal - discountAmount;
 
-  const onSubmit = (data: z.infer<typeof schema>) => {
+  const onSubmit = (data: FormData) => {
+    const fullAddress = `${data.governorate}، ${data.district}، ${data.street}`;
     const validDiscount = discountMessage?.type === 'valid' ? discountInput.trim().toUpperCase() : null;
     const payload = {
-      ...data,
+      customerName: data.customerName,
+      customerPhone: data.customerPhone,
+      customerAddress: fullAddress,
+      paymentMethod: data.paymentMethod === 'bank' ? 'bank_transfer' as const : 'cod' as const,
+      isGift: data.isGift,
+      giftMessage: data.giftMessage,
       discountCode: validDiscount,
       items: items.map(item => item.bundleId !== undefined
         ? { bundleId: item.bundleId, quantity: item.quantity }
         : { variantId: item.variantId, quantity: item.quantity })
     };
 
-    placeOrder.mutate({ slug, data: { ...payload, paymentMethod: payload.paymentMethod === 'bank' ? 'bank_transfer' : 'cod' } }, {
+    placeOrder.mutate({ slug, data: payload }, {
       onSuccess: (res) => {
         clearCart();
         setLocation(`/store/${slug}/confirmation/${res.orderId}`);
@@ -138,13 +191,7 @@ export default function StoreCheckout({ slug }: { slug: string }) {
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
-      <div className="flex items-center gap-2 text-gray-500">
-        <Link href={`/store/${slug}`} className="hover:text-gray-900 transition-colors">المتجر</Link>
-        <ChevronRight className="w-4 h-4" />
-        <Link href={`/store/${slug}/cart`} className="hover:text-gray-900 transition-colors">السلة</Link>
-        <ChevronRight className="w-4 h-4" />
-        <span className="text-gray-900 font-bold">الدفع</span>
-      </div>
+      <StepIndicator current={1} />
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         <div className="space-y-8">
@@ -165,9 +212,30 @@ export default function StoreCheckout({ slug }: { slug: string }) {
               </div>
 
               <div className="space-y-2">
-                <Label>عنوان التوصيل التفصيلي (المدينة، المنطقة، أقرب نقطة دالة)</Label>
-                <Textarea {...form.register('customerAddress')} rows={3} className="bg-gray-50 resize-none" />
-                {form.formState.errors.customerAddress && <p className="text-sm text-red-500">{form.formState.errors.customerAddress.message}</p>}
+                <Label>المحافظة</Label>
+                <Select value={form.watch('governorate')} onValueChange={(val) => form.setValue('governorate', val)}>
+                  <SelectTrigger className="h-12 bg-gray-50">
+                    <SelectValue placeholder="اختر المحافظة" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {IRAQI_GOVERNORATES.map((g) => (
+                      <SelectItem key={g} value={g}>{g}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {form.formState.errors.governorate && <p className="text-sm text-red-500">{form.formState.errors.governorate.message}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label>المنطقة / القضاء</Label>
+                <Input {...form.register('district')} className="h-12 bg-gray-50" placeholder="مثال: المنصور، الكرادة، الحקיבية" />
+                {form.formState.errors.district && <p className="text-sm text-red-500">{form.formState.errors.district.message}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label>الشارع / المبنى / أقرب نقطة دالة</Label>
+                <Input {...form.register('street')} className="h-12 bg-gray-50" placeholder="شارع 14 رمضان، عمارة 25، بجوار..." />
+                {form.formState.errors.street && <p className="text-sm text-red-500">{form.formState.errors.street.message}</p>}
               </div>
             </div>
           </div>
@@ -275,7 +343,7 @@ export default function StoreCheckout({ slug }: { slug: string }) {
               
               {appliedDiscount && discountMessage?.type === 'valid' && (
                 <div className="flex justify-between text-[hsl(var(--primary))] font-bold">
-                  <span>خصم الترويج ({discountInput.trim().toUpperCase()})</span>
+                  <span>خصم ({discountInput.trim().toUpperCase()})</span>
                   <span>- {formatPrice(discountAmount)}</span>
                 </div>
               )}
@@ -287,8 +355,19 @@ export default function StoreCheckout({ slug }: { slug: string }) {
                 <span className="text-[hsl(var(--primary))]">{formatPrice(total)}</span>
               </div>
               
-              <Button type="submit" className="w-full h-14 text-lg font-bold bg-white text-gray-900 hover:bg-gray-100" disabled={placeOrder.isPending}>
-                {placeOrder.isPending ? 'جاري التأكيد...' : 'تأكيد الطلب'}
+              <Button
+                type="submit"
+                className="w-full h-14 text-lg font-bold bg-white text-gray-900 hover:bg-gray-100 transition-all"
+                disabled={placeOrder.isPending}
+              >
+                {placeOrder.isPending ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    جاري تأكيد الطلب...
+                  </span>
+                ) : (
+                  `تأكيد الطلب — ${formatPrice(total)}`
+                )}
               </Button>
             </div>
             
