@@ -38,14 +38,6 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans flex flex-col">
-      {/* ── Announcement bar ─────────────────── */}
-      {store.phone && (
-        <div className="bg-zinc-900 dark:bg-zinc-800 text-white text-xs tracking-widest text-center py-2.5 flex items-center justify-center gap-2">
-          <Phone className="w-3 h-3" />
-          <span>{store.phone}</span>
-        </div>
-      )}
-
       {/* ── Navbar ───────────────────────────── */}
       <header className="sticky top-0 z-50 bg-background border-b border-border">
         <div className="max-w-screen-xl mx-auto px-3 h-16 flex items-center">
