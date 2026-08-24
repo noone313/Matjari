@@ -5,6 +5,7 @@ import { formatPrice, getCategoryLabel, getApiUrl } from '@/lib/utils';
 import { Link, useLocation } from 'wouter';
 import { SlidersHorizontal, X, Scale, Check, Gift, Heart, ShoppingBag, SearchX, Store } from 'lucide-react';
 import { BlurImage } from '@/components/BlurImage';
+import ProductSearch from '@/components/store/ProductSearch';
 import { ProductGridSkeleton } from '@/components/skeletons';
 import { useComparison } from '@/contexts/ComparisonContext';
 import { useCart } from '@/contexts/CartContext';
@@ -275,23 +276,13 @@ export default function StoreHome({ slug }: { slug: string }) {
       <div className="flex-1 min-w-0">
         {/* Toolbar */}
         <div className="flex items-center justify-between mb-8 gap-4">
-          <div className="relative flex-1 max-w-xs">
-            <input
-              type="text"
-              placeholder="بحث..."
-              value={search}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="w-full text-sm bg-transparent border-b border-zinc-200 dark:border-zinc-700 focus:border-primary outline-none py-2 pr-0 pl-6 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 transition-colors dark:text-zinc-300"
-            />
-            {search && (
-              <button
-                onClick={() => handleSearch('')}
-                className="absolute left-0 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-primary"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
+          <ProductSearch
+            slug={slug}
+            value={search}
+            onChange={(v) => { setSearch(v); updateUrl(activeCategory, v); }}
+            onSearch={(v) => { setSearch(v); updateUrl(activeCategory, v); }}
+            className="flex-1 max-w-xs"
+          />
 
           <div className="flex items-center gap-4">
             <span className="hidden sm:block text-xs text-zinc-400 dark:text-zinc-500 tracking-wide">

@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useGetStore, getGetStoreQueryKey } from '@workspace/api-client-react';
 import { useCart } from '@/contexts/CartContext';
 import { useComparison, MAX_COMPARISON } from '@/contexts/ComparisonContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { normalizeWhatsAppNumber } from '@/lib/utils';
-import { ShoppingBag, X, Phone, MessageCircle, Instagram, Scale, Heart, PackageSearch } from 'lucide-react';
+import { ShoppingBag, X, Phone, MessageCircle, Instagram, Scale, Heart, PackageSearch, Search } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import ProductSearch from '@/components/store/ProductSearch';
 import HeroCarousel from '@/components/store/HeroCarousel';
 import BottomNav from '@/components/layout/BottomNav';
 import { StoreShellSkeleton } from '@/components/skeletons';
@@ -19,6 +20,8 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
   const { items: comparisonItems } = useComparison();
   const { count: wishlistCount } = useWishlist();
   const [location] = useLocation();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [headerSearch, setHeaderSearch] = useState('');
 
   if (isLoading) {
     return <StoreShellSkeleton />;
@@ -64,6 +67,13 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
           {/* Right: actions */}
           <div className="w-16 md:w-auto flex-shrink-0 flex items-center justify-center md:justify-end gap-2 px-2 md:px-0">
             <span className="hidden md:inline-flex"><ThemeToggle /></span>
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="p-0.5 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors"
+              aria-label="بحث"
+            >
+              <Search className="w-4 h-4" />
+            </button>
             <Link
               href={`/store/${slug}/track`}
               className="hidden md:inline-flex items-center gap-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors whitespace-nowrap"
@@ -224,6 +234,31 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
             مقارنة ({comparisonItems.length}/{MAX_COMPARISON}) — عرض
           </span>
         </Link>
+      )}
+
+      {/* ── Search overlay ────────────────────── */}
+      {searchOpen && (
+        <div className="fixed inset-0 z-[60] flex items-start justify-center pt-20 px-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setSearchOpen(false)} />
+          <div className="relative w-full max-w-lg bg-white dark:bg-zinc-900 rounded-lg shadow-2xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs tracking-widest uppercase text-zinc-400 dark:text-zinc-500 font-medium">بحث في المنتجات</p>
+              <button onClick={() => setSearchOpen(false)} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <ProductSearch
+              slug={slug}
+              value={headerSearch}
+              onChange={setHeaderSearch}
+              onSearch={(v) => {
+                setSearchOpen(false);
+                setHeaderSearch('');
+                window.location.href = `/store/${slug}?q=${encodeURIComponent(v)}`;
+              }}
+            />
+          </div>
+        </div>
       )}
 
       {/* ── WhatsApp floating button ─────────── */}
