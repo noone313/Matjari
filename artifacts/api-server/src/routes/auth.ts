@@ -19,8 +19,66 @@ import {
 const router = Router();
 
 function setSessionCookie(res: any, token: string): void {
-  res.cookie(SESSION_COOKIE_NAME, token, sessionCookieOptions());
+  const opts = sessionCookieOptions();
+  console.log(`[AUTH] Setting session cookie: httpOnly=${opts.httpOnly}, secure=${opts.secure}, sameSite=${opts.sameSite}, path=${opts.path}`);
+  res.cookie(SESSION_COOKIE_NAME, token, opts);
 }
+
+/**
+ * Lenient token extraction — reads from Authorization header OR cookie.
+ * Does NOT return 401; returns null when no valid session exists.
+ */
+function extractTokenFromRequest(req: any): string | null {
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith("Bearer ")) return authHeader.slice(7);
+  const cookieToken = req.cookies?.[SESSION_COOKIE_NAME];
+  if (typeof cookieToken === "string" && cookieToken.length > 0) return cookieToken;
+  return null;
+}
+
+// GET /auth/session — lenient session check (always returns 200)
+router.get("/session", async (req: any, res): Promise<void> => {
+  const jwt = await import("jsonwebtoken");
+  const token = extractTokenFromRequest(req);
+  if (!token) {
+    res.json({ merchant: null, token: null });
+    return;
+  }
+  try {
+    const payload = jwt.default.verify(token, process.env.SESSION_SECRET || "matjari-dev-secret") as { merchantId: number };
+    const [merchant] = await db
+      .select()
+      .from(merchantsTable)
+      .where(eq(merchantsTable.id, payload.merchantId))
+      .limit(1);
+    if (!merchant) {
+      res.json({ merchant: null, token: null });
+      return;
+    }
+    res.json({
+      merchant: {
+        id: merchant.id,
+        slug: merchant.slug,
+        storeName: merchant.storeName,
+        email: merchant.email,
+        logoUrl: merchant.logoUrl,
+        bannerUrl: merchant.bannerUrl,
+        description: merchant.description,
+        accentColor: merchant.accentColor,
+        bankTransferInfo: merchant.bankTransferInfo,
+        phone: merchant.phone,
+        instagramHandle: merchant.instagramHandle,
+        whatsappNumber: merchant.whatsappNumber,
+        createdAt: merchant.createdAt,
+        productCount: null,
+        orderCount: null,
+      },
+      token,
+    });
+  } catch {
+    res.json({ merchant: null, token: null });
+  }
+});
 
 // POST /auth/register
 router.post("/register", async (req, res): Promise<void> => {

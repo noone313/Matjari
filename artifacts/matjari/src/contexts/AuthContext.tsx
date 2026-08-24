@@ -13,28 +13,39 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/**
+ * Response type for the /auth/session endpoint. Returns the merchant if a
+ * valid session exists (cookie OR Authorization header), or null otherwise.
+ * Never returns 401 — always 200.
+ */
+interface SessionResponse {
+  merchant: Merchant | null;
+  token: string | null;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Attempt to hydrate the session from the httpOnly cookie by calling /auth/me.
-    // If the cookie is valid, the server returns the merchant data.
-    // If not, we stay unauthenticated silently.
     const controller = new AbortController();
     (async () => {
       try {
-        const res = await customFetch<Merchant>('/api/auth/me', {
+        // Use /auth/session which returns 200+{merchant,token} or 200+null.
+        // This avoids the 401 that /auth/me throws, which triggers error handlers.
+        const res = await customFetch<SessionResponse>('/api/auth/session', {
           signal: controller.signal,
         });
-        setMerchant(res);
-        // Store a placeholder token so isAuthenticated becomes true.
-        // The real token lives in the httpOnly cookie.
-        setToken('__cookie__');
+        if (res.merchant && res.token) {
+          setMerchant(res.merchant);
+          setToken(res.token);
+          // Persist token for the Authorization header fallback
+          localStorage.setItem('matjari_token', res.token);
+          localStorage.setItem('matjari_merchant', JSON.stringify(res.merchant));
+        }
       } catch {
-        // No valid cookie — user is not authenticated.
-        // This is normal for first visits / expired sessions.
+        // Network error or session expired — user is not authenticated.
       } finally {
         setIsLoading(false);
       }
@@ -43,9 +54,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback((newToken: string, newMerchant: Merchant, initialNewOrdersCount?: number) => {
-    // The server already set the httpOnly cookie in the login response.
-    // We still store merchant data in state for immediate UI availability.
-    // Also store in localStorage for the 401 redirect flow (sessionExpired.ts).
+    // Persist for the Authorization header fallback (cookie may not work cross-origin)
+    localStorage.setItem('matjari_token', newToken);
     localStorage.setItem('matjari_merchant', JSON.stringify(newMerchant));
 
     if (initialNewOrdersCount !== undefined) {
@@ -63,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await customFetch('/api/auth/logout', { method: 'POST' });
     } catch {
-      // Best-effort — even if the request fails, clear local state.
+      // Best-effort
     }
     localStorage.removeItem('matjari_token');
     localStorage.removeItem('matjari_merchant');
