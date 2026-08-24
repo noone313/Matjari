@@ -49,12 +49,12 @@ export default function StoreCart({ slug }: { slug: string }) {
 
   if (items.length === 0) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 md:p-16 text-center max-w-lg mx-auto">
-        <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-6">
-          <ShoppingBag className="w-10 h-10 text-gray-300" />
+      <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-800 p-12 md:p-16 text-center max-w-lg mx-auto">
+        <div className="w-20 h-20 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-6">
+          <ShoppingBag className="w-10 h-10 text-gray-300 dark:text-zinc-600" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 font-serif mb-3">سلة التسوق فارغة</h2>
-        <p className="text-gray-500 mb-8 text-sm leading-relaxed">لم تقم بإضافة أي منتجات بعد. اكتشف مجموعة العطور والمنتجات المميزة.</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white font-serif mb-3">سلة التسوق فارغة</h2>
+        <p className="text-gray-500 dark:text-zinc-400 mb-8 text-sm leading-relaxed">لم تقم بإضافة أي منتجات بعد. اكتشف مجموعة العطور والمنتجات المميزة.</p>
         <Link href={`/store/${slug}`}>
           <Button className="h-12 px-8" style={{ backgroundColor: 'hsl(var(--primary))' }}>تصفح المتجر</Button>
         </Link>
@@ -71,10 +71,10 @@ export default function StoreCart({ slug }: { slug: string }) {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center gap-2 text-gray-500">
-        <Link href={`/store/${slug}`} className="hover:text-gray-900 transition-colors">المتجر</Link>
+      <div className="flex items-center gap-2 text-gray-500 dark:text-zinc-400">
+        <Link href={`/store/${slug}`} className="hover:text-gray-900 dark:hover:text-white transition-colors">المتجر</Link>
         <ChevronRight className="w-4 h-4" />
-        <span className="text-gray-900 font-bold">السلة</span>
+        <span className="text-gray-900 dark:text-white font-bold">السلة</span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -83,19 +83,19 @@ export default function StoreCart({ slug }: { slug: string }) {
             const isBundle = item.bundleId !== undefined;
             const key = cartItemKey(item);
             return (
-            <div key={key} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex gap-4 items-center">
-              <div className="w-20 h-20 bg-gray-50 rounded-lg border border-gray-100 overflow-hidden shrink-0">
+            <div key={key} className="bg-white dark:bg-zinc-900 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-800 flex gap-4 items-center">
+              <div className="w-20 h-20 bg-gray-50 dark:bg-zinc-800 rounded-lg border border-gray-100 dark:border-zinc-700 overflow-hidden shrink-0">
                 {item.image ? (
                   <img src={getApiUrl(item.image)} alt={item.productName} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">بدون صورة</div>
+                  <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-zinc-600 text-xs">بدون صورة</div>
                 )}
               </div>
               
               <div className="flex-1 min-w-0">
                 {isBundle ? (
                   <div className="flex items-center gap-2">
-                    <Link href={`/store/${slug}`} className="font-bold text-gray-900 font-serif truncate hover:text-[hsl(var(--primary))] transition-colors">
+                    <Link href={`/store/${slug}`} className="font-bold text-gray-900 dark:text-white font-serif truncate hover:text-[hsl(var(--primary))] transition-colors">
                       {item.productName}
                     </Link>
                     <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))]">
@@ -103,12 +103,12 @@ export default function StoreCart({ slug }: { slug: string }) {
                     </span>
                   </div>
                 ) : (
-                  <Link href={`/store/${slug}/product/${item.productId}`} className="font-bold text-gray-900 font-serif truncate hover:text-[hsl(var(--primary))] transition-colors">
+                  <Link href={`/store/${slug}/product/${item.productId}`} className="font-bold text-gray-900 dark:text-white font-serif truncate hover:text-[hsl(var(--primary))] transition-colors">
                     {item.productName}
                   </Link>
                 )}
-                <div className="text-sm text-gray-500 mt-1">{item.variantLabel}</div>
-                <div className="font-bold text-gray-900 mt-2">{formatPrice(item.price)}</div>
+                <div className="text-sm text-gray-500 dark:text-zinc-400 mt-1">{item.variantLabel}</div>
+                <div className="font-bold text-gray-900 dark:text-white mt-2">{formatPrice(item.price)}</div>
               </div>
 
               <div className="flex flex-col items-end gap-3 shrink-0">
@@ -121,14 +121,14 @@ export default function StoreCart({ slug }: { slug: string }) {
                   <Trash2 className="w-4 h-4" />
                 </Button>
                 
-                <div className="flex items-center border border-gray-200 rounded-md h-9">
+                <div className="flex items-center border border-gray-200 dark:border-zinc-700 rounded-md h-9">
                   <button 
-                    className="w-8 h-full flex items-center justify-center text-gray-500 hover:bg-gray-50"
+                    className="w-8 h-full flex items-center justify-center text-gray-500 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800"
                     onClick={() => updateQuantity(key, item.quantity - 1)}
                   >-</button>
-                  <span className="w-8 text-center text-sm font-bold">{item.quantity}</span>
+                  <span className="w-8 text-center text-sm font-bold dark:text-white">{item.quantity}</span>
                   <button 
-                    className="w-8 h-full flex items-center justify-center text-gray-500 hover:bg-gray-50"
+                    className="w-8 h-full flex items-center justify-center text-gray-500 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800"
                     onClick={() => updateQuantity(key, item.quantity + 1)}
                   >+</button>
                 </div>
@@ -139,13 +139,13 @@ export default function StoreCart({ slug }: { slug: string }) {
         </div>
 
         <div className="lg:col-span-1">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6 sticky top-24">
-            <h3 className="font-bold text-lg text-gray-900 border-b border-gray-100 pb-4">ملخص الطلب</h3>
+          <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-800 space-y-6 sticky top-24">
+            <h3 className="font-bold text-lg text-gray-900 dark:text-white border-b border-gray-100 dark:border-zinc-800 pb-4">ملخص الطلب</h3>
             
             <div className="space-y-3 text-sm">
-              <div className="flex justify-between text-gray-600">
+              <div className="flex justify-between text-gray-600 dark:text-zinc-400">
                 <span>المجموع الفرعي</span>
-                <span className="font-bold">{formatPrice(subtotal)}</span>
+                <span className="font-bold dark:text-zinc-200">{formatPrice(subtotal)}</span>
               </div>
               
               {appliedDiscount && (
@@ -156,8 +156,8 @@ export default function StoreCart({ slug }: { slug: string }) {
               )}
             </div>
 
-            <div className="pt-4 border-t border-gray-100">
-              <div className="flex justify-between text-lg font-bold text-gray-900">
+            <div className="pt-4 border-t border-gray-100 dark:border-zinc-800">
+              <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white">
                 <span>الإجمالي</span>
                 <span>{formatPrice(total)}</span>
               </div>
@@ -170,7 +170,7 @@ export default function StoreCart({ slug }: { slug: string }) {
                   value={discountCode}
                   onChange={(e) => setDiscountCode(e.target.value)}
                   disabled={!!appliedDiscount}
-                  className="bg-gray-50"
+                  className="bg-gray-50 dark:bg-zinc-800"
                   dir="ltr"
                 />
                 {!appliedDiscount ? (

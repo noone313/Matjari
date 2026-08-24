@@ -108,7 +108,7 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
   };
 
   if (isLoading) return <ProductPageSkeleton />;
-  if (!product) return <div className="text-center py-24">المنتج غير موجود</div>;
+  if (!product) return <div className="text-center py-24 dark:text-zinc-400">المنتج غير موجود</div>;
 
   const currentVariant = product.variants.find(v => v.id === selectedVariant) || product.variants[0];
   const totalStock = product.variants.reduce((s, v) => s + (v.stock ?? 0), 0);
@@ -139,21 +139,21 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <div className="p-4 border-b border-gray-100">
-        <Link href={`/store/${slug}`} className="inline-flex items-center text-sm text-gray-500 hover:text-gray-900 transition-colors">
+    <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-800 overflow-hidden">
+      <div className="p-4 border-b border-gray-100 dark:border-zinc-800">
+        <Link href={`/store/${slug}`} className="inline-flex items-center text-sm text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white transition-colors">
           <ChevronRight className="w-4 h-4 ml-1" /> العودة للمتجر
         </Link>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
         {/* Images */}
-        <div className="p-6 md:border-l border-gray-100 flex flex-col items-center">
-          <div className="aspect-square w-full max-w-md bg-gray-50 rounded-lg overflow-hidden mb-4 border border-gray-100">
+        <div className="p-6 md:border-l border-gray-100 dark:border-zinc-800 flex flex-col items-center">
+          <div className="aspect-square w-full max-w-md bg-gray-50 dark:bg-zinc-800 rounded-lg overflow-hidden mb-4 border border-gray-100 dark:border-zinc-700">
             {activeImage ? (
               <img src={getApiUrl(activeImage)} alt={product.name} className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-300">بدون صورة</div>
+              <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-zinc-600">بدون صورة</div>
             )}
           </div>
           {product.imageUrls && product.imageUrls.length > 1 && (
@@ -162,7 +162,7 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
                 <button 
                   key={i} 
                   onClick={() => setActiveImage(getApiUrl(img))}
-                  className={`w-20 h-20 rounded-md overflow-hidden border-2 transition-colors ${activeImage === getApiUrl(img) ? 'border-[hsl(var(--primary))]' : 'border-transparent hover:border-gray-200'}`}
+                  className={`w-20 h-20 rounded-md overflow-hidden border-2 transition-colors ${activeImage === getApiUrl(img) ? 'border-[hsl(var(--primary))]' : 'border-transparent hover:border-gray-200 dark:hover:border-zinc-600'}`}
                 >
                   <img src={getApiUrl(img)} className="w-full h-full object-cover" alt="" />
                 </button>
@@ -182,14 +182,14 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
                 <div className="flex items-center gap-1.5" title="متوسط تقييم العملاء">
                   <div className="flex">
                     {[1, 2, 3, 4, 5].map(i => (
-                      <Star key={i} className={`w-3.5 h-3.5 ${i <= Math.round(reviewsData.averageRating) ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`} />
+                      <Star key={i} className={`w-3.5 h-3.5 ${i <= Math.round(reviewsData.averageRating) ? 'fill-amber-400 text-amber-400' : 'text-gray-300 dark:text-zinc-600'}`} />
                     ))}
                   </div>
-                  <span className="text-xs text-gray-500">{reviewsData.averageRating} ({reviewsData.reviews.length})</span>
+                  <span className="text-xs text-gray-500 dark:text-zinc-400">{reviewsData.averageRating} ({reviewsData.reviews.length})</span>
                 </div>
               )}
               {totalStock > 0 && totalStock <= 5 && (
-                <span className="text-[10px] uppercase tracking-widest bg-zinc-900 text-white px-2 py-0.5">
+                <span className="text-[10px] uppercase tracking-widest bg-zinc-900 dark:bg-white dark:text-zinc-900 text-white px-2 py-0.5">
                   متبقي {totalStock} فقط
                 </span>
               )}
@@ -201,26 +201,26 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
                 toast({ title: removing ? 'أُزيل من المفضلة' : 'أُضيف للمفضلة' });
               }}
               title={isWishlisted(product.id) ? 'إزالة من المفضلة' : 'أضف للمفضلة'}
-              className={`p-2 rounded-full transition-colors ${isWishlisted(product.id) ? 'text-[hsl(var(--primary))]' : 'hover:bg-zinc-100 text-zinc-400 hover:text-zinc-900'}`}
+              className={`p-2 rounded-full transition-colors ${isWishlisted(product.id) ? 'text-[hsl(var(--primary))]' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-900 dark:hover:text-white'}`}
             >
               <Heart className={`w-4 h-4 ${isWishlisted(product.id) ? 'fill-current' : ''}`} />
             </button>
             <button
               onClick={handleShare}
               title="مشاركة المنتج"
-              className="p-2 rounded-full hover:bg-zinc-100 text-zinc-400 hover:text-zinc-900 transition-colors"
+              className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
             >
               {shared ? <Check className="w-4 h-4 text-green-500" /> : <Share2 className="w-4 h-4" />}
             </button>
           </div>
-          <h1 className="text-4xl font-bold font-serif text-gray-900 mb-4 leading-tight">{product.name}</h1>
+          <h1 className="text-4xl font-bold font-serif text-gray-900 dark:text-white mb-4 leading-tight">{product.name}</h1>
           
-          <div className="text-3xl font-bold text-gray-900 mb-6">
+          <div className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
             {currentVariant ? formatPrice(currentVariant.price) : ''}
           </div>
 
           {product.description && (
-            <p className="text-gray-600 leading-relaxed mb-8">{product.description}</p>
+            <p className="text-gray-600 dark:text-zinc-400 leading-relaxed mb-8">{product.description}</p>
           )}
 
           {isFragrance && (product.noteTop || product.noteHeart || product.noteBase) && (
@@ -228,22 +228,22 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
           )}
 
           {isSkincare && (
-            <div className="space-y-4 mb-8 bg-gray-50 p-6 rounded-lg border border-gray-100">
+            <div className="space-y-4 mb-8 bg-gray-50 dark:bg-zinc-800 p-6 rounded-lg border border-gray-100 dark:border-zinc-700">
               {product.skinType && (
                 <div className="flex items-start gap-3">
                   <Droplet className="w-5 h-5 text-[hsl(var(--primary))] shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-bold text-gray-900 block mb-1">نوع البشرة المناسب</span>
-                    <span className="text-gray-600">{product.skinType}</span>
+                    <span className="font-bold text-gray-900 dark:text-white block mb-1">نوع البشرة المناسب</span>
+                    <span className="text-gray-600 dark:text-zinc-400">{product.skinType}</span>
                   </div>
                 </div>
               )}
               {product.ingredients && (
-                <div className="flex items-start gap-3 pt-4 border-t border-gray-200">
+                <div className="flex items-start gap-3 pt-4 border-t border-gray-200 dark:border-zinc-700">
                   <Leaf className="w-5 h-5 text-[hsl(var(--primary))] shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-bold text-gray-900 block mb-1">المكونات الرئيسية</span>
-                    <span className="text-gray-600 text-sm leading-relaxed">{product.ingredients}</span>
+                    <span className="font-bold text-gray-900 dark:text-white block mb-1">المكونات الرئيسية</span>
+                    <span className="text-gray-600 dark:text-zinc-400 text-sm leading-relaxed">{product.ingredients}</span>
                   </div>
                 </div>
               )}
@@ -253,7 +253,7 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
           {/* Variants */}
           {product.variants.length > 1 && (
             <div className="mb-8">
-              <h3 className="font-bold text-gray-900 mb-3">اختر الخيار</h3>
+              <h3 className="font-bold text-gray-900 dark:text-white mb-3">اختر الخيار</h3>
               <div className="flex flex-wrap gap-2">
                 {product.variants.map(v => (
                   <button
@@ -262,7 +262,7 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
                     className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all border ${
                       selectedVariant === v.id 
                         ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary))] text-white shadow-sm' 
-                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                        : 'border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 hover:border-gray-300 dark:hover:border-zinc-500 hover:bg-gray-50 dark:hover:bg-zinc-700'
                     } ${(v.stock ?? 0) <= 0 ? 'opacity-40 cursor-not-allowed' : ''}`}
                     disabled={(v.stock ?? 0) <= 0}
                   >
@@ -279,22 +279,22 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
           )}
 
           {isOutOfStock ? (
-            <div className="border border-gray-200 bg-gray-50 rounded-xl p-5">
+            <div className="border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 rounded-xl p-5">
               {notifyRegistered ? (
                 <div className="flex items-center gap-3">
                   <BellRing className="w-5 h-5 text-[hsl(var(--primary))] shrink-0" />
                   <div>
-                    <p className="font-bold text-gray-900">تم التسجيل!</p>
-                    <p className="text-sm text-gray-500">سنخبرك فور توفر «{currentVariant?.variantLabel}»</p>
+                    <p className="font-bold text-gray-900 dark:text-white">تم التسجيل!</p>
+                    <p className="text-sm text-gray-500 dark:text-zinc-400">سنخبرك فور توفر «{currentVariant?.variantLabel}»</p>
                   </div>
                 </div>
               ) : (
                 <>
                   <div className="flex items-center gap-2 mb-1">
-                    <BellRing className="w-4 h-4 text-gray-500" />
-                    <Label className="font-bold text-gray-900">أعلمني عند التوفر</Label>
+                    <BellRing className="w-4 h-4 text-gray-500 dark:text-zinc-400" />
+                    <Label className="font-bold text-gray-900 dark:text-white">أعلمني عند التوفر</Label>
                   </div>
-                  <p className="text-sm text-gray-500 mb-4">
+                  <p className="text-sm text-gray-500 dark:text-zinc-400 mb-4">
                     هذا الخيار غير متوفر حالياً — اترك رقم هاتفك وسنخبرك فور وصوله.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-3">
@@ -319,21 +319,21 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
             </div>
           ) : (
             <div className="flex flex-col sm:flex-row gap-4 mt-auto">
-              <div className="flex items-center border border-gray-300 rounded-lg h-14 w-full sm:w-32">
+              <div className="flex items-center border border-gray-300 dark:border-zinc-600 rounded-lg h-14 w-full sm:w-32">
                 <button
                   type="button"
-                  className="w-10 h-full flex items-center justify-center text-gray-500 hover:text-gray-900"
+                  className="w-10 h-full flex items-center justify-center text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white"
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                 >-</button>
                 <input
                   type="text"
                   readOnly
                   value={quantity}
-                  className="w-full text-center font-bold bg-transparent outline-none"
+                  className="w-full text-center font-bold bg-transparent outline-none dark:text-white"
                 />
                 <button
                   type="button"
-                  className="w-10 h-full flex items-center justify-center text-gray-500 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="w-10 h-full flex items-center justify-center text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
                   onClick={() => setQuantity(Math.min(quantity + 1, Math.max(currentStock, 1)))}
                   disabled={isOutOfStock || quantity >= currentStock}
                 >+</button>
@@ -342,7 +342,7 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
               <Button
                 onClick={handleAddToCart}
                 disabled={isOutOfStock}
-                className="h-14 flex-1 text-lg font-bold shadow-lg hover:shadow-xl transition-shadow bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900"
+                className="h-14 flex-1 text-lg font-bold shadow-lg hover:shadow-xl transition-shadow bg-gray-900 dark:bg-white dark:text-zinc-900 text-white hover:bg-gray-800 dark:hover:bg-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900"
                 style={{ backgroundColor: 'hsl(var(--primary))' }}
               >
                 إضافة للسلة
@@ -354,8 +354,8 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
 
       {/* ── Related products ─────────────────── */}
       {relatedProducts && relatedProducts.length > 0 && (
-        <div className="mt-12 border-t border-zinc-100 pt-10 px-6 pb-8">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 text-center mb-6">
+        <div className="mt-12 border-t border-zinc-100 dark:border-zinc-800 pt-10 px-6 pb-8">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 text-center mb-6">
             {isFragrance ? 'عطور مشابهة' : isSkincare ? 'أكمل مجموعتك' : 'منتجات مشابهة'}
           </p>
           <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
@@ -363,19 +363,19 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
               const minPrice = p.variants?.length ? Math.min(...p.variants.map(v => v.price)) : 0;
               return (
                 <Link key={p.id} href={`/store/${slug}/product/${p.id}`} className="shrink-0 w-40 sm:w-44">
-                  <div className="bg-white group cursor-pointer border border-zinc-100">
-                    <div className="aspect-[3/4] overflow-hidden bg-zinc-50">
+                  <div className="bg-white dark:bg-zinc-900 group cursor-pointer border border-zinc-100 dark:border-zinc-800">
+                    <div className="aspect-[3/4] overflow-hidden bg-zinc-50 dark:bg-zinc-800">
                       {p.imageUrls?.[0] ? (
                         <img src={getApiUrl(p.imageUrls[0])} alt={p.name} className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-3xl font-serif text-zinc-200">
+                        <div className="w-full h-full flex items-center justify-center text-3xl font-serif text-zinc-200 dark:text-zinc-700">
                           {p.name.charAt(0)}
                         </div>
                       )}
                     </div>
                     <div className="p-4">
-                      <h3 className="text-sm font-serif text-zinc-900 line-clamp-1">{p.name}</h3>
-                      <p className="text-sm text-zinc-500 mt-1">{formatPrice(minPrice)}</p>
+                      <h3 className="text-sm font-serif text-zinc-900 dark:text-white line-clamp-1">{p.name}</h3>
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{formatPrice(minPrice)}</p>
                     </div>
                   </div>
                 </Link>
@@ -386,44 +386,44 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
       )}
 
       {/* ── Reviews ─────────────────────────────── */}
-      <div className="border-t border-zinc-100 px-6 py-10">
-        <h2 className="text-lg font-bold text-gray-900 mb-6">تقييمات العملاء</h2>
+      <div className="border-t border-zinc-100 dark:border-zinc-800 px-6 py-10">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">تقييمات العملاء</h2>
 
         {reviewsData && reviewsData.reviews.length > 0 ? (
           <div className="space-y-4">
             {reviewsData.reviews.map(r => (
-              <div key={r.id} className="border border-gray-100 rounded-lg p-5">
+              <div key={r.id} className="border border-gray-100 dark:border-zinc-800 rounded-lg p-5">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-500">
+                    <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center font-bold text-gray-500 dark:text-zinc-400">
                       {r.customerName.charAt(0)}
                     </div>
                     <div>
-                      <p className="font-bold text-gray-900">{r.customerName}</p>
+                      <p className="font-bold text-gray-900 dark:text-white">{r.customerName}</p>
                       <div className="flex">
                         {[1, 2, 3, 4, 5].map(i => (
-                          <Star key={i} className={`w-3.5 h-3.5 ${i <= r.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`} />
+                          <Star key={i} className={`w-3.5 h-3.5 ${i <= r.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-300 dark:text-zinc-600'}`} />
                         ))}
                       </div>
                     </div>
                   </div>
-                  <span className="text-xs text-gray-400">{new Date(r.createdAt).toLocaleDateString('ar-IQ')}</span>
+                  <span className="text-xs text-gray-400 dark:text-zinc-500">{new Date(r.createdAt).toLocaleDateString('ar-IQ')}</span>
                 </div>
-                {r.comment && <p className="text-gray-600 leading-relaxed">{r.comment}</p>}
+                {r.comment && <p className="text-gray-600 dark:text-zinc-400 leading-relaxed">{r.comment}</p>}
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-gray-400 text-center py-8">لا توجد تقييمات بعد — كن أول من يقيّم هذا المنتج</p>
+          <p className="text-gray-400 dark:text-zinc-500 text-center py-8">لا توجد تقييمات بعد — كن أول من يقيّم هذا المنتج</p>
         )}
 
         {/* Add review form */}
-        <div className="mt-10 bg-gray-50 border border-gray-100 rounded-xl p-6">
+        <div className="mt-10 bg-gray-50 dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 rounded-xl p-6">
           {reviewSubmitted ? (
             <p className="text-green-600 font-medium">شكراً لك! سيظهر تقييمك بعد مراجعة المتجر.</p>
           ) : (
             <form onSubmit={handleSubmitReview} className="space-y-4">
-              <h3 className="font-bold text-gray-900">أضف تقييمك</h3>
+              <h3 className="font-bold text-gray-900 dark:text-white">أضف تقييمك</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>اسمك</Label>
@@ -446,7 +446,7 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
                         className="p-0.5 transition-transform hover:scale-110"
                         aria-label={`${i} من 5`}
                       >
-                        <Star className={`w-7 h-7 ${i <= reviewRating ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`} />
+                        <Star className={`w-7 h-7 ${i <= reviewRating ? 'fill-amber-400 text-amber-400' : 'text-gray-300 dark:text-zinc-600'}`} />
                       </button>
                     ))}
                   </div>

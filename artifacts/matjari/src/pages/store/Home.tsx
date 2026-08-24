@@ -45,7 +45,6 @@ export default function StoreHome({ slug }: { slug: string }) {
 
   const debouncedSearch = useDebounced(search, 300);
 
-  // Sync category & search from URL query params
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const cat = params.get('cat') || '';
@@ -54,7 +53,6 @@ export default function StoreHome({ slug }: { slug: string }) {
     setSearch(q);
   }, [location]);
 
-  // Keep the URL query string in sync so links stay shareable
   const updateUrl = (cat: string, q: string) => {
     const params = new URLSearchParams(window.location.search);
     if (cat) params.set('cat', cat);
@@ -117,7 +115,6 @@ export default function StoreHome({ slug }: { slug: string }) {
     return true;
   }) ?? [];
 
-  // Price range filter (client-side; catalog is loaded fully)
   const priceBounds = useMemo(() => {
     const prices = (allProducts ?? [])
       .filter((p) => p.imageUrls?.length && p.imageUrls.some((u) => u?.trim()))
@@ -192,9 +189,8 @@ export default function StoreHome({ slug }: { slug: string }) {
     <div className="flex gap-10">
       {/* ── Sidebar filter (desktop) ────────── */}
       <aside className="hidden lg:flex flex-col w-52 shrink-0 gap-8 pt-1">
-        {/* Categories */}
         <div>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 mb-4 font-medium">التصنيف</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 mb-4 font-medium">التصنيف</p>
           <ul className="flex flex-col gap-1">
             {CATEGORIES.map(({ value, label }) => (
               <li key={value}>
@@ -203,7 +199,7 @@ export default function StoreHome({ slug }: { slug: string }) {
                   className={`text-sm w-full text-right py-1.5 transition-colors ${
                     activeCategory === value
                       ? 'text-primary font-semibold'
-                      : 'text-zinc-400 hover:text-zinc-700'
+                      : 'text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
                   }`}
                 >
                   {label}
@@ -213,9 +209,8 @@ export default function StoreHome({ slug }: { slug: string }) {
           </ul>
         </div>
 
-        {/* Sort */}
         <div>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 mb-4 font-medium">الترتيب</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 mb-4 font-medium">الترتيب</p>
           <ul className="flex flex-col gap-1">
             {[
               { value: 'default', label: 'الافتراضي' },
@@ -228,7 +223,7 @@ export default function StoreHome({ slug }: { slug: string }) {
                   className={`text-sm w-full text-right py-1.5 transition-colors ${
                     sortBy === value
                       ? 'text-primary font-semibold'
-                      : 'text-zinc-400 hover:text-zinc-700'
+                      : 'text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
                   }`}
                 >
                   {label}
@@ -238,9 +233,8 @@ export default function StoreHome({ slug }: { slug: string }) {
           </ul>
         </div>
 
-        {/* Price range */}
         <div>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 mb-4 font-medium">السعر</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 mb-4 font-medium">السعر</p>
           <div className="flex items-center gap-2 mb-3">
             <input
               type="number"
@@ -251,9 +245,9 @@ export default function StoreHome({ slug }: { slug: string }) {
               placeholder={priceBounds.min ? formatPrice(priceBounds.min) : 'من'}
               value={priceMin}
               onChange={(e) => setPriceMin(e.target.value)}
-              className="w-full text-xs border border-zinc-200 rounded px-2 py-1.5 outline-none focus:border-primary placeholder:text-zinc-300"
+              className="w-full text-xs border border-zinc-200 dark:border-zinc-700 bg-transparent rounded px-2 py-1.5 outline-none focus:border-primary placeholder:text-zinc-300 dark:placeholder:text-zinc-600 dark:text-zinc-300"
             />
-            <span className="text-zinc-300 text-xs">–</span>
+            <span className="text-zinc-300 dark:text-zinc-600 text-xs">–</span>
             <input
               type="number"
               inputMode="numeric"
@@ -263,7 +257,7 @@ export default function StoreHome({ slug }: { slug: string }) {
               placeholder={priceBounds.max ? formatPrice(priceBounds.max) : 'إلى'}
               value={priceMax}
               onChange={(e) => setPriceMax(e.target.value)}
-              className="w-full text-xs border border-zinc-200 rounded px-2 py-1.5 outline-none focus:border-primary placeholder:text-zinc-300"
+              className="w-full text-xs border border-zinc-200 dark:border-zinc-700 bg-transparent rounded px-2 py-1.5 outline-none focus:border-primary placeholder:text-zinc-300 dark:placeholder:text-zinc-600 dark:text-zinc-300"
             />
           </div>
           {hasPriceFilter && (
@@ -281,14 +275,13 @@ export default function StoreHome({ slug }: { slug: string }) {
       <div className="flex-1 min-w-0">
         {/* Toolbar */}
         <div className="flex items-center justify-between mb-8 gap-4">
-          {/* Search */}
           <div className="relative flex-1 max-w-xs">
             <input
               type="text"
               placeholder="بحث..."
               value={search}
               onChange={(e) => handleSearch(e.target.value)}
-              className="w-full text-sm bg-transparent border-b border-zinc-200 focus:border-primary outline-none py-2 pr-0 pl-6 placeholder:text-zinc-300 transition-colors"
+              className="w-full text-sm bg-transparent border-b border-zinc-200 dark:border-zinc-700 focus:border-primary outline-none py-2 pr-0 pl-6 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 transition-colors dark:text-zinc-300"
             />
             {search && (
               <button
@@ -301,13 +294,12 @@ export default function StoreHome({ slug }: { slug: string }) {
           </div>
 
           <div className="flex items-center gap-4">
-            <span className="hidden sm:block text-xs text-zinc-400 tracking-wide">
+            <span className="hidden sm:block text-xs text-zinc-400 dark:text-zinc-500 tracking-wide">
               {isLoading ? '...' : `${totalCount} منتج`}
             </span>
-            {/* Mobile filter button */}
             <button
               onClick={() => setFilterOpen(true)}
-              className="lg:hidden flex items-center gap-2 text-xs tracking-widest uppercase border border-zinc-200 px-4 py-2 hover:border-primary hover:bg-primary hover:text-white transition-colors"
+              className="lg:hidden flex items-center gap-2 text-xs tracking-widest uppercase border border-zinc-200 dark:border-zinc-700 px-4 py-2 hover:border-primary hover:bg-primary hover:text-white transition-colors dark:text-zinc-400"
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
               تصفية
@@ -327,22 +319,22 @@ export default function StoreHome({ slug }: { slug: string }) {
           </div>
         )}
 
-        {/* Gift bundles — hidden when searching by text */}
+        {/* Gift bundles */}
         {bundles.length > 0 && !debouncedSearch && (
           <section className="mb-10">
             <div className="flex items-center gap-2 mb-5">
               <Gift className="w-5 h-5 text-[hsl(var(--primary))]" />
-              <h2 className="text-2xl font-bold font-serif text-gray-900">باقات هدايا جاهزة</h2>
+              <h2 className="text-2xl font-bold font-serif text-gray-900 dark:text-white">باقات هدايا جاهزة</h2>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
               {bundles.map((bundle) => (
-                <div key={bundle.id} data-testid={`card-bundle-${bundle.id}`} className="bg-white border border-zinc-100 rounded-lg overflow-hidden shadow-sm flex flex-col">
-                  <div className="aspect-[4/3] overflow-hidden bg-zinc-50 relative">
+                <div key={bundle.id} data-testid={`card-bundle-${bundle.id}`} className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-lg overflow-hidden shadow-sm flex flex-col">
+                  <div className="aspect-[4/3] overflow-hidden bg-zinc-50 dark:bg-zinc-800 relative">
                     {bundle.imageUrl ? (
                       <img src={bundle.imageUrl ? getApiUrl(bundle.imageUrl) : undefined} alt={bundle.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Gift className="w-10 h-10 text-zinc-200" />
+                        <Gift className="w-10 h-10 text-zinc-200 dark:text-zinc-700" />
                       </div>
                     )}
                     <span className="absolute top-3 right-3 text-[10px] font-bold px-2 py-1 rounded-full bg-[hsl(var(--primary))] text-white flex items-center gap-1">
@@ -350,18 +342,18 @@ export default function StoreHome({ slug }: { slug: string }) {
                     </span>
                   </div>
                   <div className="p-4 flex flex-col flex-1">
-                    <h3 className="font-bold text-gray-900 font-serif line-clamp-1">{bundle.name}</h3>
+                    <h3 className="font-bold text-gray-900 dark:text-white font-serif line-clamp-1">{bundle.name}</h3>
                     {bundle.description && (
-                      <p className="text-xs text-gray-500 mt-1 line-clamp-2">{bundle.description}</p>
+                      <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1 line-clamp-2">{bundle.description}</p>
                     )}
-                    <p className="text-xs text-gray-400 mt-2">
+                    <p className="text-xs text-gray-400 dark:text-zinc-500 mt-2">
                       {bundle.items.map((it) => `${it.productName} (${it.variantLabel})`).join('، ')}
                     </p>
                     <div className="mt-auto pt-3">
                       <span className="font-bold text-[hsl(var(--primary))]">{formatPrice(bundle.bundlePrice)}</span>
                       <button
                         onClick={() => handleAddBundle(bundle)}
-                        className="mt-2 w-full flex items-center justify-center gap-1.5 text-[10px] font-bold tracking-widest uppercase px-3 py-2 bg-gray-900 text-white hover:bg-gray-800 transition-colors"
+                        className="mt-2 w-full flex items-center justify-center gap-1.5 text-[10px] font-bold tracking-widest uppercase px-3 py-2 bg-gray-900 dark:bg-white dark:text-zinc-900 text-white hover:bg-gray-800 dark:hover:bg-zinc-200 transition-colors"
                       >
                         <ShoppingBag className="w-3 h-3" />
                         أضف الباقة
@@ -381,12 +373,12 @@ export default function StoreHome({ slug }: { slug: string }) {
           <div className="py-32 text-center max-w-md mx-auto">
             {debouncedSearch || activeCategory ? (
               <>
-                <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-6">
-                  <SearchX className="w-10 h-10 text-gray-300" />
+                <div className="w-20 h-20 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-6">
+                  <SearchX className="w-10 h-10 text-gray-300 dark:text-zinc-600" />
                 </div>
-                <h3 className="text-lg font-bold font-serif text-gray-900 mb-2">لا توجد نتائج</h3>
-                <p className="text-gray-500 text-sm leading-relaxed mb-6">
-                  {debouncedSearch && <>لا توجد منتجات تطابق "<span className="font-bold text-gray-700">{debouncedSearch}</span>"</>}
+                <h3 className="text-lg font-bold font-serif text-gray-900 dark:text-white mb-2">لا توجد نتائج</h3>
+                <p className="text-gray-500 dark:text-zinc-400 text-sm leading-relaxed mb-6">
+                  {debouncedSearch && <>لا توجد منتجات تطابق "<span className="font-bold text-gray-700 dark:text-zinc-300">{debouncedSearch}</span>"</>}
                   {debouncedSearch && activeCategory && <> في </>}
                   {activeCategory && <>{CATEGORIES.find(c => c.value === activeCategory)?.label}</>}
                 </p>
@@ -399,16 +391,16 @@ export default function StoreHome({ slug }: { slug: string }) {
               </>
             ) : (
               <>
-                <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-6">
-                  <Store className="w-10 h-10 text-gray-300" />
+                <div className="w-20 h-20 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-6">
+                  <Store className="w-10 h-10 text-gray-300 dark:text-zinc-600" />
                 </div>
-                <h3 className="text-lg font-bold font-serif text-gray-900 mb-2">هذا المتجر قيد الإعداد</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">لا توجد منتجات متاحة حالياً. تحقق لاحقاً لل thấy العروض الجديدة.</p>
+                <h3 className="text-lg font-bold font-serif text-gray-900 dark:text-white mb-2">هذا المتجر قيد الإعداد</h3>
+                <p className="text-gray-500 dark:text-zinc-400 text-sm leading-relaxed">لا توجد منتجات متاحة حالياً. تحقق لاحقاً لل看到 العروض الجديدة.</p>
               </>
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-px bg-white">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-px bg-white dark:bg-zinc-800">
             {products.map((product) => {
               const minPrice =
                 product.variants?.length
@@ -422,67 +414,62 @@ export default function StoreHome({ slug }: { slug: string }) {
                   href={`/store/${slug}/product/${product.id}`}
                   data-testid={`card-product-${product.id}`}
                 >
-                  <div className="bg-white group cursor-pointer">
+                  <div className="bg-white dark:bg-zinc-900 group cursor-pointer">
                     {/* Image */}
-                    <div className="aspect-[3/4] overflow-hidden bg-zinc-50 relative">
+                    <div className="aspect-[3/4] overflow-hidden bg-zinc-50 dark:bg-zinc-800 relative">
                       {product.imageUrls?.[0] ? (
                         <BlurImage
                           src={getApiUrl(product.imageUrls[0])}
                           alt={product.name}
                           className="group-hover:scale-[1.03] transition-transform duration-700 ease-out"
                           fallback={
-                            <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-zinc-100">
-                              <span className="text-5xl font-serif text-zinc-300 select-none">{product.name.charAt(0)}</span>
-                              <span className="text-[9px] tracking-widest uppercase text-zinc-300">بدون صورة</span>
+                            <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-zinc-100 dark:bg-zinc-800">
+                              <span className="text-5xl font-serif text-zinc-300 dark:text-zinc-600 select-none">{product.name.charAt(0)}</span>
+                              <span className="text-[9px] tracking-widest uppercase text-zinc-300 dark:text-zinc-600">بدون صورة</span>
                             </div>
                           }
                         />
                       ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-zinc-100">
-                          <span className="text-5xl font-serif text-zinc-300 select-none">
+                        <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-zinc-100 dark:bg-zinc-800">
+                          <span className="text-5xl font-serif text-zinc-300 dark:text-zinc-600 select-none">
                             {product.name.charAt(0)}
                           </span>
-                          <span className="text-[9px] tracking-widest uppercase text-zinc-300">بدون صورة</span>
+                          <span className="text-[9px] tracking-widest uppercase text-zinc-300 dark:text-zinc-600">بدون صورة</span>
                         </div>
                       )}
-                      {/* Hover overlay */}
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300" />
-                      {/* New badge */}
                       {product.createdAt && (Date.now() - new Date(product.createdAt).getTime()) < 7 * 24 * 60 * 60 * 1000 && (
-                        <div className="absolute top-2 left-2 bg-white text-zinc-900 text-[9px] tracking-widest uppercase px-2 py-1 shadow-sm">
+                        <div className="absolute top-2 left-2 bg-white dark:bg-zinc-900 dark:text-white text-zinc-900 text-[9px] tracking-widest uppercase px-2 py-1 shadow-sm">
                           جديد
                         </div>
                       )}
-                      {/* Low stock badge */}
                       {(() => {
                         const totalStock = product.variants?.reduce((s, v) => s + (v.stock ?? 0), 0) ?? 0;
                         return totalStock > 0 && totalStock <= 5 ? (
-                          <div className="absolute top-2 right-2 bg-black text-white text-[9px] tracking-widest uppercase px-2 py-1">
+                          <div className="absolute top-2 right-2 bg-black dark:bg-white dark:text-zinc-900 text-white text-[9px] tracking-widest uppercase px-2 py-1">
                             متبقي {totalStock} فقط
                           </div>
                         ) : null;
                       })()}
-                      {/* Wishlist button */}
                       <button
                         onClick={(e) => handleWishlist(e, product)}
                         aria-label={isWishlisted(product.id) ? 'إزالة من المفضلة' : 'أضف للمفضلة'}
                         className={`absolute bottom-2 left-2 z-10 flex items-center gap-1.5 text-[10px] tracking-widest uppercase px-3 py-1.5 shadow-sm transition-colors ${
                           isWishlisted(product.id)
                             ? 'bg-[hsl(var(--primary))] text-white'
-                            : 'bg-white text-zinc-900 hover:bg-[hsl(var(--primary))] hover:text-white'
+                            : 'bg-white dark:bg-zinc-900 dark:text-white text-zinc-900 hover:bg-[hsl(var(--primary))] hover:text-white'
                         }`}
                       >
                         <Heart className={`w-3 h-3 ${isWishlisted(product.id) ? 'fill-current' : ''}`} />
                         {isWishlisted(product.id) ? 'محفوظ' : 'مفضلة'}
                       </button>
-                      {/* Compare button */}
                       <button
                         onClick={(e) => handleCompare(e, product)}
                         aria-label={isInCompare(product.id) ? 'إزالة من المقارنة' : 'إضافة للمقارنة'}
                         className={`absolute bottom-2 right-2 z-10 flex items-center gap-1.5 text-[10px] tracking-widest uppercase px-3 py-1.5 shadow-sm transition-colors ${
                           isInCompare(product.id)
                             ? 'bg-[hsl(var(--primary))] text-white'
-                            : 'bg-white text-zinc-900 hover:bg-[hsl(var(--primary))] hover:text-white'
+                            : 'bg-white dark:bg-zinc-900 dark:text-white text-zinc-900 hover:bg-[hsl(var(--primary))] hover:text-white'
                         }`}
                       >
                         {isInCompare(product.id) ? (
@@ -492,10 +479,9 @@ export default function StoreHome({ slug }: { slug: string }) {
                         )}
                         {isInCompare(product.id) ? 'مضاف' : 'قارن'}
                       </button>
-                      {/* Add to cart - below price */}
                       <button
                         onClick={(e) => handleAddToCart(e, product)}
-                        className="mt-3 w-full flex items-center justify-center gap-1.5 text-[10px] font-bold tracking-widest uppercase px-3 py-2 bg-gray-900 text-white hover:bg-gray-800 transition-colors"
+                        className="mt-3 w-full flex items-center justify-center gap-1.5 text-[10px] font-bold tracking-widest uppercase px-3 py-2 bg-gray-900 dark:bg-white dark:text-zinc-900 text-white hover:bg-gray-800 dark:hover:bg-zinc-200 transition-colors"
                       >
                         <ShoppingBag className="w-3 h-3" />
                         أضف للسلة
@@ -504,14 +490,14 @@ export default function StoreHome({ slug }: { slug: string }) {
 
                     {/* Info */}
                     <div className="p-4 pb-5">
-                      <p className="text-[10px] uppercase tracking-[0.18em] text-zinc-400 mb-1">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-zinc-400 dark:text-zinc-500 mb-1">
                         {getCategoryLabel(product.category)}
                       </p>
-                      <h3 className="text-sm font-medium text-zinc-900 leading-snug line-clamp-1 font-serif">
+                      <h3 className="text-sm font-medium text-zinc-900 dark:text-white leading-snug line-clamp-1 font-serif">
                         {product.name}
                       </h3>
                       <div className="mt-2 flex items-center gap-2">
-                        <span className="text-sm text-zinc-700">
+                        <span className="text-sm text-zinc-700 dark:text-zinc-300">
                           {hasMultipleVariants ? 'من ' : ''}{formatPrice(minPrice)}
                         </span>
                       </div>
@@ -528,23 +514,23 @@ export default function StoreHome({ slug }: { slug: string }) {
       {filterOpen && (
         <div className="fixed inset-0 z-50 flex lg:hidden">
           <div className="flex-1 bg-black/40" onClick={() => setFilterOpen(false)} />
-          <div className="w-72 bg-white h-full shadow-2xl flex flex-col p-8 gap-8 overflow-y-auto">
+          <div className="w-72 bg-white dark:bg-zinc-900 h-full shadow-2xl flex flex-col p-8 gap-8 overflow-y-auto">
             <div className="flex items-center justify-between">
-              <p className="text-xs uppercase tracking-widest font-medium text-zinc-500">التصفية</p>
+              <p className="text-xs uppercase tracking-widest font-medium text-zinc-500 dark:text-zinc-400">التصفية</p>
               <button onClick={() => setFilterOpen(false)} className="text-zinc-400 hover:text-primary">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 mb-4">التصنيف</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 mb-4">التصنيف</p>
               <ul className="flex flex-col gap-1">
                 {CATEGORIES.map(({ value, label }) => (
                   <li key={value}>
                     <button
                       onClick={() => { handleCategory(value); setFilterOpen(false); }}
-                      className={`text-sm w-full text-right py-2 border-b border-zinc-50 transition-colors ${
-                        activeCategory === value ? 'text-primary font-semibold' : 'text-zinc-400'
+                      className={`text-sm w-full text-right py-2 border-b border-zinc-50 dark:border-zinc-800 transition-colors ${
+                        activeCategory === value ? 'text-primary font-semibold' : 'text-zinc-400 dark:text-zinc-500'
                       }`}
                     >
                       {label}
@@ -555,7 +541,7 @@ export default function StoreHome({ slug }: { slug: string }) {
             </div>
 
             <div>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 mb-4">الترتيب</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 mb-4">الترتيب</p>
               <ul className="flex flex-col gap-1">
                 {[
                   { value: 'default', label: 'الافتراضي' },
@@ -565,8 +551,8 @@ export default function StoreHome({ slug }: { slug: string }) {
                   <li key={value}>
                     <button
                       onClick={() => { setSortBy(value as typeof sortBy); setFilterOpen(false); }}
-                      className={`text-sm w-full text-right py-2 border-b border-zinc-50 transition-colors ${
-                        sortBy === value ? 'text-primary font-semibold' : 'text-zinc-400'
+                      className={`text-sm w-full text-right py-2 border-b border-zinc-50 dark:border-zinc-800 transition-colors ${
+                        sortBy === value ? 'text-primary font-semibold' : 'text-zinc-400 dark:text-zinc-500'
                       }`}
                     >
                       {label}
@@ -577,7 +563,7 @@ export default function StoreHome({ slug }: { slug: string }) {
             </div>
 
             <div>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 mb-4">السعر</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 mb-4">السعر</p>
               <div className="flex items-center gap-2 mb-3">
                 <input
                   type="number"
@@ -588,9 +574,9 @@ export default function StoreHome({ slug }: { slug: string }) {
                   placeholder={priceBounds.min ? formatPrice(priceBounds.min) : 'من'}
                   value={priceMin}
                   onChange={(e) => setPriceMin(e.target.value)}
-                  className="w-full text-sm border border-zinc-200 rounded px-2 py-2 outline-none focus:border-primary placeholder:text-zinc-300"
+                  className="w-full text-sm border border-zinc-200 dark:border-zinc-700 bg-transparent rounded px-2 py-2 outline-none focus:border-primary placeholder:text-zinc-300 dark:placeholder:text-zinc-600 dark:text-zinc-300"
                 />
-                <span className="text-zinc-300 text-sm">–</span>
+                <span className="text-zinc-300 dark:text-zinc-600 text-sm">–</span>
                 <input
                   type="number"
                   inputMode="numeric"
@@ -600,7 +586,7 @@ export default function StoreHome({ slug }: { slug: string }) {
                   placeholder={priceBounds.max ? formatPrice(priceBounds.max) : 'إلى'}
                   value={priceMax}
                   onChange={(e) => setPriceMax(e.target.value)}
-                  className="w-full text-sm border border-zinc-200 rounded px-2 py-2 outline-none focus:border-primary placeholder:text-zinc-300"
+                  className="w-full text-sm border border-zinc-200 dark:border-zinc-700 bg-transparent rounded px-2 py-2 outline-none focus:border-primary placeholder:text-zinc-300 dark:placeholder:text-zinc-600 dark:text-zinc-300"
                 />
               </div>
               {hasPriceFilter && (

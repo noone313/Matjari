@@ -57,17 +57,17 @@ function StepIndicator({ current }: { current: number }) {
         return (
           <React.Fragment key={step.label}>
             {i > 0 && (
-              <div className={`flex-1 h-0.5 mx-1 rounded-full transition-colors duration-300 ${done ? 'bg-[hsl(var(--primary))]' : 'bg-gray-200'}`} />
+              <div className={`flex-1 h-0.5 mx-1 rounded-full transition-colors duration-300 ${done ? 'bg-[hsl(var(--primary))]' : 'bg-gray-200 dark:bg-zinc-700'}`} />
             )}
             <div className="flex flex-col items-center gap-1.5 min-w-[60px]">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
                 done ? 'bg-[hsl(var(--primary))] text-white' :
                 active ? 'bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] ring-2 ring-[hsl(var(--primary))]' :
-                'bg-gray-100 text-gray-400'
+                'bg-gray-100 dark:bg-zinc-800 text-gray-400 dark:text-zinc-500'
               }`}>
                 {done ? <CheckCircle2 className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
               </div>
-              <span className={`text-xs font-medium ${active ? 'text-[hsl(var(--primary))]' : done ? 'text-gray-700' : 'text-gray-400'}`}>
+              <span className={`text-xs font-medium ${active ? 'text-[hsl(var(--primary))]' : done ? 'text-gray-700 dark:text-zinc-300' : 'text-gray-400 dark:text-zinc-500'}`}>
                 {step.label}
               </span>
             </div>
@@ -154,11 +154,11 @@ export default function StoreCheckout({ slug }: { slug: string }) {
   if (items.length === 0) {
     return (
       <div className="py-24 text-center max-w-md mx-auto">
-        <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-6">
-          <ShoppingCart className="w-10 h-10 text-gray-300" />
+        <div className="w-20 h-20 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-6">
+          <ShoppingCart className="w-10 h-10 text-gray-300 dark:text-zinc-600" />
         </div>
-        <h2 className="text-xl font-bold font-serif text-gray-900 mb-2">سلة التسوق فارغة</h2>
-        <p className="text-gray-500 mb-8 text-sm leading-relaxed">لم تقم بإضافة أي منتجات بعد. تصفح المتجر واكتشف العروض المميزة.</p>
+        <h2 className="text-xl font-bold font-serif text-gray-900 dark:text-white mb-2">سلة التسوق فارغة</h2>
+        <p className="text-gray-500 dark:text-zinc-400 mb-8 text-sm leading-relaxed">لم تقم بإضافة أي منتجات بعد. تصفح المتجر واكتشف العروض المميزة.</p>
         <Link href={`/store/${slug}`}>
           <Button className="h-12 px-8" style={{ backgroundColor: 'hsl(var(--primary))' }}>تصفح المتجر</Button>
         </Link>
@@ -206,26 +206,26 @@ export default function StoreCheckout({ slug }: { slug: string }) {
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         <div className="space-y-8">
-          <div className="bg-white p-6 md:p-8 rounded-xl shadow-sm border border-gray-100 space-y-6">
-            <h2 className="text-xl font-bold font-serif text-gray-900 border-b border-gray-100 pb-4">معلومات التوصيل</h2>
+          <div className="bg-white dark:bg-zinc-900 p-6 md:p-8 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-800 space-y-6">
+            <h2 className="text-xl font-bold font-serif text-gray-900 dark:text-white border-b border-gray-100 dark:border-zinc-800 pb-4">معلومات التوصيل</h2>
             
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>الاسم الكامل</Label>
-                <Input {...form.register('customerName')} className="h-12 bg-gray-50" />
+                <Input {...form.register('customerName')} className="h-12 bg-gray-50 dark:bg-zinc-800" />
                 {form.formState.errors.customerName && <p className="text-sm text-red-500">{form.formState.errors.customerName.message}</p>}
               </div>
 
               <div className="space-y-2">
                 <Label>رقم الهاتف</Label>
-                <Input {...form.register('customerPhone')} className="h-12 bg-gray-50 text-left" dir="ltr" placeholder="07..." />
+                <Input {...form.register('customerPhone')} className="h-12 bg-gray-50 dark:bg-zinc-800 text-left" dir="ltr" placeholder="07..." />
                 {form.formState.errors.customerPhone && <p className="text-sm text-red-500">{form.formState.errors.customerPhone.message}</p>}
               </div>
 
               <div className="space-y-2">
                 <Label>المحافظة</Label>
                 <Select value={form.watch('governorate')} onValueChange={(val) => form.setValue('governorate', val)}>
-                  <SelectTrigger className="h-12 bg-gray-50">
+                  <SelectTrigger className="h-12 bg-gray-50 dark:bg-zinc-800">
                     <SelectValue placeholder="اختر المحافظة" />
                   </SelectTrigger>
                   <SelectContent className="max-h-56">{IRAQI_GOVERNORATES.map((g) => (
@@ -238,80 +238,80 @@ export default function StoreCheckout({ slug }: { slug: string }) {
 
               <div className="space-y-2">
                 <Label>المنطقة / القضاء</Label>
-                <Input {...form.register('district')} className="h-12 bg-gray-50" placeholder="مثال: المنصور، الكرادة، الحקיבية" />
+                <Input {...form.register('district')} className="h-12 bg-gray-50 dark:bg-zinc-800" placeholder="مثال: المنصور، الكرادة، الحקיבية" />
                 {form.formState.errors.district && <p className="text-sm text-red-500">{form.formState.errors.district.message}</p>}
               </div>
 
               <div className="space-y-2">
                 <Label>الشارع / المبنى / أقرب نقطة دالة</Label>
-                <Input {...form.register('street')} className="h-12 bg-gray-50" placeholder="شارع 14 رمضان، عمارة 25، بجوار..." />
+                <Input {...form.register('street')} className="h-12 bg-gray-50 dark:bg-zinc-800" placeholder="شارع 14 رمضان، عمارة 25، بجوار..." />
                 {form.formState.errors.street && <p className="text-sm text-red-500">{form.formState.errors.street.message}</p>}
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-6 md:p-8 rounded-xl shadow-sm border border-gray-100 space-y-6">
-            <h2 className="text-xl font-bold font-serif text-gray-900 border-b border-gray-100 pb-4">طريقة الدفع</h2>
+          <div className="bg-white dark:bg-zinc-900 p-6 md:p-8 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-800 space-y-6">
+            <h2 className="text-xl font-bold font-serif text-gray-900 dark:text-white border-b border-gray-100 dark:border-zinc-800 pb-4">طريقة الدفع</h2>
             
             <div className="space-y-3">
-              <label className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-colors ${paymentMethod === 'cod' ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5' : 'border-gray-200 hover:bg-gray-50'}`}>
+              <label className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-colors ${paymentMethod === 'cod' ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5' : 'border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800'}`}>
                 <input type="radio" value="cod" {...form.register('paymentMethod')} className="w-5 h-5 accent-[hsl(var(--primary))]" />
-                <Banknote className={`w-6 h-6 ${paymentMethod === 'cod' ? 'text-[hsl(var(--primary))]' : 'text-gray-400'}`} />
-                <span className="font-bold text-gray-900">الدفع عند الاستلام</span>
+                <Banknote className={`w-6 h-6 ${paymentMethod === 'cod' ? 'text-[hsl(var(--primary))]' : 'text-gray-400 dark:text-zinc-500'}`} />
+                <span className="font-bold text-gray-900 dark:text-white">الدفع عند الاستلام</span>
               </label>
 
-              <label className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-colors ${paymentMethod === 'bank' ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5' : 'border-gray-200 hover:bg-gray-50'}`}>
+              <label className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-colors ${paymentMethod === 'bank' ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5' : 'border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800'}`}>
                 <input type="radio" value="bank" {...form.register('paymentMethod')} className="w-5 h-5 accent-[hsl(var(--primary))]" />
-                <CreditCard className={`w-6 h-6 ${paymentMethod === 'bank' ? 'text-[hsl(var(--primary))]' : 'text-gray-400'}`} />
-                <span className="font-bold text-gray-900">تحويل مباشر</span>
+                <CreditCard className={`w-6 h-6 ${paymentMethod === 'bank' ? 'text-[hsl(var(--primary))]' : 'text-gray-400 dark:text-zinc-500'}`} />
+                <span className="font-bold text-gray-900 dark:text-white">تحويل مباشر</span>
               </label>
 
               {paymentMethod === 'bank' && store?.bankTransferInfo && (
-                <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-                  <strong className="block mb-2 text-gray-900">معلومات التحويل:</strong>
+                <div className="mt-4 p-4 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg text-sm text-gray-700 dark:text-zinc-300 whitespace-pre-wrap leading-relaxed">
+                  <strong className="block mb-2 text-gray-900 dark:text-white">معلومات التحويل:</strong>
                   {store.bankTransferInfo}
                 </div>
               )}
             </div>
           </div>
 
-          <div className="bg-pink-50/50 p-6 md:p-8 rounded-xl shadow-sm border border-pink-100 space-y-4">
+          <div className="bg-pink-50/50 dark:bg-pink-900/10 p-6 md:p-8 rounded-xl shadow-sm border border-pink-100 dark:border-pink-900/30 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-bold text-pink-900">إرسال كهدية؟</h3>
-                <p className="text-sm text-pink-700 mt-1">سنقوم بتغليف الطلب كهدية مميزة</p>
+                <h3 className="font-bold text-pink-900 dark:text-pink-300">إرسال كهدية؟</h3>
+                <p className="text-sm text-pink-700 dark:text-pink-400 mt-1">سنقوم بتغليف الطلب كهدية مميزة</p>
               </div>
               <Switch checked={isGift} onCheckedChange={(val) => form.setValue('isGift', val)} />
             </div>
 
             {isGift && (
               <div className="pt-4 animate-in fade-in slide-in-from-top-2">
-                <Label className="text-pink-900">رسالة الإهداء (اختياري)</Label>
-                <Textarea {...form.register('giftMessage')} className="mt-2 border-pink-200 focus-visible:ring-pink-500 bg-white" rows={2} placeholder="اكتب رسالتك هنا..." />
+                <Label className="text-pink-900 dark:text-pink-300">رسالة الإهداء (اختياري)</Label>
+                <Textarea {...form.register('giftMessage')} className="mt-2 border-pink-200 dark:border-pink-900/30 focus-visible:ring-pink-500 bg-white dark:bg-zinc-900" rows={2} placeholder="اكتب رسالتك هنا..." />
               </div>
             )}
           </div>
         </div>
 
         <div className="lg:sticky lg:top-24 h-fit">
-          <div className="bg-gray-900 text-white p-6 md:p-8 rounded-xl shadow-lg space-y-6">
-            <h2 className="text-xl font-bold font-serif border-b border-gray-800 pb-4">ملخص الطلب</h2>
+          <div className="bg-gray-900 dark:bg-zinc-100 text-white dark:text-zinc-900 p-6 md:p-8 rounded-xl shadow-lg space-y-6">
+            <h2 className="text-xl font-bold font-serif border-b border-gray-800 dark:border-zinc-300 pb-4">ملخص الطلب</h2>
             
             <div className="space-y-4 max-h-[40vh] overflow-y-auto scrollbar-hide pr-2">
               {items.map(item => (
                 <div key={cartItemKey(item)} className="flex justify-between text-sm">
                   <div className="flex gap-3">
-                    <span className="text-gray-400">{item.quantity}×</span>
+                    <span className="text-gray-400 dark:text-zinc-500">{item.quantity}×</span>
                     <div>
-                      <div className="font-medium text-gray-100 flex items-center gap-2">
+                      <div className="font-medium text-gray-100 dark:text-zinc-900 flex items-center gap-2">
                         {item.productName}
                         {item.bundleId !== undefined && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-800 text-gray-300">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-800 dark:bg-zinc-200 text-gray-300 dark:text-zinc-700">
                             <Gift className="w-3 h-3" /> باقة
                           </span>
                         )}
                       </div>
-                      <div className="text-gray-500 text-xs">{item.variantLabel}</div>
+                      <div className="text-gray-500 dark:text-zinc-500 text-xs">{item.variantLabel}</div>
                     </div>
                   </div>
                   <span className="font-medium">{formatPrice(item.price * item.quantity)}</span>
@@ -320,33 +320,33 @@ export default function StoreCheckout({ slug }: { slug: string }) {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-gray-400 text-xs">كود الخصم</Label>
+              <Label className="text-gray-400 dark:text-zinc-500 text-xs">كود الخصم</Label>
               <Input
                 value={discountInput}
                 onChange={(e) => { setDiscountInput(e.target.value); setDiscountMessage(null); }}
                 placeholder="أدخل الكود هنا"
-                className="h-11 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 text-left"
+                className="h-11 bg-gray-800 dark:bg-white dark:text-zinc-900 border-gray-700 dark:border-zinc-300 text-white placeholder:text-gray-500 dark:placeholder:text-zinc-400 text-left"
                 dir="ltr"
               />
               {discountChecking && !discountMessage && (
-                <p className="text-xs text-gray-400">جاري التحقق...</p>
+                <p className="text-xs text-gray-400 dark:text-zinc-500">جاري التحقق...</p>
               )}
               {discountMessage?.type === 'valid' && (
-                <p className="text-xs text-green-400 flex items-center gap-1.5">
+                <p className="text-xs text-green-400 dark:text-green-600 flex items-center gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   {discountMessage.text}
                 </p>
               )}
               {discountMessage?.type === 'invalid' && (
-                <p className="text-xs text-red-400 flex items-center gap-1.5">
+                <p className="text-xs text-red-400 dark:text-red-500 flex items-center gap-1.5">
                   <XCircle className="w-3.5 h-3.5" />
                   {discountMessage.text}
                 </p>
               )}
             </div>
 
-            <div className="pt-6 border-t border-gray-800 space-y-3 text-sm">
-              <div className="flex justify-between text-gray-400">
+            <div className="pt-6 border-t border-gray-800 dark:border-zinc-300 space-y-3 text-sm">
+              <div className="flex justify-between text-gray-400 dark:text-zinc-500">
                 <span>المجموع الفرعي</span>
                 <span>{formatPrice(subtotal)}</span>
               </div>
@@ -359,15 +359,15 @@ export default function StoreCheckout({ slug }: { slug: string }) {
               )}
             </div>
 
-            <div className="pt-4 border-t border-gray-800">
-              <div className="flex justify-between text-xl font-bold text-white mb-6">
+            <div className="pt-4 border-t border-gray-800 dark:border-zinc-300">
+              <div className="flex justify-between text-xl font-bold text-white dark:text-zinc-900 mb-6">
                 <span>الإجمالي</span>
                 <span className="text-[hsl(var(--primary))]">{formatPrice(total)}</span>
               </div>
               
               <Button
                 type="submit"
-                className="w-full h-14 text-lg font-bold bg-white text-gray-900 hover:bg-gray-100 transition-all"
+                className="w-full h-14 text-lg font-bold bg-white dark:bg-zinc-900 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all"
                 disabled={placeOrder.isPending}
               >
                 {placeOrder.isPending ? (
@@ -381,7 +381,7 @@ export default function StoreCheckout({ slug }: { slug: string }) {
               </Button>
             </div>
             
-            <div className="text-center text-xs text-gray-500 mt-4 flex items-center justify-center gap-1">
+            <div className="text-center text-xs text-gray-500 dark:text-zinc-500 mt-4 flex items-center justify-center gap-1">
               <AlertCircle className="w-3 h-3" />
               بإتمامك للطلب، أنت توافق على شروط وأحكام المتجر
             </div>

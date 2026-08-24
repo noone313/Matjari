@@ -12,7 +12,6 @@ export default function StoreConfirmation() {
   const [showContent, setShowContent] = useState(false);
 
   useEffect(() => {
-    // Reveal content after seal animation
     const timer = setTimeout(() => setShowContent(true), 1200);
     return () => clearTimeout(timer);
   }, []);
@@ -34,7 +33,6 @@ export default function StoreConfirmation() {
           {store?.storeName?.charAt(0) || 'M'}
         </div>
         
-        {/* Decorative inner circle */}
         <div 
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full border border-dashed border-white/40 z-20 pointer-events-none"
           style={{ animation: 'fadeIn 0.5s ease-out 0.8s forwards', opacity: 0 }}
@@ -53,20 +51,20 @@ export default function StoreConfirmation() {
       `}} />
 
       <div className={`text-center space-y-6 max-w-lg transition-all duration-700 ease-out transform ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 text-green-600 mb-2">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 mb-2">
           <Check className="w-6 h-6" />
         </div>
         
-        <h1 className="text-4xl font-bold font-serif text-gray-900">تم تأكيد طلبك!</h1>
+        <h1 className="text-4xl font-bold font-serif text-gray-900 dark:text-white">تم تأكيد طلبك!</h1>
         
-        <p className="text-lg text-gray-600 leading-relaxed">
-          شكراً لتسوقك من <strong className="text-gray-900 font-serif">{store?.storeName}</strong>. لقد تلقينا طلبك بنجاح وسنقوم بتجهيزه قريباً.
+        <p className="text-lg text-gray-600 dark:text-zinc-400 leading-relaxed">
+          شكراً لتسوقك من <strong className="text-gray-900 dark:text-white font-serif">{store?.storeName}</strong>. لقد تلقينا طلبك بنجاح وسنقوم بتجهيزه قريباً.
         </p>
 
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mt-8 inline-block text-right">
-          <div className="text-sm text-gray-500 mb-1">رقم الطلب</div>
-          <div className="text-2xl font-bold font-mono text-gray-900 mb-4">#{orderId}</div>
-          <p className="text-sm text-gray-600 mb-4">يرجى الاحتفاظ برقم الطلب للمراجعة.</p>
+        <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm mt-8 inline-block text-right">
+          <div className="text-sm text-gray-500 dark:text-zinc-400 mb-1">رقم الطلب</div>
+          <div className="text-2xl font-bold font-mono text-gray-900 dark:text-white mb-4">#{orderId}</div>
+          <p className="text-sm text-gray-600 dark:text-zinc-400 mb-4">يرجى الاحتفاظ برقم الطلب للمراجعة.</p>
         </div>
 
         <div className="pt-8 flex items-center justify-center gap-3">
@@ -76,7 +74,7 @@ export default function StoreConfirmation() {
             </Button>
           </Link>
           <Link href={`/store/${slug}`}>
-            <Button variant="outline" className="h-12 px-8 font-bold border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900">
+            <Button variant="outline" className="h-12 px-8 font-bold border-gray-300 dark:border-zinc-600 text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-white">
               العودة للمتجر
             </Button>
           </Link>
