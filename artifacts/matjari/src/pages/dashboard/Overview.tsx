@@ -4,6 +4,7 @@ import { formatPrice, getStatusLabel, getStatusColor } from '@/lib/utils';
 import { Package, TrendingUp, ShoppingBag, DollarSign, AlertTriangle } from 'lucide-react';
 import { Link } from 'wouter';
 import { StatCardsSkeleton } from '@/components/skeletons';
+import OnboardingChecklist from './OnboardingChecklist';
 
 export default function Overview() {
   const { data: stats, isLoading } = useGetDashboardStats();
@@ -13,10 +14,14 @@ export default function Overview() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h2 className="text-3xl font-bold text-gray-900 font-serif">نظرة عامة</h2>
-        <p className="text-gray-500 mt-1">أداء متجرك خلال هذا الشهر</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900 font-serif">نظرة عامة</h2>
+          <p className="text-gray-500 mt-1">أداء متجرك خلال هذا الشهر</p>
+        </div>
       </div>
+
+      <OnboardingChecklist />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm flex flex-col">
