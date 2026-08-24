@@ -11,6 +11,7 @@ import {
   clearSessionCookie,
   type AuthRequest,
 } from "../middleware/auth";
+import { sendPasswordResetEmail } from "../lib/email";
 import {
   RegisterMerchantBody,
   LoginMerchantBody,
@@ -280,9 +281,13 @@ router.post("/forgot-password", async (req, res): Promise<void> => {
     })
     .where(eq(merchantsTable.id, merchant.id));
 
-  // In production, send an email. For now, log the token for development.
-  const resetUrl = `${process.env.FRONTEND_URL || "https://workspacematjari-staging.up.railway.app"}/reset-password?token=${resetToken}`;
-  console.log(`[PASSWORD RESET] ${merchant.email}: ${resetUrl}`);
+  // Send reset email via Resend. Falls back to console.log if RESEND_API_KEY
+  // is not set (development mode).
+  try {
+    await sendPasswordResetEmail(merchant.email, resetToken);
+  } catch {
+    // Email send failed — but we still return success to prevent enumeration.
+  }
 
   res.json({ message: "إذا كان البريد مسجلاً، ستتلقى رسالة لإعادة تعيين كلمة المرور" });
 });
