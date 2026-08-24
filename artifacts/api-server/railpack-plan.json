@@ -1,0 +1,8 @@
+{
+  "$schema": "https://railpack.com/config/schema.json",
+  "provider": "node",
+  "packager": "pnpm",
+  "deploy": {
+    "startCommand": "node --enable-source-maps ./dist/index.mjs"
+  }
+}
