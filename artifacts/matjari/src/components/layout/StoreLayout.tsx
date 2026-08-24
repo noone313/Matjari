@@ -34,14 +34,13 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
   }
 
   const isHome = location === `/store/${slug}` || location === `/store/${slug}/`;
-  // نخفي الشريط السفلي في صفحة الدفع لتجنب تشتيت المستخدم أثناء إتمام الطلب
   const isCheckout = location.includes('/checkout');
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans flex flex-col">
       {/* ── Announcement bar ─────────────────── */}
       {store.phone && (
-        <div className="bg-zinc-900 text-white text-xs tracking-widest text-center py-2.5 flex items-center justify-center gap-2">
+        <div className="bg-zinc-900 dark:bg-zinc-800 text-white text-xs tracking-widest text-center py-2.5 flex items-center justify-center gap-2">
           <Phone className="w-3 h-3" />
           <span>{store.phone}</span>
         </div>
@@ -54,7 +53,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
           <div className="w-16 flex-shrink-0 md:hidden flex items-center justify-center">
             <button
               onClick={() => setMenuOpen(true)}
-              className="p-1 text-zinc-500 hover:text-zinc-900 transition-colors"
+              className="p-1 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors"
               aria-label="القائمة"
             >
               <Menu className="w-5 h-5" />
@@ -74,38 +73,38 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
             <ThemeToggle />
             <Link
               href={`/store/${slug}/track`}
-              className="hidden md:inline-flex items-center gap-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900 transition-colors whitespace-nowrap"
+              className="hidden md:inline-flex items-center gap-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors whitespace-nowrap"
             >
               <PackageSearch className="w-4 h-4" />
               تتبع طلبك
             </Link>
             <Link
               href={`/store/${slug}/track`}
-              className="md:hidden p-0.5 text-zinc-600 hover:text-zinc-900 transition-colors"
+              className="md:hidden p-0.5 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors"
               aria-label="تتبع طلبك"
             >
               <PackageSearch className="w-4 h-4" />
             </Link>
             <Link
               href={`/store/${slug}/wishlist`}
-              className="relative p-0.5 text-zinc-600 hover:text-zinc-900 transition-colors"
+              className="relative p-0.5 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors"
               aria-label="المفضلة"
             >
               <Heart className="w-4 h-4" />
               {wishlistCount > 0 && (
-                <span className="absolute -top-1 -left-1 w-3.5 h-3.5 bg-zinc-900 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                <span className="absolute -top-1 -left-1 w-3.5 h-3.5 bg-zinc-900 dark:bg-white dark:text-zinc-900 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                   {wishlistCount}
                 </span>
               )}
             </Link>
             <Link
               href={`/store/${slug}/cart`}
-              className="relative p-0.5 text-zinc-600 hover:text-zinc-900 transition-colors"
+              className="relative p-0.5 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors"
               aria-label="السلة"
             >
               <ShoppingBag className="w-4 h-4" />
               {itemCount > 0 && (
-                <span className="absolute -top-1 -left-1 w-3.5 h-3.5 bg-zinc-900 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                <span className="absolute -top-1 -left-1 w-3.5 h-3.5 bg-zinc-900 dark:bg-white dark:text-zinc-900 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                   {itemCount}
                 </span>
               )}
@@ -127,14 +126,14 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
             <Link
               key={cat}
               href={`/store/${slug}${cat ? `?cat=${cat}` : ''}`}
-              className="text-xs tracking-widest uppercase py-3 border-b-2 border-transparent hover:border-zinc-900 hover:text-zinc-900 text-zinc-500 transition-all whitespace-nowrap"
+              className="text-xs tracking-widest uppercase py-3 border-b-2 border-transparent hover:border-zinc-900 hover:text-zinc-900 dark:hover:border-white dark:hover:text-white text-zinc-500 dark:text-zinc-400 transition-all whitespace-nowrap"
             >
               {label}
             </Link>
           ))}
           <Link
             href={`/store/${slug}/track`}
-            className="text-xs tracking-widest uppercase py-3 border-b-2 border-transparent hover:border-zinc-900 hover:text-zinc-900 text-zinc-500 transition-all whitespace-nowrap"
+            className="text-xs tracking-widest uppercase py-3 border-b-2 border-transparent hover:border-zinc-900 hover:text-zinc-900 dark:hover:border-white dark:hover:text-white text-zinc-500 dark:text-zinc-400 transition-all whitespace-nowrap"
           >
             تتبع طلبك
           </Link>
@@ -151,13 +150,13 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
           <div className="w-72 bg-background h-full shadow-2xl flex flex-col p-8 gap-6 overflow-y-auto">
             <button
               onClick={() => setMenuOpen(false)}
-              className="self-start p-1 text-zinc-400 hover:text-zinc-900"
+              className="self-start p-1 text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
             >
               <X className="w-5 h-5" />
             </button>
             <div className="font-serif font-bold text-2xl">{store.storeName}</div>
             {store.description && (
-              <p className="text-sm text-zinc-500 leading-relaxed">{store.description}</p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">{store.description}</p>
             )}
             <nav className="flex flex-col gap-4 mt-4">
               {[
@@ -173,7 +172,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
                   key={cat}
                   href={`/store/${slug}${cat ? `?cat=${cat}` : ''}`}
                   onClick={() => setMenuOpen(false)}
-                  className="text-sm tracking-widest uppercase text-zinc-700 hover:text-zinc-900 transition-colors py-1 border-b border-zinc-100"
+                  className="text-sm tracking-widest uppercase text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white transition-colors py-1 border-b border-zinc-100 dark:border-zinc-700"
                 >
                   {label}
                 </Link>
@@ -181,7 +180,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
               <Link
                 href={`/store/${slug}/track`}
                 onClick={() => setMenuOpen(false)}
-                className="text-sm tracking-widest uppercase text-zinc-700 hover:text-zinc-900 transition-colors py-1 border-b border-zinc-100"
+                className="text-sm tracking-widest uppercase text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white transition-colors py-1 border-b border-zinc-100 dark:border-zinc-700"
               >
                 تتبع طلبك
               </Link>
@@ -194,7 +193,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
       {isHome && store.heroEnabled && store.heroSlides?.length ? (
         <HeroCarousel slides={store.heroSlides} storeName={store.storeName} />
       ) : isHome && store.bannerUrl ? (
-        <div className="relative h-[55vh] min-h-[320px] w-full overflow-hidden bg-zinc-100">
+        <div className="relative h-[55vh] min-h-[320px] w-full overflow-hidden bg-zinc-100 dark:bg-zinc-900">
           <img
             src={store.bannerUrl}
             alt={store.storeName}
@@ -218,15 +217,15 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
 
       {/* ── Footer ───────────────────────────── */}
       <footer className="border-t border-border mt-16">
-        <div className="max-w-screen-xl mx-auto px-6 pt-12 pb-28 md:pb-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 text-sm text-zinc-400">
+        <div className="max-w-screen-xl mx-auto px-6 pt-12 pb-28 md:pb-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 text-sm text-zinc-400 dark:text-zinc-500">
           <div>
-            <p className="font-serif font-bold text-zinc-900 text-base mb-1">{store.storeName}</p>
+            <p className="font-serif font-bold text-zinc-900 dark:text-white text-base mb-1">{store.storeName}</p>
             {store.description && (
               <p className="max-w-xs leading-relaxed">{store.description}</p>
             )}
           </div>
           {store.phone && (
-            <a href={`tel:${store.phone}`} className="flex items-center gap-2 hover:text-zinc-900 transition-colors">
+            <a href={`tel:${store.phone}`} className="flex items-center gap-2 hover:text-zinc-900 dark:hover:text-white transition-colors">
               <Phone className="w-4 h-4" />
               {store.phone}
             </a>
@@ -239,7 +238,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
                   target="_blank"
                   rel="noreferrer"
                   aria-label="انستقرام"
-                  className="flex items-center gap-2 text-zinc-900 hover:text-primary transition-colors"
+                  className="flex items-center gap-2 text-zinc-900 dark:text-white hover:text-primary transition-colors"
                 >
                   <Instagram className="w-4 h-4" />
                 </a>
@@ -250,7 +249,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
                   target="_blank"
                   rel="noreferrer"
                   aria-label="واتساب"
-                  className="flex items-center gap-2 text-zinc-900 hover:text-primary transition-colors"
+                  className="flex items-center gap-2 text-zinc-900 dark:text-white hover:text-primary transition-colors"
                 >
                   <MessageCircle className="w-4 h-4" />
                 </a>
@@ -259,7 +258,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
           )}
           <p className="text-xs">
             مشغل بواسطة{' '}
-            <span className="font-bold text-zinc-900 font-serif">متجري</span>
+            <span className="font-bold text-zinc-900 dark:text-white font-serif">متجري</span>
           </p>
         </div>
       </footer>
@@ -269,11 +268,11 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
         <Link
           href={`/store/${slug}/compare`}
           aria-label="عرض المقارنة"
-          className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-zinc-900 text-white pl-3 pr-5 py-3 shadow-2xl hover:bg-zinc-800 transition-colors"
+          className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-zinc-900 dark:bg-white dark:text-zinc-900 text-white pl-3 pr-5 py-3 shadow-2xl hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors"
         >
           <span className="relative flex items-center justify-center w-8 h-8 rounded-full bg-[hsl(var(--primary))] text-white">
             <Scale className="w-4 h-4" />
-            <span className="absolute -top-1.5 -left-1.5 min-w-5 h-5 px-1 rounded-full bg-white text-zinc-900 text-[10px] font-bold flex items-center justify-center">
+            <span className="absolute -top-1.5 -left-1.5 min-w-5 h-5 px-1 rounded-full bg-white dark:bg-zinc-900 dark:text-white text-zinc-900 text-[10px] font-bold flex items-center justify-center">
               {comparisonItems.length}
             </span>
           </span>
@@ -295,7 +294,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
             className="fixed bottom-24 md:bottom-6 left-4 md:left-6 z-50 w-14 h-14 rounded-full bg-[#25D366] text-white shadow-xl flex items-center justify-center hover:bg-[#20bc5a] transition-colors group"
           >
             <MessageCircle className="w-7 h-7 fill-white stroke-none" />
-            <span className="absolute right-full ml-3 mr-3 whitespace-nowrap bg-zinc-900 text-white text-xs rounded px-3 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+            <span className="absolute right-full ml-3 mr-3 whitespace-nowrap bg-zinc-900 dark:bg-zinc-700 text-white text-xs rounded px-3 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
               تواصل عبر واتساب
             </span>
           </a>

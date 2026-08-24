@@ -89,41 +89,43 @@ function DashboardRouter() {
 function StoreRouter({ params }: { params: { slug: string } }) {
   const slug = params.slug;
   return (
-    <CartProvider storeSlug={slug}>
-      <ComparisonProvider storeSlug={slug}>
-        <WishlistProvider storeSlug={slug}>
-          <StoreLayout slug={slug}>
-            <Switch>
-              <Route path="/store/:slug">
-                {() => <StoreHome slug={slug} />}
-              </Route>
-              <Route path="/store/:slug/product/:productId">
-                {(p) => <StoreProduct slug={slug} productId={p?.productId ?? ''} />}
-              </Route>
-              <Route path="/store/:slug/compare">
-                {() => <StoreCompare slug={slug} />}
-              </Route>
-              <Route path="/store/:slug/wishlist">
-                {() => <StoreWishlist slug={slug} />}
-              </Route>
-              <Route path="/store/:slug/track">
-                {() => <StoreTrack slug={slug} />}
-              </Route>
-              <Route path="/store/:slug/cart">
-                {() => <StoreCart slug={slug} />}
-              </Route>
-              <Route path="/store/:slug/checkout">
-                {() => <StoreCheckout slug={slug} />}
-              </Route>
-              <Route path="/store/:slug/confirmation/:orderId">
-                {() => <StoreConfirmation />}
-              </Route>
-              <Route component={NotFound} />
-            </Switch>
-          </StoreLayout>
-        </WishlistProvider>
-      </ComparisonProvider>
-    </CartProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange={false}>
+      <CartProvider storeSlug={slug}>
+        <ComparisonProvider storeSlug={slug}>
+          <WishlistProvider storeSlug={slug}>
+            <StoreLayout slug={slug}>
+              <Switch>
+                <Route path="/store/:slug">
+                  {() => <StoreHome slug={slug} />}
+                </Route>
+                <Route path="/store/:slug/product/:productId">
+                  {(p) => <StoreProduct slug={slug} productId={p?.productId ?? ''} />}
+                </Route>
+                <Route path="/store/:slug/compare">
+                  {() => <StoreCompare slug={slug} />}
+                </Route>
+                <Route path="/store/:slug/wishlist">
+                  {() => <StoreWishlist slug={slug} />}
+                </Route>
+                <Route path="/store/:slug/track">
+                  {() => <StoreTrack slug={slug} />}
+                </Route>
+                <Route path="/store/:slug/cart">
+                  {() => <StoreCart slug={slug} />}
+                </Route>
+                <Route path="/store/:slug/checkout">
+                  {() => <StoreCheckout slug={slug} />}
+                </Route>
+                <Route path="/store/:slug/confirmation/:orderId">
+                  {() => <StoreConfirmation />}
+                </Route>
+                <Route component={NotFound} />
+              </Switch>
+            </StoreLayout>
+          </WishlistProvider>
+        </ComparisonProvider>
+      </CartProvider>
+    </ThemeProvider>
   );
 }
 
@@ -158,18 +160,16 @@ function MainRouter() {
 
 function App() {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange={false}>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <TooltipProvider>
-            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-              <MainRouter />
-            </WouterRouter>
-            <Toaster />
-          </TooltipProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+            <MainRouter />
+          </WouterRouter>
+          <Toaster />
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 
