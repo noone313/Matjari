@@ -161,6 +161,8 @@ function MainRouter() {
       {/* Auth pages - handled by DashboardRouter which checks authentication */}
       <Route path="/register" component={DashboardRouter} />
       <Route path="/login" component={DashboardRouter} />
+      <Route path="/forgot-password" component={DashboardRouter} />
+      <Route path="/reset-password" component={DashboardRouter} />
 
       {/* Protected dashboard routes */}
       <Route path="/dashboard/*?" component={DashboardRouter} />
