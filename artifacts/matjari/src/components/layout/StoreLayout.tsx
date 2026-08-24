@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'wouter';
 import { useGetStore, getGetStoreQueryKey } from '@workspace/api-client-react';
 import { useCart } from '@/contexts/CartContext';
 import { useComparison, MAX_COMPARISON } from '@/contexts/ComparisonContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { normalizeWhatsAppNumber } from '@/lib/utils';
-import { ShoppingBag, Menu, X, Phone, MessageCircle, Instagram, Scale, Heart, PackageSearch } from 'lucide-react';
+import { ShoppingBag, X, Phone, MessageCircle, Instagram, Scale, Heart, PackageSearch } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import HeroCarousel from '@/components/store/HeroCarousel';
 import BottomNav from '@/components/layout/BottomNav';
@@ -18,7 +18,6 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
   const { itemCount } = useCart();
   const { items: comparisonItems } = useComparison();
   const { count: wishlistCount } = useWishlist();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [location] = useLocation();
 
   if (isLoading) {
@@ -38,18 +37,20 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans flex flex-col">
+      {/* ── Announcement bar ─────────────────── */}
+      {store.phone && (
+        <div className="bg-zinc-900 dark:bg-zinc-800 text-white text-xs tracking-widest text-center py-2.5 flex items-center justify-center gap-2">
+          <Phone className="w-3 h-3" />
+          <span>{store.phone}</span>
+        </div>
+      )}
+
       {/* ── Navbar ───────────────────────────── */}
       <header className="sticky top-0 z-50 bg-background border-b border-border">
         <div className="max-w-screen-xl mx-auto px-3 h-16 flex items-center">
-          {/* Left: hamburger (mobile only) */}
-          <div className="w-16 flex-shrink-0 md:hidden flex items-center justify-center">
-            <button
-              onClick={() => setMenuOpen(true)}
-              className="p-1 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors"
-              aria-label="القائمة"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
+          {/* Left: ThemeToggle on mobile */}
+          <div className="w-16 flex-shrink-0 flex items-center justify-center md:hidden">
+            <ThemeToggle />
           </div>
 
           {/* Center: store name */}
@@ -62,7 +63,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
 
           {/* Right: actions */}
           <div className="w-16 md:w-auto flex-shrink-0 flex items-center justify-center md:justify-end gap-2 px-2 md:px-0">
-            <ThemeToggle />
+            <span className="hidden md:inline-flex"><ThemeToggle /></span>
             <Link
               href={`/store/${slug}/track`}
               className="hidden md:inline-flex items-center gap-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors whitespace-nowrap"
@@ -131,55 +132,6 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
           </Link>
         </nav>
       </header>
-
-      {/* ── Mobile drawer ────────────────────── */}
-      {menuOpen && (
-        <div className="fixed inset-0 z-50 flex">
-          <div
-            className="flex-1 bg-black/40 backdrop-blur-sm"
-            onClick={() => setMenuOpen(false)}
-          />
-          <div className="w-72 bg-background h-full shadow-2xl flex flex-col p-8 gap-6 overflow-y-auto">
-            <button
-              onClick={() => setMenuOpen(false)}
-              className="self-start p-1 text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <div className="font-serif font-bold text-2xl">{store.storeName}</div>
-            {store.description && (
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">{store.description}</p>
-            )}
-            <nav className="flex flex-col gap-4 mt-4">
-              {[
-                { label: 'كل المنتجات', cat: '' },
-                { label: 'عطور رجالي', cat: 'perfume_men' },
-                { label: 'عطور نسائي', cat: 'perfume_women' },
-                { label: 'عود وبخور', cat: 'oud' },
-                { label: 'عناية بالبشرة', cat: 'skincare' },
-                { label: 'مكياج', cat: 'makeup' },
-                { label: 'هدايا', cat: 'gifts' },
-              ].map(({ label, cat }) => (
-                <Link
-                  key={cat}
-                  href={`/store/${slug}${cat ? `?cat=${cat}` : ''}`}
-                  onClick={() => setMenuOpen(false)}
-                  className="text-sm tracking-widest uppercase text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white transition-colors py-1 border-b border-zinc-100 dark:border-zinc-700"
-                >
-                  {label}
-                </Link>
-              ))}
-              <Link
-                href={`/store/${slug}/track`}
-                onClick={() => setMenuOpen(false)}
-                className="text-sm tracking-widest uppercase text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white transition-colors py-1 border-b border-zinc-100 dark:border-zinc-700"
-              >
-                تتبع طلبك
-              </Link>
-            </nav>
-          </div>
-        </div>
-      )}
 
       {/* ── Hero (only on home) ───────────────── */}
       {isHome && store.heroEnabled && store.heroSlides?.length ? (
@@ -298,7 +250,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
           slug={slug}
           itemCount={itemCount}
           wishlistCount={wishlistCount}
-          onOpenCategories={() => setMenuOpen(true)}
+          onOpenCategories={() => {}}
         />
       )}
     </div>
