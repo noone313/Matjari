@@ -42,7 +42,7 @@ try {
 } catch {
   _baseUrl = null;
 }
-let _authTokenGetter: AuthTokenGetter | null = () => localStorage.getItem("matjari_token");
+let _authTokenGetter: AuthTokenGetter | null = null;
 
 /**
  * Set a base URL that is prepended to every relative request URL
@@ -395,7 +395,7 @@ export async function customFetch<T = unknown>(
 
   const requestInfo = { method, url: resolveUrl(input) };
 
-  const response = await fetch(input, { ...init, method, headers });
+  const response = await fetch(input, { ...init, method, headers, credentials: "include" });
 
   if (!response.ok) {
     const errorData = await parseErrorBody(response, method);

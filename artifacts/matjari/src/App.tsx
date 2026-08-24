@@ -15,6 +15,8 @@ import NotFound from '@/pages/not-found';
 // --- Dashboard Pages ---
 import Login from '@/pages/dashboard/Login';
 import Register from '@/pages/dashboard/Register';
+import ForgotPassword from '@/pages/dashboard/ForgotPassword';
+import ResetPassword from '@/pages/dashboard/ResetPassword';
 import Overview from '@/pages/dashboard/Overview';
 import Products from '@/pages/dashboard/Products';
 import ProductForm from '@/pages/dashboard/ProductForm';
@@ -49,12 +51,22 @@ const queryClient = new QueryClient({
 });
 
 function DashboardRouter() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-pulse text-gray-400">...</div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (
       <Switch>
         <Route path="/register" component={Register} />
+        <Route path="/forgot-password" component={ForgotPassword} />
+        <Route path="/reset-password" component={ResetPassword} />
         <Route component={Login} />
       </Switch>
     );

@@ -1,14 +1,26 @@
 import { Router } from "express";
+import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { db, merchantsTable, ordersTable } from "@workspace/db";
 import { and, count, eq } from "drizzle-orm";
-import { requireAuth, signToken, type AuthRequest } from "../middleware/auth";
+import {
+  requireAuth,
+  signToken,
+  SESSION_COOKIE_NAME,
+  sessionCookieOptions,
+  clearSessionCookie,
+  type AuthRequest,
+} from "../middleware/auth";
 import {
   RegisterMerchantBody,
   LoginMerchantBody,
 } from "@workspace/api-zod";
 
 const router = Router();
+
+function setSessionCookie(res: any, token: string): void {
+  res.cookie(SESSION_COOKIE_NAME, token, sessionCookieOptions());
+}
 
 // POST /auth/register
 router.post("/register", async (req, res): Promise<void> => {
@@ -56,6 +68,7 @@ router.post("/register", async (req, res): Promise<void> => {
     .returning();
 
   const token = signToken(merchant.id);
+  setSessionCookie(res, token);
 
   res.status(201).json({
     merchant: {
@@ -76,7 +89,7 @@ router.post("/register", async (req, res): Promise<void> => {
       orderCount: 0,
     },
     token,
-    newOrdersCount: 0, // brand-new account has no orders
+    newOrdersCount: 0,
   });
 });
 
@@ -108,6 +121,7 @@ router.post("/login", async (req, res): Promise<void> => {
   }
 
   const token = signToken(merchant.id);
+  setSessionCookie(res, token);
 
   // Fetch current new-orders count so the client can initialise its seen-orders
   // baseline immediately on login (preventing a badge flash for historical orders).
@@ -141,6 +155,7 @@ router.post("/login", async (req, res): Promise<void> => {
 
 // POST /auth/logout
 router.post("/logout", (_req, res): void => {
+  clearSessionCookie(res);
   res.sendStatus(204);
 });
 
@@ -174,6 +189,91 @@ router.get("/me", requireAuth, async (req: AuthRequest, res): Promise<void> => {
     productCount: null,
     orderCount: null,
   });
+});
+
+// POST /auth/forgot-password
+router.post("/forgot-password", async (req, res): Promise<void> => {
+  const { email } = req.body ?? {};
+  if (typeof email !== "string" || !email.includes("@")) {
+    res.status(400).json({ error: "البريد الإلكتروني غير صالح" });
+    return;
+  }
+
+  const [merchant] = await db
+    .select()
+    .from(merchantsTable)
+    .where(eq(merchantsTable.email, email))
+    .limit(1);
+
+  // Always return success to prevent email enumeration
+  if (!merchant) {
+    res.json({ message: "إذا كان البريد مسجلاً، ستتلقى رسالة لإعادة تعيين كلمة المرور" });
+    return;
+  }
+
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  const resetExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+  await db
+    .update(merchantsTable)
+    .set({
+      passwordResetToken: resetToken,
+      passwordResetExpires: resetExpiry,
+    })
+    .where(eq(merchantsTable.id, merchant.id));
+
+  // In production, send an email. For now, log the token for development.
+  const resetUrl = `${process.env.FRONTEND_URL || "https://workspacematjari-staging.up.railway.app"}/reset-password?token=${resetToken}`;
+  console.log(`[PASSWORD RESET] ${merchant.email}: ${resetUrl}`);
+
+  res.json({ message: "إذا كان البريد مسجلاً، ستتلقى رسالة لإعادة تعيين كلمة المرور" });
+});
+
+// POST /auth/reset-password
+router.post("/reset-password", async (req, res): Promise<void> => {
+  const { token, password } = req.body ?? {};
+
+  if (typeof token !== "string" || token.length < 10) {
+    res.status(400).json({ error: "رمز إعادة التعيين غير صالح" });
+    return;
+  }
+
+  if (typeof password !== "string" || password.length < 6) {
+    res.status(400).json({ error: "كلمة المرور يجب أن تكون 6 أحرف على الأقل" });
+    return;
+  }
+
+  const [merchant] = await db
+    .select()
+    .from(merchantsTable)
+    .where(eq(merchantsTable.passwordResetToken, token))
+    .limit(1);
+
+  if (!merchant) {
+    res.status(400).json({ error: "رمز إعادة التعيين غير صالح أو منتهي الصلاحية" });
+    return;
+  }
+
+  if (
+    !merchant.passwordResetExpires ||
+    new Date(merchant.passwordResetExpires).getTime() < Date.now()
+  ) {
+    res.status(400).json({ error: "رمز إعادة التعيين منتهي الصلاحية" });
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12);
+
+  await db
+    .update(merchantsTable)
+    .set({
+      passwordHash,
+      passwordResetToken: null,
+      passwordResetExpires: null,
+    })
+    .where(eq(merchantsTable.id, merchant.id));
+
+  res.json({ message: "تم تغيير كلمة المرور بنجاح" });
 });
 
 export default router;

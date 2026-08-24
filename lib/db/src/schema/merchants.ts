@@ -1,4 +1,5 @@
 import { pgTable, serial, text, timestamp, varchar, boolean } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -17,12 +18,16 @@ export const merchantsTable = pgTable("merchants", {
   phone: varchar("phone", { length: 20 }),
   instagramHandle: varchar("instagram_handle", { length: 100 }),
   whatsappNumber: varchar("whatsapp_number", { length: 20 }),
+  passwordResetToken: text("password_reset_token"),
+  passwordResetExpires: timestamp("password_reset_expires"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const insertMerchantSchema = createInsertSchema(merchantsTable).omit({
   id: true,
   createdAt: true,
+  passwordResetToken: true,
+  passwordResetExpires: true,
 });
 
 export type Merchant = typeof merchantsTable.$inferSelect;

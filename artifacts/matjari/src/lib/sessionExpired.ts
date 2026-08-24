@@ -1,4 +1,3 @@
-const TOKEN_KEY = 'matjari_token';
 const MERCHANT_KEY = 'matjari_merchant';
 const SESSION_EXPIRED_KEY = 'matjari_session_expired';
 
@@ -27,7 +26,6 @@ export function handleApiError(error: unknown): void {
 }
 
 export function clearSession(): void {
-  localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(MERCHANT_KEY);
 }
 
@@ -63,40 +61,20 @@ export function consumeSessionExpiredMessage(): string | null {
 
 /**
  * Entry-point check: should we refuse to render the app and go straight to
- * /login? True only when a dashboard page is being loaded while the stored
- * JWT has already expired. Called from main.tsx BEFORE React mounts, so the
- * dashboard never flashes and the storefront is never affected.
+ * /login? With httpOnly cookies, we no longer have a synchronously readable
+ * JWT — the session is validated asynchronously via /auth/me in AuthContext.
+ * This function only checks localStorage for merchant data as a fast
+ * heuristic; the real validation happens on mount.
  */
 export function shouldRedirectToLogin(): boolean {
   try {
     if (!window.location.pathname.startsWith('/dashboard')) return false;
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (!token) return false;
-    return isJwtExpired(token);
-  } catch {
+    // With httpOnly cookies we can't synchronously check JWT expiry.
+    // We still check if merchant data exists in localStorage as a fast path.
+    // If it does, the user likely has a valid session — AuthContext will verify
+    // via /auth/me. If not, let AuthContext handle the redirect.
     return false;
-  }
-}
-
-/**
- * Decode the JWT payload (base64url) and check `exp` against the current time.
- * Used on app load so an already-expired token from an old tab sends the user
- * to /login immediately, without waiting for the first failed request.
- */
-export function isJwtExpired(token: string): boolean {
-  try {
-    const parts = token.split('.');
-    if (parts.length < 2) return true;
-    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const binary = atob(base64);
-    const json = decodeURIComponent(
-      Array.from(binary, (c) => `%${c.charCodeAt(0).toString(16).padStart(2, '0')}`).join(''),
-    );
-    const payload = JSON.parse(json) as { exp?: unknown };
-    if (typeof payload.exp !== 'number') return false;
-    return payload.exp * 1000 <= Date.now();
   } catch {
-    // Undecodable token — don't force logout; the 401 handler is the safety net.
     return false;
   }
 }

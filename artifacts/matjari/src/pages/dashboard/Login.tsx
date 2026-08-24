@@ -77,6 +77,12 @@ export default function Login() {
           </Button>
         </form>
 
+        <div className="mt-4 text-center text-sm">
+          <Link href="/forgot-password" className="text-gray-500 hover:text-primary hover:underline">
+            نسيت كلمة المرور؟
+          </Link>
+        </div>
+
         <div className="mt-6 text-center text-sm text-gray-500">
           ليس لديك حساب؟{' '}
           <Link href="/register" className="text-primary font-medium hover:underline">
