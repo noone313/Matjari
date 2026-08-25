@@ -29,6 +29,8 @@ export function BlurImage({ src, alt, className, fallback, ...props }: BlurImage
       <img
         src={src}
         alt={alt}
+        loading="lazy"
+        decoding="async"
         className={cn(
           'w-full h-full object-cover transition-opacity duration-500',
           loaded ? 'opacity-100' : 'opacity-0',

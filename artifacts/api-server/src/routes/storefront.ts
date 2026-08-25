@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type Response } from "express";
 import { db, merchantsTable, productsTable, productVariantsTable, ordersTable, orderItemsTable, discountCodesTable, reviewsTable, stockNotificationsTable, bundlesTable, bundleItemsTable, heroSlidesTable } from "@workspace/db";
 import { eq, and, ilike, sql, gte, ne, desc, count, avg, inArray } from "drizzle-orm";
 import { sendPushToMerchant } from "../lib/push";
@@ -24,6 +24,10 @@ import {
 } from "@workspace/api-zod";
 
 const router = Router();
+
+function setCache(res: Response, seconds: number) {
+  res.set("Cache-Control", `public, max-age=${seconds}, s-maxage=${seconds}`);
+}
 
 // Compute the discount amount (IQD) for a subtotal. Returns null when the
 // discount does not apply (e.g. min order not reached).
@@ -72,6 +76,7 @@ router.get("/:slug", async (req, res): Promise<void> => {
         .orderBy(heroSlidesTable.position, heroSlidesTable.id)
     : [];
 
+  setCache(res, 60);
   res.json({
     slug: merchant.slug,
     storeName: merchant.storeName,
@@ -145,15 +150,6 @@ router.get("/:slug/products", async (req, res): Promise<void> => {
     .from(productsTable)
     .where(and(...filters));
 
-  const allVariants = await db
-    .select()
-    .from(productVariantsTable)
-    .where(
-      products.length > 0
-        ? eq(productVariantsTable.productId, products[0].id)
-        : eq(productVariantsTable.productId, -1),
-    );
-
   // Fetch all variants for all products efficiently
   const variantMap = new Map<number, typeof productVariantsTable.$inferSelect[]>();
   if (products.length > 0) {
@@ -175,6 +171,7 @@ router.get("/:slug/products", async (req, res): Promise<void> => {
     }
   }
 
+  setCache(res, 30);
   res.json(
     products.map((p) => ({
       ...p,
@@ -224,6 +221,7 @@ router.get("/:slug/products/:productId", async (req, res): Promise<void> => {
     .from(productVariantsTable)
     .where(eq(productVariantsTable.productId, product.id));
 
+  setCache(res, 120);
   res.json({ ...product, variants });
 });
 
@@ -859,6 +857,7 @@ router.get("/:slug/bundles", async (req, res): Promise<void> => {
     itemsByBundle.set(it.bundleId, list);
   }
 
+  setCache(res, 60);
   res.json({
     bundles: bundles.map((b) => ({
       id: b.id,

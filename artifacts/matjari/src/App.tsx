@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from '@tanstack/react-query';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from '@/components/ui/toaster';
@@ -12,40 +12,57 @@ import { ComparisonProvider } from './contexts/ComparisonContext';
 import { WishlistProvider } from './contexts/WishlistContext';
 import NotFound from '@/pages/not-found';
 
-// --- Dashboard Pages ---
-import Login from '@/pages/dashboard/Login';
-import Register from '@/pages/dashboard/Register';
-import ForgotPassword from '@/pages/dashboard/ForgotPassword';
-import ResetPassword from '@/pages/dashboard/ResetPassword';
-import Overview from '@/pages/dashboard/Overview';
-import Products from '@/pages/dashboard/Products';
-import ProductForm from '@/pages/dashboard/ProductForm';
-import Orders from '@/pages/dashboard/Orders';
-import OrderDetail from '@/pages/dashboard/OrderDetail';
-import Discounts from '@/pages/dashboard/Discounts';
-import Reviews from '@/pages/dashboard/Reviews';
-import Bundles from '@/pages/dashboard/Bundles';
-import BundleForm from '@/pages/dashboard/BundleForm';
-import Settings from '@/pages/dashboard/Settings';
+// --- Dashboard Pages (lazy loaded) ---
+const Login = lazy(() => import('@/pages/dashboard/Login'));
+const Register = lazy(() => import('@/pages/dashboard/Register'));
+const ForgotPassword = lazy(() => import('@/pages/dashboard/ForgotPassword'));
+const ResetPassword = lazy(() => import('@/pages/dashboard/ResetPassword'));
+const Overview = lazy(() => import('@/pages/dashboard/Overview'));
+const Products = lazy(() => import('@/pages/dashboard/Products'));
+const ProductForm = lazy(() => import('@/pages/dashboard/ProductForm'));
+const Orders = lazy(() => import('@/pages/dashboard/Orders'));
+const OrderDetail = lazy(() => import('@/pages/dashboard/OrderDetail'));
+const Discounts = lazy(() => import('@/pages/dashboard/Discounts'));
+const Reviews = lazy(() => import('@/pages/dashboard/Reviews'));
+const Bundles = lazy(() => import('@/pages/dashboard/Bundles'));
+const BundleForm = lazy(() => import('@/pages/dashboard/BundleForm'));
+const Settings = lazy(() => import('@/pages/dashboard/Settings'));
 import DashboardLayout from '@/components/layout/DashboardLayout';
 
 // --- Public Pages ---
-import Landing from '@/pages/Landing';
+const Landing = lazy(() => import('@/pages/Landing'));
 
-// --- Storefront Pages ---
+// --- Storefront Pages (lazy loaded) ---
 import StoreLayout from '@/components/layout/StoreLayout';
-import StoreHome from '@/pages/store/Home';
-import StoreProduct from '@/pages/store/Product';
-import StoreCompare from '@/pages/store/Compare';
-import StoreCart from '@/pages/store/Cart';
-import StoreCheckout from '@/pages/store/Checkout';
-import StoreConfirmation from '@/pages/store/Confirmation';
-import StoreWishlist from '@/pages/store/Wishlist';
-import StoreTrack from '@/pages/store/Track';
+const StoreHome = lazy(() => import('@/pages/store/Home'));
+const StoreProduct = lazy(() => import('@/pages/store/Product'));
+const StoreCompare = lazy(() => import('@/pages/store/Compare'));
+const StoreCart = lazy(() => import('@/pages/store/Cart'));
+const StoreCheckout = lazy(() => import('@/pages/store/Checkout'));
+const StoreConfirmation = lazy(() => import('@/pages/store/Confirmation'));
+const StoreWishlist = lazy(() => import('@/pages/store/Wishlist'));
+const StoreTrack = lazy(() => import('@/pages/store/Track'));
+
+function PageSpinner() {
+  return (
+    <div className="min-h-[50vh] flex items-center justify-center">
+      <div className="animate-pulse text-zinc-300 dark:text-zinc-600 text-sm">...</div>
+    </div>
+  );
+}
 
 // Centralized 401 handling: an expired/invalid session on any protected
 // dashboard request clears the stored session and redirects to /login.
 const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,       // 1 minute — data is fresh for 60s
+      gcTime: 5 * 60_000,      // 5 minutes — cache kept in memory
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      retry: 1,
+    },
+  },
   queryCache: new QueryCache({ onError: (error) => handleApiError(error) }),
   mutationCache: new MutationCache({ onError: (error) => handleApiError(error) }),
 });
@@ -63,37 +80,41 @@ function DashboardRouter() {
 
   if (!isAuthenticated) {
     return (
-      <Switch>
-        <Route path="/register" component={Register} />
-        <Route path="/forgot-password" component={ForgotPassword} />
-        <Route path="/reset-password" component={ResetPassword} />
-        <Route component={Login} />
-      </Switch>
+      <Suspense fallback={<PageSpinner />}>
+        <Switch>
+          <Route path="/register" component={Register} />
+          <Route path="/forgot-password" component={ForgotPassword} />
+          <Route path="/reset-password" component={ResetPassword} />
+          <Route component={Login} />
+        </Switch>
+      </Suspense>
     );
   }
 
   return (
     <DashboardLayout>
-      <Switch>
-        <Route path="/login"><Redirect to="/dashboard" /></Route>
-        <Route path="/register"><Redirect to="/dashboard" /></Route>
-        <Route path="/">
-          <Redirect to="/dashboard" />
-        </Route>
-        <Route path="/dashboard" component={Overview} />
-        <Route path="/dashboard/products" component={Products} />
-        <Route path="/dashboard/products/new" component={ProductForm} />
-        <Route path="/dashboard/products/:id/edit" component={ProductForm} />
-        <Route path="/dashboard/orders" component={Orders} />
-        <Route path="/dashboard/orders/:id" component={OrderDetail} />
-        <Route path="/dashboard/discounts" component={Discounts} />
-        <Route path="/dashboard/reviews" component={Reviews} />
-        <Route path="/dashboard/bundles" component={Bundles} />
-        <Route path="/dashboard/bundles/new" component={BundleForm} />
-        <Route path="/dashboard/bundles/:id/edit" component={BundleForm} />
-        <Route path="/dashboard/settings" component={Settings} />
-        <Route component={NotFound} />
-      </Switch>
+      <Suspense fallback={<PageSpinner />}>
+        <Switch>
+          <Route path="/login"><Redirect to="/dashboard" /></Route>
+          <Route path="/register"><Redirect to="/dashboard" /></Route>
+          <Route path="/">
+            <Redirect to="/dashboard" />
+          </Route>
+          <Route path="/dashboard" component={Overview} />
+          <Route path="/dashboard/products" component={Products} />
+          <Route path="/dashboard/products/new" component={ProductForm} />
+          <Route path="/dashboard/products/:id/edit" component={ProductForm} />
+          <Route path="/dashboard/orders" component={Orders} />
+          <Route path="/dashboard/orders/:id" component={OrderDetail} />
+          <Route path="/dashboard/discounts" component={Discounts} />
+          <Route path="/dashboard/reviews" component={Reviews} />
+          <Route path="/dashboard/bundles" component={Bundles} />
+          <Route path="/dashboard/bundles/new" component={BundleForm} />
+          <Route path="/dashboard/bundles/:id/edit" component={BundleForm} />
+          <Route path="/dashboard/settings" component={Settings} />
+          <Route component={NotFound} />
+        </Switch>
+      </Suspense>
     </DashboardLayout>
   );
 }
@@ -106,33 +127,35 @@ function StoreRouter({ params }: { params: { slug: string } }) {
         <ComparisonProvider storeSlug={slug}>
           <WishlistProvider storeSlug={slug}>
             <StoreLayout slug={slug}>
-              <Switch>
-                <Route path="/store/:slug">
-                  {() => <StoreHome slug={slug} />}
-                </Route>
-                <Route path="/store/:slug/product/:productId">
-                  {(p) => <StoreProduct slug={slug} productId={p?.productId ?? ''} />}
-                </Route>
-                <Route path="/store/:slug/compare">
-                  {() => <StoreCompare slug={slug} />}
-                </Route>
-                <Route path="/store/:slug/wishlist">
-                  {() => <StoreWishlist slug={slug} />}
-                </Route>
-                <Route path="/store/:slug/track">
-                  {() => <StoreTrack slug={slug} />}
-                </Route>
-                <Route path="/store/:slug/cart">
-                  {() => <StoreCart slug={slug} />}
-                </Route>
-                <Route path="/store/:slug/checkout">
-                  {() => <StoreCheckout slug={slug} />}
-                </Route>
-                <Route path="/store/:slug/confirmation/:orderId">
-                  {() => <StoreConfirmation />}
-                </Route>
-                <Route component={NotFound} />
-              </Switch>
+              <Suspense fallback={<PageSpinner />}>
+                <Switch>
+                  <Route path="/store/:slug">
+                    {() => <StoreHome slug={slug} />}
+                  </Route>
+                  <Route path="/store/:slug/product/:productId">
+                    {(p) => <StoreProduct slug={slug} productId={p?.productId ?? ''} />}
+                  </Route>
+                  <Route path="/store/:slug/compare">
+                    {() => <StoreCompare slug={slug} />}
+                  </Route>
+                  <Route path="/store/:slug/wishlist">
+                    {() => <StoreWishlist slug={slug} />}
+                  </Route>
+                  <Route path="/store/:slug/track">
+                    {() => <StoreTrack slug={slug} />}
+                  </Route>
+                  <Route path="/store/:slug/cart">
+                    {() => <StoreCart slug={slug} />}
+                  </Route>
+                  <Route path="/store/:slug/checkout">
+                    {() => <StoreCheckout slug={slug} />}
+                  </Route>
+                  <Route path="/store/:slug/confirmation/:orderId">
+                    {() => <StoreConfirmation />}
+                  </Route>
+                  <Route component={NotFound} />
+                </Switch>
+              </Suspense>
             </StoreLayout>
           </WishlistProvider>
         </ComparisonProvider>
@@ -143,7 +166,6 @@ function StoreRouter({ params }: { params: { slug: string } }) {
 
 function MainRouter() {
   useEffect(() => {
-    // Enforce RTL at document level
     document.documentElement.dir = 'rtl';
     document.documentElement.lang = 'ar';
   }, []);
@@ -153,18 +175,17 @@ function MainRouter() {
       <Route path="/store/:slug/*?" component={StoreRouter} />
       <Route path="/store/:slug" component={StoreRouter} />
 
-      {/* Public landing page at root for unauthenticated visitors */}
       <Route path="/">
-        <Landing />
+        <Suspense fallback={<PageSpinner />}>
+          <Landing />
+        </Suspense>
       </Route>
 
-      {/* Auth pages - handled by DashboardRouter which checks authentication */}
       <Route path="/register" component={DashboardRouter} />
       <Route path="/login" component={DashboardRouter} />
       <Route path="/forgot-password" component={DashboardRouter} />
       <Route path="/reset-password" component={DashboardRouter} />
 
-      {/* Protected dashboard routes */}
       <Route path="/dashboard/*?" component={DashboardRouter} />
 
       <Route component={NotFound} />
