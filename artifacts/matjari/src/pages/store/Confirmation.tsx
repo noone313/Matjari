@@ -17,7 +17,7 @@ export default function StoreConfirmation() {
   }, []);
 
   return (
-    <div className="min-h-[60vh] flex flex-col items-center justify-center py-12 relative">
+    <div className="min-h-[60vh] flex flex-col items-center justify-center py-12 relative overflow-hidden">
       
       {/* Wax Seal Animation */}
       <div className="relative mb-12 flex justify-center">
@@ -61,7 +61,7 @@ export default function StoreConfirmation() {
           شكراً لتسوقك من <strong className="text-gray-900 dark:text-white font-serif">{store?.storeName}</strong>. لقد تلقينا طلبك بنجاح وسنقوم بتجهيزه قريباً.
         </p>
 
-        <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm mt-8 inline-block text-right">
+        <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm mt-8 w-full max-w-sm mx-auto text-right">
           <div className="text-sm text-gray-500 dark:text-zinc-400 mb-1">رقم الطلب</div>
           <div className="text-2xl font-bold font-mono text-gray-900 dark:text-white mb-4">#{orderId}</div>
           <p className="text-sm text-gray-600 dark:text-zinc-400 mb-4">يرجى الاحتفاظ برقم الطلب للمراجعة.</p>
