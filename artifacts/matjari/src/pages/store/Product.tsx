@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useGetStoreProduct, getGetStoreProductQueryKey, useGetRelatedProducts, getGetRelatedProductsQueryKey, useGetProductReviews, getGetProductReviewsQueryKey, useCreateProductReview, useCreateStockNotification } from '@workspace/api-client-react';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
-import { formatPrice, getCategoryLabel, getApiUrl } from '@/lib/utils';
+import { formatPrice, getApiUrl } from '@/lib/utils';
+import { useStoreCategoriesCtx } from '@/contexts/StoreCategoriesContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +15,7 @@ import { ProductPageSkeleton } from '@/components/skeletons';
 import { FragrancePyramid } from '@/components/store/FragrancePyramid';
 
 export default function StoreProduct({ slug, productId }: { slug: string, productId: string }) {
+  const { getCategoryLabel } = useStoreCategoriesCtx();
   const { data: product, isLoading } = useGetStoreProduct(slug, Number(productId), { query: { enabled: !!slug && !!productId, queryKey: getGetStoreProductQueryKey(slug, Number(productId)) } });
   const { addToCart } = useCart();
   const { toast } = useToast();

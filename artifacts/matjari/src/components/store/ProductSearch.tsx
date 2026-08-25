@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useBrowseStoreProducts, getBrowseStoreProductsQueryKey } from '@workspace/api-client-react';
 import type { Product } from '@workspace/api-client-react';
-import { formatPrice, getCategoryLabel, getApiUrl } from '@/lib/utils';
+import { formatPrice, getApiUrl } from '@/lib/utils';
+import { useStoreCategoriesCtx } from '@/contexts/StoreCategoriesContext';
 import { Search, X, ArrowLeft } from 'lucide-react';
 import { BlurImage } from '@/components/BlurImage';
 import { useLocation } from 'wouter';
@@ -27,6 +28,7 @@ interface ProductSearchProps {
 }
 
 export default function ProductSearch({ slug, value, onChange, onSearch, className }: ProductSearchProps) {
+  const { getCategoryLabel } = useStoreCategoriesCtx();
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);

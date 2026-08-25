@@ -6,7 +6,6 @@ import {
   boolean,
   timestamp,
   integer,
-  pgEnum,
   customType,
 } from "drizzle-orm/pg-core";
 
@@ -17,15 +16,6 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { merchantsTable } from "./merchants";
 
-export const categoryEnum = pgEnum("product_category", [
-  "perfume_men",
-  "perfume_women",
-  "oud",
-  "skincare",
-  "makeup",
-  "gifts",
-]);
-
 export const productsTable = pgTable("products", {
   id: serial("id").primaryKey(),
   merchantId: integer("merchant_id")
@@ -33,7 +23,7 @@ export const productsTable = pgTable("products", {
     .references(() => merchantsTable.id, { onDelete: "cascade" }),
   name: varchar("name", { length: 200 }).notNull(),
   description: text("description"),
-  category: categoryEnum("category").notNull(),
+  category: varchar("category", { length: 100 }).notNull(),
   imageUrls: text("image_urls").array().notNull().default([]),
   noteTop: varchar("note_top", { length: 100 }),
   noteHeart: varchar("note_heart", { length: 100 }),

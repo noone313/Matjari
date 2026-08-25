@@ -13,6 +13,7 @@ import * as pushController from "../controllers/dashboard/push.controller";
 import * as ordersController from "../controllers/dashboard/orders.controller";
 import * as settingsController from "../controllers/dashboard/settings.controller";
 import * as heroController from "../controllers/dashboard/hero.controller";
+import * as categoriesController from "../controllers/dashboard/categories.controller";
 
 import {
   UpdateDashboardSettingsBody,
@@ -92,6 +93,13 @@ router.get("/bundles", bundlesController.listBundles);
 router.post("/bundles", bundlesController.createBundle);
 router.put("/bundles/:id", bundlesController.updateBundle);
 router.delete("/bundles/:id", bundlesController.deleteBundle);
+
+// ─── Categories ──────────────────────────────────────────────────────────────
+router.get("/categories", categoriesController.listCategories);
+router.post("/categories", categoriesController.createCategory);
+router.put("/categories/reorder", categoriesController.reorderCategories);
+router.put("/categories/:id", categoriesController.updateCategory);
+router.delete("/categories/:id", categoriesController.deleteCategory);
 
 // ─── Hero gallery ────────────────────────────────────────────────────────────
 

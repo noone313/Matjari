@@ -2,7 +2,8 @@ import React from 'react';
 import { Link } from 'wouter';
 import { useComparison, MAX_COMPARISON } from '@/contexts/ComparisonContext';
 import { FragrancePyramid } from '@/components/store/FragrancePyramid';
-import { formatPrice, getCategoryLabel, getApiUrl } from '@/lib/utils';
+import { formatPrice, getApiUrl } from '@/lib/utils';
+import { useStoreCategoriesCtx } from '@/contexts/StoreCategoriesContext';
 import { X, Scale, Droplet, Leaf, RotateCcw } from 'lucide-react';
 import type { Product } from '@workspace/api-client-react';
 
@@ -15,6 +16,7 @@ function isCosmetic(category: string) {
 }
 
 function CompareColumn({ product, slug, onRemove }: { product: Product; slug: string; onRemove: (id: number) => void }) {
+  const { getCategoryLabel } = useStoreCategoriesCtx();
   const basePrice = product.variants?.length ? Math.min(...product.variants.map((v) => v.price)) : 0;
   const hasMultipleVariants = (product.variants?.length ?? 0) > 1;
   const fragrance = isFragrance(product.category);

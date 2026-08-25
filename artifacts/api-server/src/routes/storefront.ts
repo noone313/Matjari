@@ -1,6 +1,6 @@
 import { Router, type Response } from "express";
-import { db, merchantsTable, productsTable, productVariantsTable, ordersTable, orderItemsTable, discountCodesTable, reviewsTable, stockNotificationsTable, bundlesTable, bundleItemsTable, heroSlidesTable } from "@workspace/db";
-import { eq, and, ilike, sql, gte, ne, desc, count, avg, inArray } from "drizzle-orm";
+import { db, merchantsTable, productsTable, productVariantsTable, ordersTable, orderItemsTable, discountCodesTable, reviewsTable, stockNotificationsTable, bundlesTable, bundleItemsTable, heroSlidesTable, categoriesTable } from "@workspace/db";
+import { eq, and, ilike, sql, gte, ne, desc, count, avg, inArray, asc } from "drizzle-orm";
 import { sendPushToMerchant } from "../lib/push";
 import {
   GetStoreParams,
@@ -102,6 +102,35 @@ router.get("/:slug", async (req, res): Promise<void> => {
     whatsappNumber: merchant.whatsappNumber,
     createdAt: merchant.createdAt,
   });
+});
+
+// GET /stores/:slug/categories
+router.get("/:slug/categories", async (req, res): Promise<void> => {
+  const params = GetStoreParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: "معرّف غير صالح" });
+    return;
+  }
+
+  const [merchant] = await db
+    .select()
+    .from(merchantsTable)
+    .where(eq(merchantsTable.slug, params.data.slug))
+    .limit(1);
+
+  if (!merchant) {
+    res.status(404).json({ error: "المتجر غير موجود" });
+    return;
+  }
+
+  const categories = await db
+    .select()
+    .from(categoriesTable)
+    .where(eq(categoriesTable.merchantId, merchant.id))
+    .orderBy(asc(categoriesTable.sortOrder), asc(categoriesTable.id));
+
+  setCache(res, 60);
+  res.json(categories);
 });
 
 // GET /stores/:slug/products

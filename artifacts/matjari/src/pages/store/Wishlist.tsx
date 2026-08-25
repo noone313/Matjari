@@ -1,12 +1,14 @@
 import React from 'react';
 import { useBrowseStoreProducts, getBrowseStoreProductsQueryKey } from '@workspace/api-client-react';
 import { useWishlist } from '@/contexts/WishlistContext';
-import { formatPrice, getCategoryLabel, getApiUrl } from '@/lib/utils';
+import { formatPrice, getApiUrl } from '@/lib/utils';
+import { useStoreCategoriesCtx } from '@/contexts/StoreCategoriesContext';
 import { Link } from 'wouter';
 import { Heart } from 'lucide-react';
 import { ProductGridSkeleton } from '@/components/skeletons';
 
 export default function StoreWishlist({ slug }: { slug: string }) {
+  const { getCategoryLabel } = useStoreCategoriesCtx();
   const { items, removeFromWishlist } = useWishlist();
 
   const { data: products, isLoading } = useBrowseStoreProducts(slug, undefined, {

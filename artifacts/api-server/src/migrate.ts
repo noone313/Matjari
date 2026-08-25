@@ -9,7 +9,6 @@ import { logger } from "./lib/logger";
 // "already exists" errors (table/type/column/constraint) are tolerated and
 // skipped, so this never mutates or destroys existing data.
 const BASELINE_SQL = `
-CREATE TYPE "public"."product_category" AS ENUM('perfume_men', 'perfume_women', 'oud', 'skincare', 'makeup', 'gifts');--> statement-breakpoint
 CREATE TYPE "public"."order_status" AS ENUM('new', 'processing', 'shipped', 'delivered', 'cancelled');--> statement-breakpoint
 CREATE TYPE "public"."payment_method" AS ENUM('cod', 'bank_transfer');--> statement-breakpoint
 CREATE TABLE "merchants" (
@@ -27,10 +26,22 @@ CREATE TABLE "merchants" (
 	"phone" varchar(20),
 	"instagram_handle" varchar(100),
 	"whatsapp_number" varchar(20),
+	"password_reset_token" text,
+	"password_reset_expires" timestamp,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "merchants_slug_unique" UNIQUE("slug"),
 	CONSTRAINT "merchants_email_unique" UNIQUE("email")
 );--> statement-breakpoint
+CREATE TABLE "categories" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"merchant_id" integer NOT NULL,
+	"slug" varchar(100) NOT NULL,
+	"label" varchar(150) NOT NULL,
+	"sort_order" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL
+);--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_categories_merchant_slug" ON "categories"("merchant_id", "slug");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "idx_categories_merchant_id" ON "categories"("merchant_id");--> statement-breakpoint
 CREATE TABLE "product_images" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"product_id" integer NOT NULL,
@@ -50,7 +61,7 @@ CREATE TABLE "products" (
 	"merchant_id" integer NOT NULL,
 	"name" varchar(200) NOT NULL,
 	"description" text,
-	"category" "product_category" NOT NULL,
+	"category" varchar(100) NOT NULL,
 	"image_urls" text[] DEFAULT '{}' NOT NULL,
 	"note_top" varchar(100),
 	"note_heart" varchar(100),
@@ -153,6 +164,7 @@ CREATE TABLE "push_subscriptions" (
 ALTER TABLE "product_images" ADD CONSTRAINT "product_images_product_id_products_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "product_variants" ADD CONSTRAINT "product_variants_product_id_products_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "products" ADD CONSTRAINT "products_merchant_id_merchants_id_fk" FOREIGN KEY ("merchant_id") REFERENCES "public"."merchants"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "categories" ADD CONSTRAINT "categories_merchant_id_merchants_id_fk" FOREIGN KEY ("merchant_id") REFERENCES "public"."merchants"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "order_items" ADD CONSTRAINT "order_items_order_id_orders_id_fk" FOREIGN KEY ("order_id") REFERENCES "public"."orders"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "order_items" ADD CONSTRAINT "order_items_variant_id_product_variants_id_fk" FOREIGN KEY ("variant_id") REFERENCES "public"."product_variants"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "orders" ADD CONSTRAINT "orders_merchant_id_merchants_id_fk" FOREIGN KEY ("merchant_id") REFERENCES "public"."merchants"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

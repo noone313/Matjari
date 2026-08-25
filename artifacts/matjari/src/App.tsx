@@ -10,6 +10,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { ComparisonProvider } from './contexts/ComparisonContext';
 import { WishlistProvider } from './contexts/WishlistContext';
+import { StoreCategoriesProvider } from './contexts/StoreCategoriesContext';
 import NotFound from '@/pages/not-found';
 
 // --- Dashboard Pages (lazy loaded) ---
@@ -26,6 +27,7 @@ const Discounts = lazy(() => import('@/pages/dashboard/Discounts'));
 const Reviews = lazy(() => import('@/pages/dashboard/Reviews'));
 const Bundles = lazy(() => import('@/pages/dashboard/Bundles'));
 const BundleForm = lazy(() => import('@/pages/dashboard/BundleForm'));
+const Categories = lazy(() => import('@/pages/dashboard/Categories'));
 const Settings = lazy(() => import('@/pages/dashboard/Settings'));
 import DashboardLayout from '@/components/layout/DashboardLayout';
 
@@ -111,6 +113,7 @@ function DashboardRouter() {
           <Route path="/dashboard/bundles" component={Bundles} />
           <Route path="/dashboard/bundles/new" component={BundleForm} />
           <Route path="/dashboard/bundles/:id/edit" component={BundleForm} />
+          <Route path="/dashboard/categories" component={Categories} />
           <Route path="/dashboard/settings" component={Settings} />
           <Route component={NotFound} />
         </Switch>
@@ -126,7 +129,8 @@ function StoreRouter({ params }: { params: { slug: string } }) {
       <CartProvider storeSlug={slug}>
         <ComparisonProvider storeSlug={slug}>
           <WishlistProvider storeSlug={slug}>
-            <StoreLayout slug={slug}>
+            <StoreCategoriesProvider slug={slug}>
+              <StoreLayout slug={slug}>
               <Suspense fallback={<PageSpinner />}>
                 <Switch>
                   <Route path="/store/:slug">
@@ -157,6 +161,7 @@ function StoreRouter({ params }: { params: { slug: string } }) {
                 </Switch>
               </Suspense>
             </StoreLayout>
+            </StoreCategoriesProvider>
           </WishlistProvider>
         </ComparisonProvider>
       </CartProvider>

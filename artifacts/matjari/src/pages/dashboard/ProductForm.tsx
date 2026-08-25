@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { CATEGORIES, getApiUrl } from '@/lib/utils';
+import { getApiUrl } from '@/lib/utils';
+import { useListDashboardCategories } from '@/hooks/useCategories';
 import { Trash2, Plus, Upload, X, Loader2, BellRing, Phone } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { DetailPanelSkeleton } from '@/components/skeletons';
@@ -140,6 +141,7 @@ export default function ProductForm() {
   const isEdit = !!id && id !== 'new';
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { data: categories } = useListDashboardCategories();
 
   const [savedUrls, setSavedUrls] = useState<string[]>([]);
   const [newFiles, setNewFiles] = useState<File[]>([]);
@@ -280,8 +282,8 @@ export default function ProductForm() {
                 {...form.register('category')}
                 className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm"
               >
-                {CATEGORIES.map((c) => (
-                  <option key={c.value} value={c.value}>{c.label}</option>
+                {categories?.map((c) => (
+                  <option key={c.id} value={c.slug}>{c.label}</option>
                 ))}
               </select>
             </div>

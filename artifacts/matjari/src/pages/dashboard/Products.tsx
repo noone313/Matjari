@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useListProducts, useDeleteProduct, useUpdateProduct, getGetProductQueryKey } from '@workspace/api-client-react';
-import { formatPrice, getCategoryLabel, CATEGORIES, getApiUrl } from '@/lib/utils';
+import { formatPrice, getApiUrl } from '@/lib/utils';
+import { useListDashboardCategories } from '@/hooks/useCategories';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link } from 'wouter';
@@ -12,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 export default function Products() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
+  const { data: categories } = useListDashboardCategories();
   const { data: products, isLoading, refetch } = useListProducts({ q: search, category: category || undefined });
   const deleteMutation = useDeleteProduct();
   const updateMutation = useUpdateProduct();
@@ -69,8 +71,8 @@ export default function Products() {
           onChange={(e) => setCategory(e.target.value)}
         >
           <option value="">جميع الفئات</option>
-          {CATEGORIES.map(c => (
-            <option key={c.value} value={c.value}>{c.label}</option>
+          {categories?.map(c => (
+            <option key={c.id} value={c.slug}>{c.label}</option>
           ))}
         </select>
       </div>
@@ -112,7 +114,7 @@ export default function Products() {
                           <div className="font-medium text-gray-900">{product.name}</div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-gray-500">{getCategoryLabel(product.category)}</td>
+                      <td className="px-6 py-4 text-gray-500">{categories?.find(c => c.slug === product.category)?.label || product.category}</td>
                       <td className="px-6 py-4 font-medium">{formatPrice(minPrice)}</td>
                       <td className="px-6 py-4">
                         <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${product.isActive ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-700 border-gray-200'}`}>

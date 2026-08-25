@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useBrowseStoreProducts, getBrowseStoreProductsQueryKey, useBrowseStoreBundles, getBrowseStoreBundlesQueryKey } from '@workspace/api-client-react';
 import type { Product } from '@workspace/api-client-react';
-import { formatPrice, getCategoryLabel, getApiUrl } from '@/lib/utils';
+import { formatPrice, getApiUrl } from '@/lib/utils';
+import { useStoreCategoriesCtx } from '@/contexts/StoreCategoriesContext';
 import { Link, useLocation } from 'wouter';
 import { SlidersHorizontal, X, Scale, Check, Gift, Heart, ShoppingBag, SearchX, Store } from 'lucide-react';
 import { BlurImage } from '@/components/BlurImage';
@@ -11,16 +12,6 @@ import { useComparison } from '@/contexts/ComparisonContext';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useToast } from '@/hooks/use-toast';
-
-const CATEGORIES = [
-  { value: '', label: 'الكل' },
-  { value: 'perfume_men', label: 'عطور رجالي' },
-  { value: 'perfume_women', label: 'عطور نسائي' },
-  { value: 'oud', label: 'عود وبخور' },
-  { value: 'skincare', label: 'عناية بالبشرة' },
-  { value: 'makeup', label: 'مكياج' },
-  { value: 'gifts', label: 'هدايا' },
-];
 
 function useDebounced<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -32,6 +23,7 @@ function useDebounced<T>(value: T, delay: number): T {
 }
 
 export default function StoreHome({ slug }: { slug: string }) {
+  const { categories, getCategoryLabel } = useStoreCategoriesCtx();
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('');
   const [sortBy, setSortBy] = useState<'default' | 'price_asc' | 'price_desc'>('default');
@@ -43,6 +35,12 @@ export default function StoreHome({ slug }: { slug: string }) {
   const { addToCart } = useCart();
   const { toggleWishlist, isWishlisted } = useWishlist();
   const { toast } = useToast();
+
+  // Build CATEGORIES with "All" option prepended
+  const CATEGORIES = useMemo(() => [
+    { value: '', label: 'الكل' },
+    ...categories.map((c) => ({ value: c.slug, label: c.label })),
+  ], [categories]);
 
   const debouncedSearch = useDebounced(search, 300);
 
