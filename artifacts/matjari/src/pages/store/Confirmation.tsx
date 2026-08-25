@@ -17,7 +17,7 @@ export default function StoreConfirmation() {
   }, []);
 
   return (
-    <div className="min-h-[60vh] flex flex-col items-center justify-center py-12 px-4 relative">
+    <div className="min-h-[60vh] flex flex-col items-center justify-center py-12 relative">
       
       {/* Wax Seal Animation */}
       <div className="relative mb-12 flex justify-center">
@@ -67,9 +67,9 @@ export default function StoreConfirmation() {
           <p className="text-sm text-gray-600 dark:text-zinc-400 mb-4">يرجى الاحتفاظ برقم الطلب للمراجعة.</p>
         </div>
 
-        <div className="pt-8 flex items-center justify-center gap-3">
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
           <Link href={`/store/${slug}/track`}>
-            <Button className="h-12 px-8 font-bold">
+            <Button className="h-12 sm:px-8 px-6 font-bold w-full sm:w-auto">
               تتبع الطلب
             </Button>
           </Link>
