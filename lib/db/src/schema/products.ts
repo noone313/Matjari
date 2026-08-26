@@ -15,6 +15,7 @@ const bytea = customType<{ data: Buffer; notNull: false; default: false }>({
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { merchantsTable } from "./merchants";
+import { categoriesTable } from "./categories";
 
 export const productsTable = pgTable("products", {
   id: serial("id").primaryKey(),
@@ -24,6 +25,7 @@ export const productsTable = pgTable("products", {
   name: varchar("name", { length: 200 }).notNull(),
   description: text("description"),
   category: varchar("category", { length: 100 }).notNull(),
+  categoryId: integer("category_id"),
   imageUrls: text("image_urls").array().notNull().default([]),
   noteTop: varchar("note_top", { length: 100 }),
   noteHeart: varchar("note_heart", { length: 100 }),

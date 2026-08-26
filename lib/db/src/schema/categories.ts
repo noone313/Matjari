@@ -12,6 +12,7 @@ export const categoriesTable = pgTable("categories", {
   label: varchar("label", { length: 150 }).notNull(),
   sortOrder: integer("sort_order").notNull().default(0),
   isActive: boolean("is_active").notNull().default(true),
+  parentCategoryId: integer("parent_category_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
