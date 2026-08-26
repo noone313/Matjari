@@ -15,24 +15,21 @@ export default function Categories() {
   const reorderCategories = useReorderDashboardCategories();
   const { toast } = useToast();
 
-  const [newSlug, setNewSlug] = useState('');
   const [newLabel, setNewLabel] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editLabel, setEditLabel] = useState('');
-  const [editSlug, setEditSlug] = useState('');
 
   const handleCreate = async () => {
-    if (!newSlug.trim() || !newLabel.trim()) {
-      toast({ title: 'الاسم والرابط مطلوبان', variant: 'destructive' });
+    if (!newLabel.trim()) {
+      toast({ title: 'اسم الفئة مطلوب', variant: 'destructive' });
       return;
     }
     try {
       await createCategory.mutateAsync({
-        slug: newSlug.trim(),
+        slug: newLabel.trim(),
         label: newLabel.trim(),
         sortOrder: (categories?.length ?? 0) + 1,
       });
-      setNewSlug('');
       setNewLabel('');
       toast({ title: 'تم إضافة الفئة' });
     } catch (err: any) {
@@ -43,12 +40,11 @@ export default function Categories() {
   const startEdit = (cat: Category) => {
     setEditingId(cat.id);
     setEditLabel(cat.label);
-    setEditSlug(cat.slug);
   };
 
   const saveEdit = async (id: number) => {
     try {
-      await updateCategory.mutateAsync({ id, label: editLabel, slug: editSlug });
+      await updateCategory.mutateAsync({ id, label: editLabel });
       setEditingId(null);
       toast({ title: 'تم التحديث' });
     } catch (err: any) {
@@ -90,28 +86,19 @@ export default function Categories() {
       {/* Add new category */}
       <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm space-y-4">
         <h3 className="text-lg font-bold text-gray-900 border-b pb-2">إضافة فئة جديدة</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label>الاسم (عربي)</Label>
+            <Label>اسم الفئة</Label>
             <Input
               value={newLabel}
               onChange={(e) => setNewLabel(e.target.value)}
               placeholder="مثال: عطور رجالي"
             />
           </div>
-          <div className="space-y-2">
-            <Label>الرابط (إنجليزي)</Label>
-            <Input
-              value={newSlug}
-              onChange={(e) => setNewSlug(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, '_'))}
-              placeholder="perfume_men"
-              dir="ltr"
-            />
-          </div>
           <div className="flex items-end">
             <Button
               onClick={handleCreate}
-              disabled={createCategory.isPending || !newSlug.trim() || !newLabel.trim()}
+              disabled={createCategory.isPending || !newLabel.trim()}
               className="w-full"
             >
               {createCategory.isPending ? (
@@ -180,17 +167,7 @@ export default function Categories() {
                         cat.label
                       )}
                     </td>
-                    <td className="px-6 py-4 text-gray-500" dir="ltr">
-                      {editingId === cat.id ? (
-                        <Input
-                          value={editSlug}
-                          onChange={(e) => setEditSlug(e.target.value)}
-                          className="h-8 w-full"
-                        />
-                      ) : (
-                        cat.slug
-                      )}
-                    </td>
+                    <td className="px-6 py-4 text-gray-400 text-xs" dir="ltr">{cat.slug}</td>
                     <td className="px-6 py-4 text-gray-400 text-xs">{cat.sortOrder}</td>
                     <td className="px-6 py-4 text-center">
                       <div className="flex items-center justify-center gap-1">
