@@ -14,6 +14,7 @@ import * as ordersController from "../controllers/dashboard/orders.controller";
 import * as settingsController from "../controllers/dashboard/settings.controller";
 import * as heroController from "../controllers/dashboard/hero.controller";
 import * as categoriesController from "../controllers/dashboard/categories.controller";
+import * as attributesController from "../controllers/dashboard/attributes.controller";
 
 import {
   UpdateDashboardSettingsBody,
@@ -100,6 +101,16 @@ router.post("/categories", categoriesController.createCategory);
 router.put("/categories/reorder", categoriesController.reorderCategories);
 router.put("/categories/:id", categoriesController.updateCategory);
 router.delete("/categories/:id", categoriesController.deleteCategory);
+
+// ─── Attribute Definitions (per category) ────────────────────────────────────
+router.get("/categories/:catId/attributes", attributesController.listAttributeDefinitions);
+router.post("/categories/:catId/attributes", attributesController.createAttributeDefinition);
+router.put("/attributes/:attrId", attributesController.updateAttributeDefinition);
+router.delete("/attributes/:attrId", attributesController.deleteAttributeDefinition);
+
+// ─── Product Attribute Values ────────────────────────────────────────────────
+router.get("/products/:id/attributes", productsController.getProductAttributes);
+router.post("/products/:id/attributes", productsController.saveProductAttributes);
 
 // ─── Hero gallery ────────────────────────────────────────────────────────────
 

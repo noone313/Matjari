@@ -1,5 +1,5 @@
 import { Router, type Response } from "express";
-import { db, merchantsTable, productsTable, productVariantsTable, ordersTable, orderItemsTable, discountCodesTable, reviewsTable, stockNotificationsTable, bundlesTable, bundleItemsTable, heroSlidesTable, categoriesTable } from "@workspace/db";
+import { db, merchantsTable, productsTable, productVariantsTable, ordersTable, orderItemsTable, discountCodesTable, reviewsTable, stockNotificationsTable, bundlesTable, bundleItemsTable, heroSlidesTable, categoriesTable, attributeDefinitionsTable, productAttributeValuesTable } from "@workspace/db";
 import { eq, and, ilike, sql, gte, ne, desc, count, avg, inArray, asc } from "drizzle-orm";
 import { sendPushToMerchant } from "../lib/push";
 import {
@@ -252,6 +252,78 @@ router.get("/:slug/products/:productId", async (req, res): Promise<void> => {
 
   setCache(res, 120);
   res.json({ ...product, variants });
+});
+
+// GET /stores/:slug/products/:productId/attributes
+// Public endpoint: fetch attribute definitions + values for a product
+router.get("/:slug/products/:productId/attributes", async (req, res): Promise<void> => {
+  const params = GetStoreProductParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: "معرّف غير صالح" });
+    return;
+  }
+
+  const [merchant] = await db
+    .select()
+    .from(merchantsTable)
+    .where(eq(merchantsTable.slug, params.data.slug))
+    .limit(1);
+
+  if (!merchant) {
+    res.status(404).json({ error: "المتجر غير موجود" });
+    return;
+  }
+
+  const [product] = await db
+    .select()
+    .from(productsTable)
+    .where(
+      and(
+        eq(productsTable.id, params.data.productId),
+        eq(productsTable.merchantId, merchant.id),
+        eq(productsTable.isActive, true),
+      ),
+    )
+    .limit(1);
+
+  if (!product) {
+    res.status(404).json({ error: "المنتج غير موجود" });
+    return;
+  }
+
+  if (!product.categoryId) {
+    res.json({ attributes: [] });
+    return;
+  }
+
+  // Get attribute definitions for this category
+  const defs = await db
+    .select()
+    .from(attributeDefinitionsTable)
+    .where(eq(attributeDefinitionsTable.categoryId, product.categoryId));
+
+  if (defs.length === 0) {
+    res.json({ attributes: [] });
+    return;
+  }
+
+  // Get saved values
+  const values = await db
+    .select()
+    .from(productAttributeValuesTable)
+    .where(eq(productAttributeValuesTable.productId, product.id));
+
+  const valueMap = new Map(values.map((v) => [v.attributeDefinitionId, v.value]));
+
+  const attributes = defs.map((d) => ({
+    key: d.key,
+    label: d.label,
+    type: d.type,
+    value: valueMap.get(d.id) ?? null,
+  })).filter((a) => a.value !== null && a.value !== "");
+
+  setCache(res, 120);
+  res.json({ attributes });
 });
 
 // GET /stores/:slug/products/:productId/related

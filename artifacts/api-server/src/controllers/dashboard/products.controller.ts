@@ -1,4 +1,4 @@
-import { db, merchantsTable, productsTable, productVariantsTable, productImagesTable } from "@workspace/db";
+import { db, merchantsTable, productsTable, productVariantsTable, productImagesTable, productAttributeValuesTable, attributeDefinitionsTable, categoriesTable } from "@workspace/db";
 import { eq, and, desc, sql, inArray } from "drizzle-orm";
 import { type AuthRequest } from "../../middleware/auth";
 import { CreateProductBody, UpdateProductBody, UpdateProductParams, DeleteProductParams, GetProductParams, ListProductsQueryParams } from "@workspace/api-zod";
@@ -226,3 +226,136 @@ export async function deleteProduct(req: AuthRequest, res: Response) {
 }
 
 export { upload };
+
+// ── Product Attribute Values ─────────────────────────────────────────────────
+
+// GET /dashboard/products/:id/attributes — fetch attribute values for a product
+export async function getProductAttributes(req: AuthRequest, res: Response) {
+  const merchantId = req.merchantId!;
+  const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const productId = parseInt(idParam, 10);
+
+  try {
+    const [product] = await db
+      .select()
+      .from(productsTable)
+      .where(and(eq(productsTable.id, productId), eq(productsTable.merchantId, merchantId)))
+      .limit(1);
+
+    if (!product) {
+      res.status(404).json({ error: "المنتج غير موجود" });
+      return;
+    }
+
+    if (!product.categoryId) {
+      res.json({ categoryId: null, attributes: [] });
+      return;
+    }
+
+    // Get attribute definitions for this product's category
+    const defs = await db
+      .select()
+      .from(attributeDefinitionsTable)
+      .where(eq(attributeDefinitionsTable.categoryId, product.categoryId));
+
+    if (defs.length === 0) {
+      res.json({ categoryId: product.categoryId, attributes: [] });
+      return;
+    }
+
+    // Get saved values
+    const values = await db
+      .select()
+      .from(productAttributeValuesTable)
+      .where(eq(productAttributeValuesTable.productId, productId));
+
+    const valueMap = new Map(values.map((v) => [v.attributeDefinitionId, v.value]));
+
+    // Merge definitions with values
+    const attributes = defs.map((d) => ({
+      id: d.id,
+      key: d.key,
+      label: d.label,
+      type: d.type,
+      options: d.options,
+      required: d.required,
+      value: valueMap.get(d.id) ?? null,
+    }));
+
+    res.json({ categoryId: product.categoryId, attributes });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "فشل جلب خصائص المنتج" });
+  }
+}
+
+// POST /dashboard/products/:id/attributes — upsert attribute values
+export async function saveProductAttributes(req: AuthRequest, res: Response) {
+  const merchantId = req.merchantId!;
+  const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const productId = parseInt(idParam, 10);
+  const { attributes } = req.body as { attributes: { attributeDefinitionId: number; value: string | null }[] };
+
+  if (!Array.isArray(attributes)) {
+    res.status(400).json({ error: "الخصائص يجب أن تكون مصفوفة" });
+    return;
+  }
+
+  try {
+    const [product] = await db
+      .select()
+      .from(productsTable)
+      .where(and(eq(productsTable.id, productId), eq(productsTable.merchantId, merchantId)))
+      .limit(1);
+
+    if (!product) {
+      res.status(404).json({ error: "المنتج غير موجود" });
+      return;
+    }
+
+    // Verify all attribute definitions belong to this product's category
+    if (product.categoryId) {
+      const defIds = attributes.map((a) => a.attributeDefinitionId);
+      if (defIds.length > 0) {
+        const validDefs = await db
+          .select({ id: attributeDefinitionsTable.id })
+          .from(attributeDefinitionsTable)
+          .where(
+            and(
+              eq(attributeDefinitionsTable.categoryId, product.categoryId),
+              inArray(attributeDefinitionsTable.id, defIds),
+            ),
+          );
+
+        const validIds = new Set(validDefs.map((d) => d.id));
+        const invalid = defIds.filter((id) => !validIds.has(id));
+        if (invalid.length > 0) {
+          res.status(400).json({ error: `خصائص غير صالحة: ${invalid.join(", ")}` });
+          return;
+        }
+      }
+    }
+
+    // Delete existing values for this product, then re-insert
+    await db
+      .delete(productAttributeValuesTable)
+      .where(eq(productAttributeValuesTable.productId, productId));
+
+    const toInsert = attributes
+      .filter((a) => a.value !== null && a.value !== "")
+      .map((a) => ({
+        productId,
+        attributeDefinitionId: a.attributeDefinitionId,
+        value: a.value!,
+      }));
+
+    if (toInsert.length > 0) {
+      await db.insert(productAttributeValuesTable).values(toInsert);
+    }
+
+    res.json({ message: "تم حفظ الخصائص", count: toInsert.length });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "فشل حفظ خصائص المنتج" });
+  }
+}
