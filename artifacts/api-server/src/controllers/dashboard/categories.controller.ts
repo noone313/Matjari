@@ -10,7 +10,7 @@ export async function listCategories(req: AuthRequest, res: Response) {
     const categories = await db
       .select()
       .from(categoriesTable)
-      .where(eq(categoriesTable.merchantId, merchantId))
+      .where(and(eq(categoriesTable.merchantId, merchantId), eq(categoriesTable.isActive, true)))
       .orderBy(asc(categoriesTable.sortOrder), asc(categoriesTable.id));
     res.json(categories);
   } catch (err) {
@@ -117,20 +117,59 @@ export async function deleteCategory(req: AuthRequest, res: Response) {
       return;
     }
 
-    const products = await db.select()
+    // Count affected products
+    const affectedProducts = await db.select()
       .from(productsTable)
-      .where(and(eq(productsTable.merchantId, merchantId), eq(productsTable.category, existing[0].slug)))
-      .limit(1);
+      .where(and(eq(productsTable.merchantId, merchantId), eq(productsTable.category, existing[0].slug)));
 
-    if (products.length > 0) {
-      res.status(409).json({ error: "لا يمكن حذف الفئة لوجود منتجات مرتبطة بها" });
-      return;
+    // If products exist, move them to the first active category or "other"
+    if (affectedProducts.length > 0) {
+      const fallbackCategory = await db.select()
+        .from(categoriesTable)
+        .where(
+          and(
+            eq(categoriesTable.merchantId, merchantId),
+            eq(categoriesTable.isActive, true),
+            // Not the category being deleted
+          )
+        )
+        .orderBy(categoriesTable.sortOrder)
+        .limit(5);
+
+      // Find the first active category that isn't the one being deleted
+      const target = fallbackCategory.find((c) => c.id !== categoryId);
+
+      if (target) {
+        // Move products to the target category
+        await db.update(productsTable)
+          .set({ category: target.slug })
+          .where(and(eq(productsTable.merchantId, merchantId), eq(productsTable.category, existing[0].slug)));
+      } else {
+        // No other category exists — create "أخرى" (other)
+        const [otherCat] = await db.insert(categoriesTable).values({
+          merchantId,
+          slug: "other",
+          label: "أخرى",
+          sortOrder: 999,
+        }).returning();
+
+        await db.update(productsTable)
+          .set({ category: otherCat.slug })
+          .where(and(eq(productsTable.merchantId, merchantId), eq(productsTable.category, existing[0].slug)));
+      }
     }
 
-    await db.delete(categoriesTable)
+    // Soft delete — set isActive to false
+    await db.update(categoriesTable)
+      .set({ isActive: false })
       .where(and(eq(categoriesTable.id, categoryId), eq(categoriesTable.merchantId, merchantId)));
 
-    res.sendStatus(204);
+    res.json({
+      message: affectedProducts.length > 0
+        ? `تم حذف الفئة ونقل ${affectedProducts.length} منتج لفئة أخرى`
+        : "تم حذف الفئة",
+      movedProducts: affectedProducts.length,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "فشل حذف الفئة" });

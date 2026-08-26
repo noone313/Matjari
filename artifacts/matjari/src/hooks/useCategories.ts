@@ -47,7 +47,7 @@ export function useDeleteDashboardCategory() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: number) =>
-      customFetch<void>(`/api/dashboard/categories/${id}`, { method: 'DELETE' }),
+      customFetch<{ message: string; movedProducts: number }>(`/api/dashboard/categories/${id}`, { method: 'DELETE' }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['dashboard-categories'] }),
   });
 }

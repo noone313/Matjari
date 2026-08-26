@@ -126,7 +126,7 @@ router.get("/:slug/categories", async (req, res): Promise<void> => {
   const categories = await db
     .select()
     .from(categoriesTable)
-    .where(eq(categoriesTable.merchantId, merchant.id))
+    .where(and(eq(categoriesTable.merchantId, merchant.id), eq(categoriesTable.isActive, true)))
     .orderBy(asc(categoriesTable.sortOrder), asc(categoriesTable.id));
 
   setCache(res, 60);

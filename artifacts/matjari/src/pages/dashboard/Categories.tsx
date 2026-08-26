@@ -53,10 +53,13 @@ export default function Categories() {
   };
 
   const handleDelete = async (cat: Category) => {
-    if (!confirm(`هل تريد حذف "${cat.label}"؟`)) return;
+    if (!confirm(`هل تريد حذف "${cat.label}"؟\nالمنتجات ستنتقل لفئة أخرى تلقائياً.`)) return;
     try {
-      await deleteCategory.mutateAsync(cat.id);
-      toast({ title: 'تم الحذف' });
+      const result = await deleteCategory.mutateAsync(cat.id);
+      const msg = result?.movedProducts > 0
+        ? `تم حذف الفئة ونقل ${result.movedProducts} منتج لفئة أخرى`
+        : 'تم حذف الفئة';
+      toast({ title: msg });
     } catch (err: any) {
       toast({ title: err.message ?? 'حدث خطأ', variant: 'destructive' });
     }

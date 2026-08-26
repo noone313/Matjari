@@ -38,6 +38,7 @@ CREATE TABLE "categories" (
 	"slug" varchar(100) NOT NULL,
 	"label" varchar(150) NOT NULL,
 	"sort_order" integer DEFAULT 0 NOT NULL,
+	"is_active" boolean DEFAULT true NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL
 );--> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "idx_categories_merchant_slug" ON "categories"("merchant_id", "slug");--> statement-breakpoint
