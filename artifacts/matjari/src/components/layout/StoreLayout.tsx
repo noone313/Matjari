@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useGetStore, getGetStoreQueryKey } from '@workspace/api-client-react';
 import { useCart } from '@/contexts/CartContext';
@@ -6,7 +6,7 @@ import { useStoreCategoriesCtx } from '@/contexts/StoreCategoriesContext';
 import { useComparison, MAX_COMPARISON } from '@/contexts/ComparisonContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { normalizeWhatsAppNumber } from '@/lib/utils';
-import { ShoppingBag, Phone, MessageCircle, Instagram, Scale, Heart, PackageSearch } from 'lucide-react';
+import { ShoppingBag, Phone, MessageCircle, Instagram, Scale, Heart, PackageSearch, X } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import HeroCarousel from '@/components/store/HeroCarousel';
 import BottomNav from '@/components/layout/BottomNav';
@@ -21,6 +21,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
   const { count: wishlistCount } = useWishlist();
   const { categories, activeCategory, setActiveCategory } = useStoreCategoriesCtx();
   const [location, setLocation] = useLocation();
+  const [catsOpen, setCatsOpen] = useState(false);
 
   if (isLoading) {
     return <StoreShellSkeleton />;
@@ -254,8 +255,44 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
           slug={slug}
           itemCount={itemCount}
           wishlistCount={wishlistCount}
-          onOpenCategories={() => {}}
+          onOpenCategories={() => setCatsOpen(true)}
         />
+      )}
+
+      {/* ── Mobile categories drawer ─────────── */}
+      {catsOpen && (
+        <div className="fixed inset-0 z-50 flex md:hidden">
+          <div className="flex-1 bg-black/40" onClick={() => setCatsOpen(false)} />
+          <div className="w-64 bg-white dark:bg-zinc-900 h-full shadow-2xl flex flex-col overflow-y-auto" dir="rtl">
+            <div className="flex items-center justify-between p-5 border-b border-zinc-100 dark:border-zinc-800">
+              <p className="text-xs uppercase tracking-widest font-medium text-zinc-500 dark:text-zinc-400">الأقسام</p>
+              <button onClick={() => setCatsOpen(false)} className="text-zinc-400 hover:text-zinc-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex flex-col">
+              <button
+                onClick={() => { setActiveCategory(''); setLocation(`/store/${slug}`); setCatsOpen(false); }}
+                className={`text-sm text-right px-5 py-3 border-b border-zinc-50 dark:border-zinc-800 transition-colors ${
+                  activeCategory === '' ? 'text-primary font-semibold' : 'text-zinc-400 dark:text-zinc-500'
+                }`}
+              >
+                كل المنتجات
+              </button>
+              {categories.map((cat) => (
+                <button
+                  key={cat.slug}
+                  onClick={() => { setActiveCategory(cat.slug); setLocation(`/store/${slug}?cat=${cat.slug}`); setCatsOpen(false); }}
+                  className={`text-sm text-right px-5 py-3 border-b border-zinc-50 dark:border-zinc-800 transition-colors ${
+                    activeCategory === cat.slug ? 'text-primary font-semibold' : 'text-zinc-400 dark:text-zinc-500'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
