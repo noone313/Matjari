@@ -5,24 +5,14 @@ import { FragrancePyramid } from '@/components/store/FragrancePyramid';
 import { formatPrice, getApiUrl } from '@/lib/utils';
 import { useStoreCategoriesCtx } from '@/contexts/StoreCategoriesContext';
 import { useStoreProductAttributes } from '@/hooks/useAttributes';
-import { X, Scale, Droplet, Leaf, RotateCcw } from 'lucide-react';
+import { X, Scale, Droplet, RotateCcw } from 'lucide-react';
 import type { Product } from '@workspace/api-client-react';
-
-function isFragrance(category: string) {
-  return ['perfume_men', 'perfume_women', 'oud'].includes(category);
-}
-
-function isCosmetic(category: string) {
-  return ['skincare', 'makeup'].includes(category);
-}
 
 function CompareColumn({ product, slug, onRemove }: { product: Product; slug: string; onRemove: (id: number) => void }) {
   const { getCategoryLabel } = useStoreCategoriesCtx();
   const { data: storeAttrs } = useStoreProductAttributes(slug, product.id);
   const basePrice = product.variants?.length ? Math.min(...product.variants.map((v) => v.price)) : 0;
   const hasMultipleVariants = (product.variants?.length ?? 0) > 1;
-  const fragrance = isFragrance(product.category);
-  const cosmetic = isCosmetic(product.category);
   const hasDynamicAttrs = storeAttrs && storeAttrs.attributes.length > 0;
 
   return (
@@ -82,25 +72,6 @@ function CompareColumn({ product, slug, onRemove }: { product: Product; slug: st
                 const noteBase = notes.find((a) => a.key === 'note_base')?.value ?? null;
                 return <FragrancePyramid top={noteTop} heart={noteHeart} base={noteBase} />;
               })()}
-            </div>
-          ) : fragrance && (product.noteTop || product.noteHeart || product.noteBase) ? (
-            <FragrancePyramid top={product.noteTop} heart={product.noteHeart} base={product.noteBase} />
-          ) : cosmetic ? (
-            <div className="space-y-4 py-5">
-              <div className="flex items-start gap-3">
-                <Droplet className="w-5 h-5 text-[hsl(var(--primary))] shrink-0 mt-0.5" />
-                <div>
-                  <span className="font-bold text-gray-900 dark:text-white block mb-1">نوع البشرة المناسب</span>
-                  <span className="text-gray-600 dark:text-zinc-400 text-sm leading-relaxed">{product.skinType || '—'}</span>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 pt-4 border-t border-gray-100 dark:border-zinc-800">
-                <Leaf className="w-5 h-5 text-[hsl(var(--primary))] shrink-0 mt-0.5" />
-                <div>
-                  <span className="font-bold text-gray-900 dark:text-white block mb-1">المكونات الرئيسية</span>
-                  <span className="text-gray-600 dark:text-zinc-400 text-sm leading-relaxed">{product.ingredients || '—'}</span>
-                </div>
-              </div>
             </div>
           ) : (
             <p className="py-5 text-gray-500 dark:text-zinc-400 text-sm">لا توجد تفاصيل إضافية</p>

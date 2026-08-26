@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { ChevronRight, Droplet, Leaf, Share2, Check, Star, BellRing, Heart } from 'lucide-react';
+import { ChevronRight, Droplet, Share2, Check, Star, BellRing, Heart } from 'lucide-react';
 import { Link } from 'wouter';
 import { ProductPageSkeleton } from '@/components/skeletons';
 import { FragrancePyramid } from '@/components/store/FragrancePyramid';
@@ -118,22 +118,12 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
   const totalStock = product.variants.reduce((s, v) => s + (v.stock ?? 0), 0);
   const currentStock = currentVariant?.stock ?? 0;
   const isOutOfStock = currentStock <= 0;
-  const isFragrance = product.category.startsWith('perfume') || product.category === 'oud';
-  const isSkincare = product.category === 'skincare' || product.category === 'makeup';
 
-  // Dynamic attributes from the new system
+  // Dynamic attributes
   const hasDynamicAttrs = storeAttrs && storeAttrs.attributes.length > 0;
-
-  // Fragrance pyramid: use dynamic attrs if available, fallback to legacy
-  const noteTop = hasDynamicAttrs
-    ? storeAttrs.attributes.find((a) => a.key === 'note_top')?.value ?? null
-    : product.noteTop;
-  const noteHeart = hasDynamicAttrs
-    ? storeAttrs.attributes.find((a) => a.key === 'note_heart')?.value ?? null
-    : product.noteHeart;
-  const noteBase = hasDynamicAttrs
-    ? storeAttrs.attributes.find((a) => a.key === 'note_base')?.value ?? null
-    : product.noteBase;
+  const noteTop = storeAttrs?.attributes.find((a) => a.key === 'note_top')?.value ?? null;
+  const noteHeart = storeAttrs?.attributes.find((a) => a.key === 'note_heart')?.value ?? null;
+  const noteBase = storeAttrs?.attributes.find((a) => a.key === 'note_base')?.value ?? null;
   const hasFragranceNotes = !!(noteTop || noteHeart || noteBase);
 
   const handleAddToCart = () => {
@@ -267,30 +257,6 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
             );
           })()}
 
-          {/* Legacy skincare display (fallback if no dynamic attrs) */}
-          {!hasDynamicAttrs && isSkincare && (
-            <div className="space-y-4 mb-8 bg-gray-50 dark:bg-zinc-800 p-6 rounded-lg border border-gray-100 dark:border-zinc-700">
-              {product.skinType && (
-                <div className="flex items-start gap-3">
-                  <Droplet className="w-5 h-5 text-[hsl(var(--primary))] shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-bold text-gray-900 dark:text-white block mb-1">نوع البشرة المناسب</span>
-                    <span className="text-gray-600 dark:text-zinc-400">{product.skinType}</span>
-                  </div>
-                </div>
-              )}
-              {product.ingredients && (
-                <div className="flex items-start gap-3 pt-4 border-t border-gray-200 dark:border-zinc-700">
-                  <Leaf className="w-5 h-5 text-[hsl(var(--primary))] shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-bold text-gray-900 dark:text-white block mb-1">المكونات الرئيسية</span>
-                    <span className="text-gray-600 dark:text-zinc-400 text-sm leading-relaxed">{product.ingredients}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
           {/* Variants */}
           {product.variants.length > 1 && (
             <div className="mb-8">
@@ -397,7 +363,7 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
       {relatedProducts && relatedProducts.length > 0 && (
         <div className="mt-12 border-t border-zinc-100 dark:border-zinc-800 pt-10 px-6 pb-8">
           <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 text-center mb-6">
-            {isFragrance ? 'عطور مشابهة' : isSkincare ? 'أكمل مجموعتك' : 'منتجات مشابهة'}
+            منتجات مشابهة
           </p>
           <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
             {relatedProducts.map(p => {

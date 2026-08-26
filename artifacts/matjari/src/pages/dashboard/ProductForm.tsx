@@ -29,12 +29,6 @@ const schema = z.object({
   description: z.string().optional().nullable(),
   category: z.string().min(1, 'الفئة مطلوبة'),
   isActive: z.boolean().default(true),
-  noteTop: z.string().optional().nullable(),
-  noteHeart: z.string().optional().nullable(),
-  noteBase: z.string().optional().nullable(),
-  skinType: z.string().optional().nullable(),
-  ingredients: z.string().optional().nullable(),
-  batchExpiry: z.string().optional().nullable(),
   variants: z.array(variantSchema).min(1, 'يجب إضافة خيار واحد على الأقل'),
 });
 type FormValues = z.infer<typeof schema>;
@@ -227,12 +221,6 @@ export default function ProductForm() {
         description: product.description,
         category: product.category,
         isActive: product.isActive,
-        noteTop: product.noteTop,
-        noteHeart: product.noteHeart,
-        noteBase: product.noteBase,
-        skinType: product.skinType,
-        ingredients: product.ingredients,
-        batchExpiry: product.batchExpiry,
         variants: product.variants.map((v) => ({
           variantLabel: v.variantLabel,
           price: v.price,

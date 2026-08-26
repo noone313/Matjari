@@ -37,6 +37,7 @@ CREATE TABLE "categories" (
 	"merchant_id" integer NOT NULL,
 	"slug" varchar(100) NOT NULL,
 	"label" varchar(150) NOT NULL,
+	"parent_category_id" integer,
 	"sort_order" integer DEFAULT 0 NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL
@@ -63,15 +64,27 @@ CREATE TABLE "products" (
 	"name" varchar(200) NOT NULL,
 	"description" text,
 	"category" varchar(100) NOT NULL,
+	"category_id" integer,
 	"image_urls" text[] DEFAULT '{}' NOT NULL,
-	"note_top" varchar(100),
-	"note_heart" varchar(100),
-	"note_base" varchar(100),
-	"skin_type" varchar(100),
-	"ingredients" text,
-	"batch_expiry" varchar(20),
 	"is_active" boolean DEFAULT true NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL
+);--> statement-breakpoint
+CREATE TABLE "attribute_definitions" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"category_id" integer NOT NULL,
+	"key" varchar(100) NOT NULL,
+	"label" varchar(150) NOT NULL,
+	"input_type" varchar(50) DEFAULT 'text' NOT NULL,
+	"options" jsonb,
+	"sort_order" integer DEFAULT 0 NOT NULL,
+	"is_active" boolean DEFAULT true NOT NULL,
+	CONSTRAINT "attr_def_category_key_unique" UNIQUE("category_id","key")
+);--> statement-breakpoint
+CREATE TABLE "product_attribute_values" (
+	"product_id" integer NOT NULL,
+	"attribute_definition_id" integer NOT NULL,
+	"value" text NOT NULL,
+	CONSTRAINT "pav_product_attr_unique" UNIQUE("product_id","attribute_definition_id")
 );--> statement-breakpoint
 CREATE TABLE "order_items" (
 	"id" serial PRIMARY KEY NOT NULL,
@@ -176,7 +189,12 @@ ALTER TABLE "bundle_items" ADD CONSTRAINT "bundle_items_bundle_id_bundles_id_fk"
 ALTER TABLE "bundle_items" ADD CONSTRAINT "bundle_items_variant_id_product_variants_id_fk" FOREIGN KEY ("variant_id") REFERENCES "public"."product_variants"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "bundles" ADD CONSTRAINT "bundles_merchant_id_merchants_id_fk" FOREIGN KEY ("merchant_id") REFERENCES "public"."merchants"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "hero_slides" ADD CONSTRAINT "hero_slides_merchant_id_merchants_id_fk" FOREIGN KEY ("merchant_id") REFERENCES "public"."merchants"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "push_subscriptions" ADD CONSTRAINT "push_subscriptions_merchant_id_merchants_id_fk" FOREIGN KEY ("merchant_id") REFERENCES "public"."merchants"("id") ON DELETE cascade ON UPDATE no action;
+ALTER TABLE "push_subscriptions" ADD CONSTRAINT "push_subscriptions_merchant_id_merchants_id_fk" FOREIGN KEY ("merchant_id") REFERENCES "public"."merchants"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "products" ADD CONSTRAINT "products_category_id_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."categories"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "attribute_definitions" ADD CONSTRAINT "attr_def_category_id_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."categories"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "product_attribute_values" ADD CONSTRAINT "pav_product_id_products_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "product_attribute_values" ADD CONSTRAINT "pav_attr_def_id_attr_def_id_fk" FOREIGN KEY ("attribute_definition_id") REFERENCES "public"."attribute_definitions"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "categories" ADD CONSTRAINT "categories_parent_category_id_categories_id_fk" FOREIGN KEY ("parent_category_id") REFERENCES "public"."categories"("id") ON DELETE set null ON UPDATE no action;
 `;
 
 // PostgreSQL codes meaning "this object already exists" — safe to skip when

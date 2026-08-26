@@ -27,12 +27,6 @@ export const productsTable = pgTable("products", {
   category: varchar("category", { length: 100 }).notNull(),
   categoryId: integer("category_id"),
   imageUrls: text("image_urls").array().notNull().default([]),
-  noteTop: varchar("note_top", { length: 100 }),
-  noteHeart: varchar("note_heart", { length: 100 }),
-  noteBase: varchar("note_base", { length: 100 }),
-  skinType: varchar("skin_type", { length: 100 }),
-  ingredients: text("ingredients"),
-  batchExpiry: varchar("batch_expiry", { length: 20 }),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
