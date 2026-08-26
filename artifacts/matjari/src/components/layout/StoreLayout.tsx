@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'wouter';
 import { useGetStore, getGetStoreQueryKey } from '@workspace/api-client-react';
 import { useCart } from '@/contexts/CartContext';
+import { useStoreCategoriesCtx } from '@/contexts/StoreCategoriesContext';
 import { useComparison, MAX_COMPARISON } from '@/contexts/ComparisonContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { normalizeWhatsAppNumber } from '@/lib/utils';
@@ -18,6 +19,7 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
   const { itemCount } = useCart();
   const { items: comparisonItems } = useComparison();
   const { count: wishlistCount } = useWishlist();
+  const { categories } = useStoreCategoriesCtx();
   const [location] = useLocation();
 
   if (isLoading) {
@@ -107,21 +109,19 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
 
         {/* Desktop nav pills */}
         <nav className="hidden md:flex border-t border-border max-w-screen-xl mx-auto px-6 gap-8 py-0">
-          {[
-            { label: 'كل المنتجات', cat: '' },
-            { label: 'عطور رجالي', cat: 'perfume_men' },
-            { label: 'عطور نسائي', cat: 'perfume_women' },
-            { label: 'عود وبخور', cat: 'oud' },
-            { label: 'عناية بالبشرة', cat: 'skincare' },
-            { label: 'مكياج', cat: 'makeup' },
-            { label: 'هدايا', cat: 'gifts' },
-          ].map(({ label, cat }) => (
+          <Link
+            href={`/store/${slug}`}
+            className="text-xs tracking-widest uppercase py-3 border-b-2 border-transparent hover:border-zinc-900 hover:text-zinc-900 dark:hover:border-white dark:hover:text-white text-zinc-500 dark:text-zinc-400 transition-all whitespace-nowrap"
+          >
+            كل المنتجات
+          </Link>
+          {categories.map((cat) => (
             <Link
-              key={cat}
-              href={`/store/${slug}${cat ? `?cat=${cat}` : ''}`}
+              key={cat.slug}
+              href={`/store/${slug}?cat=${cat.slug}`}
               className="text-xs tracking-widest uppercase py-3 border-b-2 border-transparent hover:border-zinc-900 hover:text-zinc-900 dark:hover:border-white dark:hover:text-white text-zinc-500 dark:text-zinc-400 transition-all whitespace-nowrap"
             >
-              {label}
+              {cat.label}
             </Link>
           ))}
           <Link
