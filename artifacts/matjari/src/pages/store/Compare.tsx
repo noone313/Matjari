@@ -4,6 +4,7 @@ import { useComparison, MAX_COMPARISON } from '@/contexts/ComparisonContext';
 import { FragrancePyramid } from '@/components/store/FragrancePyramid';
 import { formatPrice, getApiUrl } from '@/lib/utils';
 import { useStoreCategoriesCtx } from '@/contexts/StoreCategoriesContext';
+import { useStoreProductAttributes } from '@/hooks/useAttributes';
 import { X, Scale, Droplet, Leaf, RotateCcw } from 'lucide-react';
 import type { Product } from '@workspace/api-client-react';
 
@@ -17,10 +18,12 @@ function isCosmetic(category: string) {
 
 function CompareColumn({ product, slug, onRemove }: { product: Product; slug: string; onRemove: (id: number) => void }) {
   const { getCategoryLabel } = useStoreCategoriesCtx();
+  const { data: storeAttrs } = useStoreProductAttributes(slug, product.id);
   const basePrice = product.variants?.length ? Math.min(...product.variants.map((v) => v.price)) : 0;
   const hasMultipleVariants = (product.variants?.length ?? 0) > 1;
   const fragrance = isFragrance(product.category);
   const cosmetic = isCosmetic(product.category);
+  const hasDynamicAttrs = storeAttrs && storeAttrs.attributes.length > 0;
 
   return (
     <div className="bg-white dark:bg-zinc-900 flex flex-col" data-testid={`compare-col-${product.id}`}>
@@ -56,7 +59,31 @@ function CompareColumn({ product, slug, onRemove }: { product: Product; slug: st
         </div>
 
         <div className="mt-5 border-t border-zinc-100 dark:border-zinc-800">
-          {fragrance && (product.noteTop || product.noteHeart || product.noteBase) ? (
+          {hasDynamicAttrs ? (
+            <div className="space-y-4 py-5">
+              {storeAttrs.attributes.map((attr) => {
+                const isNote = ['note_top', 'note_heart', 'note_base'].includes(attr.key);
+                const noteLabels: Record<string, string> = { note_top: 'المقدمة', note_heart: 'القلب', note_base: 'القاعدة' };
+                return isNote ? null : (
+                  <div key={attr.key} className="flex items-start gap-3">
+                    <Droplet className="w-5 h-5 text-[hsl(var(--primary))] shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-gray-900 dark:text-white block mb-1">{attr.label}</span>
+                      <span className="text-gray-600 dark:text-zinc-400 text-sm leading-relaxed">{attr.value}</span>
+                    </div>
+                  </div>
+                );
+              })}
+              {(() => {
+                const notes = storeAttrs.attributes.filter((a) => ['note_top', 'note_heart', 'note_base'].includes(a.key));
+                if (notes.length === 0) return null;
+                const noteTop = notes.find((a) => a.key === 'note_top')?.value ?? null;
+                const noteHeart = notes.find((a) => a.key === 'note_heart')?.value ?? null;
+                const noteBase = notes.find((a) => a.key === 'note_base')?.value ?? null;
+                return <FragrancePyramid top={noteTop} heart={noteHeart} base={noteBase} />;
+              })()}
+            </div>
+          ) : fragrance && (product.noteTop || product.noteHeart || product.noteBase) ? (
             <FragrancePyramid top={product.noteTop} heart={product.noteHeart} base={product.noteBase} />
           ) : cosmetic ? (
             <div className="space-y-4 py-5">

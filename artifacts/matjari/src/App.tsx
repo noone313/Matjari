@@ -28,6 +28,7 @@ const Reviews = lazy(() => import('@/pages/dashboard/Reviews'));
 const Bundles = lazy(() => import('@/pages/dashboard/Bundles'));
 const BundleForm = lazy(() => import('@/pages/dashboard/BundleForm'));
 const Categories = lazy(() => import('@/pages/dashboard/Categories'));
+const CategoryAttributes = lazy(() => import('@/pages/dashboard/CategoryAttributes'));
 const Settings = lazy(() => import('@/pages/dashboard/Settings'));
 import DashboardLayout from '@/components/layout/DashboardLayout';
 
@@ -114,6 +115,7 @@ function DashboardRouter() {
           <Route path="/dashboard/bundles/new" component={BundleForm} />
           <Route path="/dashboard/bundles/:id/edit" component={BundleForm} />
           <Route path="/dashboard/categories" component={Categories} />
+          <Route path="/dashboard/categories/:catId/attributes" component={CategoryAttributes} />
           <Route path="/dashboard/settings" component={Settings} />
           <Route component={NotFound} />
         </Switch>

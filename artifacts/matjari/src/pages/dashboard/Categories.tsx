@@ -3,9 +3,10 @@ import { useListDashboardCategories, useCreateDashboardCategory, useUpdateDashbo
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, Trash2, GripVertical, Loader2, Edit2, Check, X, LayoutGrid } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Loader2, Edit2, Check, X, LayoutGrid, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { TableRowsSkeleton } from '@/components/skeletons';
+import { useLocation } from 'wouter';
 
 export default function Categories() {
   const { data: categories, isLoading } = useListDashboardCategories();
@@ -14,6 +15,7 @@ export default function Categories() {
   const deleteCategory = useDeleteDashboardCategory();
   const reorderCategories = useReorderDashboardCategories();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   const [newLabel, setNewLabel] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -196,6 +198,15 @@ export default function Categories() {
                           </>
                         ) : (
                           <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-gray-500 hover:text-primary"
+                              onClick={() => setLocation(`/dashboard/categories/${cat.id}/attributes`)}
+                              title="إدارة الخصائص"
+                            >
+                              <Settings className="w-4 h-4" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="icon"

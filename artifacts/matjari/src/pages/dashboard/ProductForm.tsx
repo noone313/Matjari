@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { getApiUrl } from '@/lib/utils';
 import { useListDashboardCategories } from '@/hooks/useCategories';
+import { useAttributeDefinitions, useProductAttributes, useSaveProductAttributes } from '@/hooks/useAttributes';
 import { Trash2, Plus, Upload, X, Loader2, BellRing, Phone } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { DetailPanelSkeleton } from '@/components/skeletons';
@@ -187,8 +188,32 @@ export default function ProductForm() {
 
   const { fields, append, remove } = useFieldArray({ control: form.control, name: 'variants' });
   const categoryWatch = form.watch('category');
-  const isFragrance = ['perfume_men', 'perfume_women', 'oud'].includes(categoryWatch);
-  const isSkincare = ['skincare', 'makeup'].includes(categoryWatch);
+
+  // Dynamic attributes: find category ID from slug, fetch definitions
+  const selectedCategory = categories?.find((c) => c.slug === categoryWatch);
+  const selectedCategoryId = selectedCategory?.id ?? null;
+  const { data: attrDefs } = useAttributeDefinitions(selectedCategoryId);
+  const { data: existingAttrs } = useProductAttributes(isEdit ? Number(id) : null);
+  const saveAttrs = useSaveProductAttributes();
+
+  // Local state for attribute values
+  const [attrValues, setAttrValues] = useState<Record<number, string>>({});
+
+  // Load existing attribute values when editing
+  useEffect(() => {
+    if (existingAttrs?.attributes) {
+      const map: Record<number, string> = {};
+      for (const attr of existingAttrs.attributes) {
+        map[attr.id] = attr.value ?? '';
+      }
+      setAttrValues(map);
+    }
+  }, [existingAttrs]);
+
+  // Reset attr values when category changes
+  useEffect(() => {
+    setAttrValues({});
+  }, [categoryWatch]);
 
   // Generated Orval multipart hooks — they build the FormData (data + keepUrls + images)
   // from the documented ProductCreateBody / ProductUpdateBody, so no manual fetch.
@@ -245,6 +270,19 @@ export default function ProductForm() {
       // Invalidate React-Query caches
       queryClient.invalidateQueries({ queryKey: ['product', id] });
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard/products'] });
+
+      // Save dynamic attribute values (if editing and has attributes)
+      if (isEdit && attrDefs && attrDefs.length > 0) {
+        const attrsToSave = attrDefs.map((def) => ({
+          attributeDefinitionId: def.id,
+          value: attrValues[def.id] ?? null,
+        }));
+        try {
+          await saveAttrs.mutateAsync({ productId: Number(id), attributes: attrsToSave });
+        } catch {
+          // Attribute save is non-critical
+        }
+      }
 
       toast({ title: isEdit ? 'تم التحديث بنجاح' : 'تم إضافة المنتج بنجاح' });
       setLocation('/dashboard/products');
@@ -309,42 +347,32 @@ export default function ProductForm() {
           </div>
         </div>
 
-        {/* ── Category-specific fields ── */}
-        {(isFragrance || isSkincare) && (
+        {/* ── Dynamic category attributes ── */}
+        {attrDefs && attrDefs.length > 0 && (
           <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm space-y-6">
             <h3 className="text-lg font-bold text-gray-900 border-b pb-2">تفاصيل إضافية</h3>
-            {isFragrance && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <Label>المقدمة (القمة)</Label>
-                  <Input {...form.register('noteTop')} placeholder="ليمون، برغموت..." />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {attrDefs.map((def) => (
+                <div key={def.id} className={`space-y-2 ${def.type === 'textarea' ? 'md:col-span-2' : ''}`}>
+                  <Label>
+                    {def.label}
+                    {def.required && <span className="text-red-500 mr-1">*</span>}
+                  </Label>
+                  {def.type === 'textarea' ? (
+                    <Textarea
+                      value={attrValues[def.id] ?? ''}
+                      onChange={(e) => setAttrValues((prev) => ({ ...prev, [def.id]: e.target.value }))}
+                      rows={3}
+                    />
+                  ) : (
+                    <Input
+                      value={attrValues[def.id] ?? ''}
+                      onChange={(e) => setAttrValues((prev) => ({ ...prev, [def.id]: e.target.value }))}
+                    />
+                  )}
                 </div>
-                <div className="space-y-2">
-                  <Label>القلب</Label>
-                  <Input {...form.register('noteHeart')} placeholder="ياسمين، ورد..." />
-                </div>
-                <div className="space-y-2">
-                  <Label>القاعدة</Label>
-                  <Input {...form.register('noteBase')} placeholder="عود، مسك..." />
-                </div>
-              </div>
-            )}
-            {isSkincare && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label>نوع البشرة</Label>
-                  <Input {...form.register('skinType')} placeholder="دهنية، جافة، مختلطة..." />
-                </div>
-                <div className="space-y-2">
-                  <Label>تاريخ الانتهاء (اختياري)</Label>
-                  <Input {...form.register('batchExpiry')} placeholder="MM/YYYY" />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <Label>المكونات</Label>
-                  <Textarea {...form.register('ingredients')} rows={3} />
-                </div>
-              </div>
-            )}
+              ))}
+            </div>
           </div>
         )}
 

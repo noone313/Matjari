@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useGetStoreProduct, getGetStoreProductQueryKey, useGetRelatedProducts, getGetRelatedProductsQueryKey, useGetProductReviews, getGetProductReviewsQueryKey, useCreateProductReview, useCreateStockNotification } from '@workspace/api-client-react';
+import { useStoreProductAttributes } from '@/hooks/useAttributes';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { formatPrice, getApiUrl } from '@/lib/utils';
@@ -17,6 +18,7 @@ import { FragrancePyramid } from '@/components/store/FragrancePyramid';
 export default function StoreProduct({ slug, productId }: { slug: string, productId: string }) {
   const { getCategoryLabel } = useStoreCategoriesCtx();
   const { data: product, isLoading } = useGetStoreProduct(slug, Number(productId), { query: { enabled: !!slug && !!productId, queryKey: getGetStoreProductQueryKey(slug, Number(productId)) } });
+  const { data: storeAttrs } = useStoreProductAttributes(slug, product?.id ?? null);
   const { addToCart } = useCart();
   const { toast } = useToast();
   const { toggleWishlist, isWishlisted } = useWishlist();
@@ -118,6 +120,21 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
   const isOutOfStock = currentStock <= 0;
   const isFragrance = product.category.startsWith('perfume') || product.category === 'oud';
   const isSkincare = product.category === 'skincare' || product.category === 'makeup';
+
+  // Dynamic attributes from the new system
+  const hasDynamicAttrs = storeAttrs && storeAttrs.attributes.length > 0;
+
+  // Fragrance pyramid: use dynamic attrs if available, fallback to legacy
+  const noteTop = hasDynamicAttrs
+    ? storeAttrs.attributes.find((a) => a.key === 'note_top')?.value ?? null
+    : product.noteTop;
+  const noteHeart = hasDynamicAttrs
+    ? storeAttrs.attributes.find((a) => a.key === 'note_heart')?.value ?? null
+    : product.noteHeart;
+  const noteBase = hasDynamicAttrs
+    ? storeAttrs.attributes.find((a) => a.key === 'note_base')?.value ?? null
+    : product.noteBase;
+  const hasFragranceNotes = !!(noteTop || noteHeart || noteBase);
 
   const handleAddToCart = () => {
     if (!currentVariant) return;
@@ -225,11 +242,33 @@ export default function StoreProduct({ slug, productId }: { slug: string, produc
             <p className="text-gray-600 dark:text-zinc-400 leading-relaxed mb-8">{product.description}</p>
           )}
 
-          {isFragrance && (product.noteTop || product.noteHeart || product.noteBase) && (
-            <FragrancePyramid top={product.noteTop} heart={product.noteHeart} base={product.noteBase} />
+          {hasFragranceNotes && (
+            <FragrancePyramid top={noteTop} heart={noteHeart} base={noteBase} />
           )}
 
-          {isSkincare && (
+          {/* Dynamic attributes display (non-fragrance attributes) */}
+          {hasDynamicAttrs && (() => {
+            const nonFragranceAttrs = storeAttrs.attributes.filter(
+              (a) => !['note_top', 'note_heart', 'note_base'].includes(a.key),
+            );
+            if (nonFragranceAttrs.length === 0) return null;
+            return (
+              <div className="space-y-4 mb-8 bg-gray-50 dark:bg-zinc-800 p-6 rounded-lg border border-gray-100 dark:border-zinc-700">
+                {nonFragranceAttrs.map((attr) => (
+                  <div key={attr.key} className="flex items-start gap-3">
+                    <Droplet className="w-5 h-5 text-[hsl(var(--primary))] shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-gray-900 dark:text-white block mb-1">{attr.label}</span>
+                      <span className="text-gray-600 dark:text-zinc-400">{attr.value}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+
+          {/* Legacy skincare display (fallback if no dynamic attrs) */}
+          {!hasDynamicAttrs && isSkincare && (
             <div className="space-y-4 mb-8 bg-gray-50 dark:bg-zinc-800 p-6 rounded-lg border border-gray-100 dark:border-zinc-700">
               {product.skinType && (
                 <div className="flex items-start gap-3">
