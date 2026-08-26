@@ -19,8 +19,8 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
   const { itemCount } = useCart();
   const { items: comparisonItems } = useComparison();
   const { count: wishlistCount } = useWishlist();
-  const { categories } = useStoreCategoriesCtx();
-  const [location] = useLocation();
+  const { categories, activeCategory, setActiveCategory } = useStoreCategoriesCtx();
+  const [location, setLocation] = useLocation();
 
   if (isLoading) {
     return <StoreShellSkeleton />;
@@ -109,20 +109,24 @@ export default function StoreLayout({ children, slug }: { children: React.ReactN
 
         {/* Desktop nav pills */}
         <nav className="hidden md:flex border-t border-border max-w-screen-xl mx-auto px-6 gap-8 py-0">
-          <Link
-            href={`/store/${slug}`}
-            className="text-xs tracking-widest uppercase py-3 border-b-2 border-transparent hover:border-zinc-900 hover:text-zinc-900 dark:hover:border-white dark:hover:text-white text-zinc-500 dark:text-zinc-400 transition-all whitespace-nowrap"
+          <button
+            onClick={() => { setActiveCategory(''); setLocation(`/store/${slug}`); }}
+            className={`text-xs tracking-widest uppercase py-3 border-b-2 transition-all whitespace-nowrap ${
+              activeCategory === '' ? 'border-zinc-900 dark:border-white text-zinc-900 dark:text-white font-semibold' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:border-zinc-900 hover:text-zinc-900 dark:hover:border-white dark:hover:text-white'
+            }`}
           >
             كل المنتجات
-          </Link>
+          </button>
           {categories.map((cat) => (
-            <Link
+            <button
               key={cat.slug}
-              href={`/store/${slug}?cat=${cat.slug}`}
-              className="text-xs tracking-widest uppercase py-3 border-b-2 border-transparent hover:border-zinc-900 hover:text-zinc-900 dark:hover:border-white dark:hover:text-white text-zinc-500 dark:text-zinc-400 transition-all whitespace-nowrap"
+              onClick={() => { setActiveCategory(cat.slug); setLocation(`/store/${slug}?cat=${cat.slug}`); }}
+              className={`text-xs tracking-widest uppercase py-3 border-b-2 transition-all whitespace-nowrap ${
+                activeCategory === cat.slug ? 'border-zinc-900 dark:border-white text-zinc-900 dark:text-white font-semibold' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:border-zinc-900 hover:text-zinc-900 dark:hover:border-white dark:hover:text-white'
+              }`}
             >
               {cat.label}
-            </Link>
+            </button>
           ))}
           <Link
             href={`/store/${slug}/track`}

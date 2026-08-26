@@ -23,9 +23,8 @@ function useDebounced<T>(value: T, delay: number): T {
 }
 
 export default function StoreHome({ slug }: { slug: string }) {
-  const { categories, getCategoryLabel } = useStoreCategoriesCtx();
+  const { categories, getCategoryLabel, activeCategory, setActiveCategory } = useStoreCategoriesCtx();
   const [search, setSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState('');
   const [sortBy, setSortBy] = useState<'default' | 'price_asc' | 'price_desc'>('default');
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
@@ -50,7 +49,7 @@ export default function StoreHome({ slug }: { slug: string }) {
     const q = params.get('q') || '';
     setActiveCategory(cat);
     setSearch(q);
-  }, [location]);
+  }, []);
 
   const updateUrl = (cat: string, q: string) => {
     const params = new URLSearchParams(window.location.search);
