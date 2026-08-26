@@ -240,18 +240,19 @@ export default function ProductForm() {
     setSubmitting(true);
     try {
       const images = newFiles.length > 0 ? newFiles : undefined;
+      const payload = { ...data, categoryId: selectedCategoryId };
       if (isEdit) {
         await updateProductMutation.mutateAsync({
           id: Number(id),
           data: {
-            data,
+            data: payload,
             keepUrls: JSON.stringify(savedUrls),
             images,
           },
         });
       } else {
         await createProductMutation.mutateAsync({
-          data: { data, images },
+          data: { data: payload, images },
         });
       }
 

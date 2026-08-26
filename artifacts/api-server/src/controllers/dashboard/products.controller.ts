@@ -104,6 +104,7 @@ export function createProduct(req: AuthRequest, res: Response) {
     const [product] = await tx.insert(productsTable).values({
       ...productData,
       category: productData.category as any,
+      categoryId: productData.categoryId ?? null,
       merchantId,
       imageUrls: [],
     }).returning();
@@ -149,7 +150,7 @@ export function updateProduct(req: AuthRequest, res: Response) {
 
   db.transaction(async (tx) => {
     const [product] = await tx.update(productsTable)
-      .set({ ...productData, category: productData.category as any })
+      .set({ ...productData, category: productData.category as any, categoryId: productData.categoryId ?? undefined })
       .where(and(eq(productsTable.id, productId), eq(productsTable.merchantId, merchantId)))
       .returning();
 

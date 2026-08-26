@@ -14,19 +14,9 @@ export interface Product {
   /** @nullable */
   description?: string | null;
   category: string;
+  /** @nullable */
+  categoryId?: number | null;
   imageUrls?: string[];
-  /** @nullable */
-  noteTop?: string | null;
-  /** @nullable */
-  noteHeart?: string | null;
-  /** @nullable */
-  noteBase?: string | null;
-  /** @nullable */
-  skinType?: string | null;
-  /** @nullable */
-  ingredients?: string | null;
-  /** @nullable */
-  batchExpiry?: string | null;
   isActive: boolean;
   createdAt: string;
   variants: ProductVariant[];
