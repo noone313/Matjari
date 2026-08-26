@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { useListProducts, useDeleteProduct, useUpdateProduct, getGetProductQueryKey } from '@workspace/api-client-react';
+import { useListProducts, useUpdateProduct, getGetProductQueryKey, customFetch } from '@workspace/api-client-react';
 import { formatPrice, getApiUrl } from '@/lib/utils';
 import { useListDashboardCategories } from '@/hooks/useCategories';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link } from 'wouter';
-import { Plus, Search, Edit, Archive, ArchiveRestore, Package } from 'lucide-react';
+import { Plus, Search, Edit, Archive, ArchiveRestore, Package, Trash2, AlertTriangle } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { TableRowsSkeleton } from '@/components/skeletons';
 import { useToast } from '@/hooks/use-toast';
@@ -15,19 +15,31 @@ export default function Products() {
   const [category, setCategory] = useState('');
   const { data: categories } = useListDashboardCategories();
   const { data: products, isLoading, refetch } = useListProducts({ q: search, category: category || undefined });
-  const deleteMutation = useDeleteProduct();
   const updateMutation = useUpdateProduct();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; product: any }>({ open: false, product: null });
 
-  const handleArchive = (id: number) => {
-    if (confirm('هل تريد أرشفة هذا المنتج؟ سيختفي من المتجر ويمكن استعادته لاحقاً.')) {
-      deleteMutation.mutate({ id }, {
-        onSuccess: () => {
-          toast({ title: 'تمت أرشفة المنتج' });
-          refetch();
-        }
-      });
+  const handleSoftDelete = async (id: number) => {
+    try {
+      await customFetch(`/api/dashboard/products/${id}`, { method: 'DELETE' });
+      toast({ title: 'تمت أرشفة المنتج' });
+      setDeleteDialog({ open: false, product: null });
+      refetch();
+    } catch (err: any) {
+      toast({ title: err.message ?? 'حدث خطأ', variant: 'destructive' });
+    }
+  };
+
+  const handlePermanentDelete = async (id: number) => {
+    if (!confirm('هل أنت متأكد من الحذف النهائي؟ لا يمكن التراجع عن هذا الإجراء.')) return;
+    try {
+      await customFetch(`/api/dashboard/products/${id}?permanent=true`, { method: 'DELETE' });
+      toast({ title: 'تم حذف المنتج نهائياً' });
+      setDeleteDialog({ open: false, product: null });
+      refetch();
+    } catch (err: any) {
+      toast({ title: err.message ?? 'حدث خطأ', variant: 'destructive' });
     }
   };
 
@@ -133,10 +145,9 @@ export default function Products() {
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 text-gray-500 hover:text-red-600"
-                              onClick={() => handleArchive(product.id)}
-                              disabled={deleteMutation.isPending}
+                              onClick={() => setDeleteDialog({ open: true, product })}
                             >
-                              <Archive className="w-4 h-4" />
+                              <Trash2 className="w-4 h-4" />
                             </Button>
                           ) : (
                             <Button
@@ -159,6 +170,52 @@ export default function Products() {
           </table>
         </div>
       </div>
+
+      {/* Delete Dialog */}
+      {deleteDialog.open && deleteDialog.product && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setDeleteDialog({ open: false, product: null })}>
+          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-900">حذف المنتج</h3>
+                <p className="text-sm text-gray-500">{deleteDialog.product.name}</p>
+              </div>
+            </div>
+            <p className="text-gray-600 text-sm mb-6">اختر نوع الحذف:</p>
+            <div className="space-y-3">
+              <button
+                onClick={() => handleSoftDelete(deleteDialog.product.id)}
+                className="w-full flex items-center gap-3 p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors text-right"
+              >
+                <Archive className="w-5 h-5 text-gray-600" />
+                <div>
+                  <p className="font-medium text-gray-900">أرشفة (قابل للارجاع)</p>
+                  <p className="text-xs text-gray-500">سيختفي من المتجر ويمكنك استعادته لاحقاً</p>
+                </div>
+              </button>
+              <button
+                onClick={() => handlePermanentDelete(deleteDialog.product.id)}
+                className="w-full flex items-center gap-3 p-4 rounded-lg border border-red-200 hover:bg-red-50 transition-colors text-right"
+              >
+                <Trash2 className="w-5 h-5 text-red-600" />
+                <div>
+                  <p className="font-medium text-red-600">حذف نهائي</p>
+                  <p className="text-xs text-gray-500">لا يمكن التراجع عن هذا الإجراء</p>
+                </div>
+              </button>
+            </div>
+            <button
+              onClick={() => setDeleteDialog({ open: false, product: null })}
+              className="w-full mt-4 py-2 text-sm text-gray-500 hover:text-gray-700"
+            >
+              إلغاء
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

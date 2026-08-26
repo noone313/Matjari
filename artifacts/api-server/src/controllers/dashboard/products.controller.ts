@@ -188,26 +188,41 @@ export function updateProduct(req: AuthRequest, res: Response) {
   });
 }
 
-export function deleteProduct(req: AuthRequest, res: Response) {
+export async function deleteProduct(req: AuthRequest, res: Response) {
   const merchantId = req.merchantId!;
   const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const productId = parseInt(idParam, 10);
+  const permanent = req.query.permanent === 'true';
 
-  // Soft-delete: archive the product so it disappears from the storefront while
-  // preserving order/wishlist history. Restore by setting isActive back to true.
-  db.update(productsTable)
-    .set({ isActive: false })
-    .where(and(eq(productsTable.id, productId), eq(productsTable.merchantId, merchantId)))
-    .then((result) => {
-      if (result.rowCount === 0) {
-        res.status(404).json({ error: "المنتج غير موجود" });
-      } else {
-        res.sendStatus(204);
-      }
-    }).catch((err) => {
-      console.error(err);
-      res.status(500).json({ error: "فشل أرشفة المنتج" });
-    });
+  try {
+    const existing = await db
+      .select({ id: productsTable.id })
+      .from(productsTable)
+      .where(and(eq(productsTable.id, productId), eq(productsTable.merchantId, merchantId)))
+      .limit(1);
+
+    if (existing.length === 0) {
+      res.status(404).json({ error: "المنتج غير موجود" });
+      return;
+    }
+
+    if (permanent) {
+      // Permanent delete — remove product + variants + images
+      await db.delete(productImagesTable).where(eq(productImagesTable.productId, productId));
+      await db.delete(productVariantsTable).where(eq(productVariantsTable.productId, productId));
+      await db.delete(productsTable).where(eq(productsTable.id, productId));
+      res.json({ message: "تم حذف المنتج نهائياً" });
+    } else {
+      // Soft delete — archive
+      await db.update(productsTable)
+        .set({ isActive: false })
+        .where(eq(productsTable.id, productId));
+      res.json({ message: "تم أرشفة المنتج" });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "فشل حذف المنتج" });
+  }
 }
 
 export { upload };
