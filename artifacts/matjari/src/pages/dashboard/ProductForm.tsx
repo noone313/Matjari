@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useLocation, useParams } from 'wouter';
+import { Link, useLocation, useParams } from 'wouter';
 import { useGetProduct, useCreateProduct, useUpdateProduct, useListStockNotifications, useUpdateStockNotification, getListStockNotificationsQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -283,6 +283,24 @@ export default function ProductForm() {
   };
 
   if (isEdit && isLoading) return <div className="p-8"><DetailPanelSkeleton /></div>;
+
+  if (!isEdit && categories && categories.length === 0) {
+    return (
+      <div className="max-w-3xl mx-auto space-y-6 pb-16">
+        <h2 className="text-3xl font-bold text-gray-900 font-serif">إضافة منتج جديد</h2>
+        <div className="bg-white p-12 rounded-lg border border-gray-200 shadow-sm text-center space-y-4">
+          <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto" />
+          <h3 className="text-lg font-bold text-gray-900">يجب إنشاء فئة واحدة على الأقل</h3>
+          <p className="text-gray-500 max-w-md mx-auto">
+            لا يمكن إضافة منتجات بدون تحديد فئة. أنشئ فئة أولاً ثم عد هنا.
+          </p>
+          <Link href="/dashboard/categories">
+            <Button className="mt-2">إنشاء فئة جديدة</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto space-y-8 pb-16">
