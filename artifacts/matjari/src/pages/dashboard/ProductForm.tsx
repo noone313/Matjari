@@ -136,7 +136,7 @@ export default function ProductForm() {
   const isEdit = !!id && id !== 'new';
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { data: categories } = useListDashboardCategories();
+  const { data: categories, isLoading: categoriesLoading } = useListDashboardCategories();
 
   const [savedUrls, setSavedUrls] = useState<string[]>([]);
   const [newFiles, setNewFiles] = useState<File[]>([]);
@@ -283,6 +283,8 @@ export default function ProductForm() {
   };
 
   if (isEdit && isLoading) return <div className="p-8"><DetailPanelSkeleton /></div>;
+
+  if (!isEdit && (categoriesLoading || categories === undefined)) return <div className="max-w-3xl mx-auto p-8"><DetailPanelSkeleton /></div>;
 
   if (!isEdit && categories && categories.length === 0) {
     return (
