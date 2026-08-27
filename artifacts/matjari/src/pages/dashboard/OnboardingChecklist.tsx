@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import { useGetDashboardSettings, useListProducts, useListHeroSlides } from '@workspace/api-client-react';
-import { Check, Circle, ChevronDown, ChevronUp, Rocket, Package, MessageCircle, Image, FileText, CreditCard } from 'lucide-react';
+import { useListDashboardCategories } from '@/hooks/useCategories';
+import { Check, Circle, ChevronDown, ChevronUp, Rocket, Package, MessageCircle, Image, FileText, CreditCard, Layers } from 'lucide-react';
 
 const DISMISS_KEY = 'onboarding_dismissed';
 
@@ -18,12 +19,13 @@ export default function OnboardingChecklist() {
   const { data: settings, isLoading: settingsLoading } = useGetDashboardSettings();
   const { data: products, isLoading: productsLoading } = useListProducts();
   const { data: heroData, isLoading: heroLoading } = useListHeroSlides();
+  const { data: categories, isLoading: categoriesLoading } = useListDashboardCategories();
   const [dismissed, setDismissed] = useState(() => {
     try { return localStorage.getItem(DISMISS_KEY) === '1'; } catch { return false; }
   });
   const [expanded, setExpanded] = useState(true);
 
-  const isLoading = settingsLoading || productsLoading || heroLoading;
+  const isLoading = settingsLoading || productsLoading || heroLoading || categoriesLoading;
 
   useEffect(() => {
     if (dismissed) {
@@ -36,6 +38,14 @@ export default function OnboardingChecklist() {
   if (isLoading || !settings) return null;
 
   const steps: Step[] = [
+    {
+      id: 'category',
+      label: 'أنشئ فئتك الأولى',
+      description: 'أضف فئة تناسب منتجاتك — مثل: ملابس، إلكترونيات، عطور... أي فئة تريدها',
+      done: (categories?.length ?? 0) > 0,
+      href: '/dashboard/categories',
+      icon: <Layers className="w-5 h-5" />,
+    },
     {
       id: 'product',
       label: 'أضف منتجك الأول',

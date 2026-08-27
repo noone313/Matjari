@@ -1,7 +1,7 @@
 import { Router } from "express";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
-import { db, merchantsTable, ordersTable, categoriesTable } from "@workspace/db";
+import { db, merchantsTable, ordersTable } from "@workspace/db";
 import { and, count, eq } from "drizzle-orm";
 import {
   requireAuth,
@@ -125,19 +125,6 @@ router.post("/register", async (req, res): Promise<void> => {
     .insert(merchantsTable)
     .values({ storeName, slug, email, passwordHash })
     .returning();
-
-  // Seed default categories for the new merchant
-  const defaultCategories = [
-    { slug: "perfume_men", label: "عطور رجالي", sortOrder: 1 },
-    { slug: "perfume_women", label: "عطور نسائي", sortOrder: 2 },
-    { slug: "oud", label: "عود وبخور", sortOrder: 3 },
-    { slug: "skincare", label: "عناية بالبشرة", sortOrder: 4 },
-    { slug: "makeup", label: "مكياج", sortOrder: 5 },
-    { slug: "gifts", label: "هدايا", sortOrder: 6 },
-  ];
-  await db.insert(categoriesTable).values(
-    defaultCategories.map((c) => ({ ...c, merchantId: merchant.id }))
-  );
 
   const token = signToken(merchant.id);
   setSessionCookie(res, token);
