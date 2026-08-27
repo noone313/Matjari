@@ -22,11 +22,11 @@ export default function Landing() {
         <main className="relative max-w-screen-xl mx-auto px-6 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-100 border border-zinc-200 text-xs tracking-widest uppercase text-zinc-600 mb-8">
             <Zap className="w-3 h-3 text-[hsl(var(--primary))]" />
-            <span>منصة متجري — متجرك الإلكتروني الخاص بالعطور والكوزمتك</span>
+            <span>منصة متجري — متجرك الإلكتروني الخاص</span>
           </div>
 
           <h1 className="font-serif font-bold text-4xl md:text-6xl lg:text-7xl tracking-tight leading-[1.1] mb-6">
-متجر إلكتروني خاص بكل تاجر عطور
+متجر إلكتروني خاص بكل تاجر
             <br />
             <span className="text-[hsl(var(--primary))]">بدون تعقيدات</span>
           </h1>
@@ -64,7 +64,7 @@ export default function Landing() {
         <div className="max-w-screen-xl mx-auto px-6">
           <header className="text-center mb-16 md:mb-20">
             <h2 className="font-serif font-bold text-3xl md:text-4xl tracking-tight mb-4">
-              كل ما يحتاجه متجر عطور ناجح
+              كل ما يحتاجه متجر ناجح
             </h2>
             <p className="text-zinc-500 text-lg max-w-2xl mx-auto">
               ميزات حقيقية مطورة للتجار الصغار — لا إضافات وهمية، لا تعقيد.
@@ -139,7 +139,7 @@ export default function Landing() {
               {
                 step: '02',
                 title: 'عبّي منتجاتك',
-                desc: 'أضف عطورك وكوزمتك: صور، أوصاف، خيارات (حجم/لون)، أسعار، ومخزون. يدعم الباقات (bundles) للهدايا.',
+                desc: 'أضف منتجاتك: صور، أوصاف، خيارات (حجم/لون)، أسعار، ومخزون. يدعم الباقات (bundles) للهدايا.',
                 icon: Package,
               },
               {
@@ -198,7 +198,7 @@ export default function Landing() {
       <section className="py-24 md:py-32 bg-zinc-900 text-white">
         <div className="max-w-screen-xl mx-auto px-6 text-center">
           <h2 className="font-serif font-bold text-3xl md:text-4xl tracking-tight mb-4">
-            جاهز لبدء متجر العطور الخاص بك؟
+            جاهز لبدء متجرك الإلكتروني؟
           </h2>
           <p className="text-zinc-300 text-lg max-w-2xl mx-auto mb-10">
             انضم لمئات التجار الذين انتقلوا من الدايركت المبعثر إلى متجر احترافي 
@@ -228,7 +228,7 @@ export default function Landing() {
             <Link href="/register" className="hover:text-zinc-900 transition-colors">إنشاء متجر</Link>
             <Link href="/login" className="hover:text-zinc-900 transition-colors">تسجيل الدخول</Link>
           </nav>
-          <p className="text-xs">© 2025 متجري — منصة متاجر العطور والكوزمتك العراقية</p>
+          <p className="text-xs">© 2025 متجري — منصة متاجر إلكترونية عراقية</p>
         </div>
       </footer>
     </div>
