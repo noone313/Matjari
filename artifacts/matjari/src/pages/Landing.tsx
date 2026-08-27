@@ -22,11 +22,11 @@ export default function Landing() {
         <main className="relative max-w-screen-xl mx-auto px-6 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-100 border border-zinc-200 text-xs tracking-widest uppercase text-zinc-600 mb-8">
             <Zap className="w-3 h-3 text-[hsl(var(--primary))]" />
-            <span>منصة متجري — متجرك الإلكتروني الخاص</span>
+            <span>منصة متجري — متجرك الإلكتروني الخاص بك</span>
           </div>
 
           <h1 className="font-serif font-bold text-4xl md:text-6xl lg:text-7xl tracking-tight leading-[1.1] mb-6">
-متجر إلكتروني خاص بكل تاجر
+متجر إلكتروني خاص بكل تاجر صغير
             <br />
             <span className="text-[hsl(var(--primary))]">بدون تعقيدات</span>
           </h1>
@@ -228,7 +228,7 @@ export default function Landing() {
             <Link href="/register" className="hover:text-zinc-900 transition-colors">إنشاء متجر</Link>
             <Link href="/login" className="hover:text-zinc-900 transition-colors">تسجيل الدخول</Link>
           </nav>
-          <p className="text-xs">© 2025 متجري — منصة متاجر إلكترونية عراقية</p>
+          <p className="text-xs">© 2025 متجري — منصة المتاجر الإلكترونية للتجار العراقيين</p>
         </div>
       </footer>
     </div>
