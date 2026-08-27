@@ -54,7 +54,7 @@ export default function StoreCart({ slug }: { slug: string }) {
           <ShoppingBag className="w-10 h-10 text-gray-300 dark:text-zinc-600" />
         </div>
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white font-serif mb-3">سلة التسوق فارغة</h2>
-        <p className="text-gray-500 dark:text-zinc-400 mb-8 text-sm leading-relaxed">لم تقم بإضافة أي منتجات بعد. اكتشف مجموعة العطور والمنتجات المميزة.</p>
+        <p className="text-gray-500 dark:text-zinc-400 mb-8 text-sm leading-relaxed">لم تقم بإضافة أي منتجات بعد. تصفح المتجر واكتشف منتجاتنا المميزة.</p>
         <Link href={`/store/${slug}`}>
           <Button className="h-12 px-8" style={{ backgroundColor: 'hsl(var(--primary))' }}>تصفح المتجر</Button>
         </Link>

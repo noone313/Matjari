@@ -173,7 +173,7 @@ export default function ProductForm() {
     defaultValues: {
       name: '',
       description: '',
-      category: 'perfume_women',
+      category: '',
       isActive: true,
       variants: [{ variantLabel: 'الافتراضي', price: 0, stock: 100 }],
     },
