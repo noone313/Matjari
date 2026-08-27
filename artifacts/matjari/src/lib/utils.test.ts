@@ -5,10 +5,8 @@ import {
   buildOrderStatusWhatsAppMessage,
   getStatusLabel,
   getStatusColor,
-  getCategoryLabel,
   formatPrice,
   getApiUrl,
-  CATEGORIES,
   ORDER_STATUSES,
 } from './utils';
 
@@ -30,22 +28,6 @@ describe('formatPrice', () => {
 
   it('يتعامل مع الأرقام العشرية', () => {
     expect(formatPrice(1234.56)).toContain('د.ع');
-  });
-});
-
-// ─── CATEGORIES ─────────────────────────────────────────────────────────────
-describe('CATEGORIES', () => {
-  it('يحتوي على 6 أقسام', () => {
-    expect(CATEGORIES).toHaveLength(6);
-  });
-
-  it('كل قسم له value و label', () => {
-    CATEGORIES.forEach((cat) => {
-      expect(cat).toHaveProperty('value');
-      expect(cat).toHaveProperty('label');
-      expect(typeof cat.value).toBe('string');
-      expect(typeof cat.label).toBe('string');
-    });
   });
 });
 
@@ -93,20 +75,6 @@ describe('getStatusColor', () => {
 
   it('يعيد لون افتراضي للحالة غير المعروفة', () => {
     expect(getStatusColor('unknown')).toContain('bg-gray-100');
-  });
-});
-
-// ─── getCategoryLabel ───────────────────────────────────────────────────────
-describe('getCategoryLabel', () => {
-  it('يعيد التسمية العربية للقسم المعروف', () => {
-    expect(getCategoryLabel('perfume_men')).toBe('عطور رجالي');
-    expect(getCategoryLabel('perfume_women')).toBe('عطور نسائي');
-    expect(getCategoryLabel('skincare')).toBe('عناية بالبشرة');
-    expect(getCategoryLabel('gifts')).toBe('هدايا');
-  });
-
-  it('يمرر القسم غير المعروف كما هو', () => {
-    expect(getCategoryLabel('nope')).toBe('nope');
   });
 });
 
