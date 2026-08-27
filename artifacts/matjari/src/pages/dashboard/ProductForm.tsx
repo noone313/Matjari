@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { getApiUrl } from '@/lib/utils';
 import { useListDashboardCategories } from '@/hooks/useCategories';
 import { useAttributeDefinitions, useProductAttributes, useSaveProductAttributes } from '@/hooks/useAttributes';
-import { Trash2, Plus, Upload, X, Loader2, BellRing, Phone } from 'lucide-react';
+import { Trash2, Plus, Upload, X, Loader2, BellRing, Phone, AlertTriangle } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { DetailPanelSkeleton } from '@/components/skeletons';
 
